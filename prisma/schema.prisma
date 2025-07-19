@@ -1,0 +1,205 @@
+// WayrApp Database Schema
+// Author: Exequiel Trujillo
+// Production-ready schema for language learning platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String    @unique @db.VarChar(255)
+  username            String?   @unique @db.VarChar(50)
+  countryCode         String?   @map("country_code") @db.Char(2)
+  registrationDate    DateTime  @default(now()) @map("registration_date") @db.Timestamptz
+  profilePictureUrl   String?   @map("profile_picture_url") @db.VarChar(255)
+  isActive            Boolean   @default(true) @map("is_active")
+  role                Role      @default(student)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  progress            UserProgress?
+  following           Follow[] @relation("Follower")
+  followers           Follow[] @relation("Followed")
+  
+  @@map("users")
+}
+
+model Follow {
+  followerId  String   @map("follower_id") @db.Uuid
+  followedId  String   @map("followed_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  // Relations
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followed    User     @relation("Followed", fields: [followedId], references: [id], onDelete: Cascade)
+  
+  @@id([followerId, followedId])
+  @@index([followedId])
+  @@map("follows")
+}
+
+model UserProgress {
+  userId                  String    @id @map("user_id") @db.Uuid
+  experiencePoints        Int       @default(0) @map("experience_points")
+  livesCurrent           Int       @default(5) @map("lives_current")
+  streakCurrent          Int       @default(0) @map("streak_current")
+  lastCompletedLessonId  String?   @map("last_completed_lesson_id") @db.VarChar(60)
+  lastActivityDate       DateTime  @default(now()) @map("last_activity_date") @db.Timestamptz
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastCompletedLesson    Lesson?   @relation(fields: [lastCompletedLessonId], references: [id], onDelete: SetNull)
+  
+  @@map("user_progress")
+}
+
+model Course {
+  id             String   @id @db.VarChar(20)
+  sourceLanguage String   @map("source_language") @db.VarChar(5)
+  targetLanguage String   @map("target_language") @db.VarChar(5)
+  name           String   @db.VarChar(100)
+  description    String?
+  isPublic       Boolean  @default(true) @map("is_public")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  levels         Level[]
+  
+  @@index([sourceLanguage])
+  @@index([targetLanguage])
+  @@index([isPublic])
+  @@map("courses")
+}
+
+model Level {
+  id        String   @id @db.VarChar(30)
+  courseId  String   @map("course_id") @db.VarChar(20)
+  code      String   @db.VarChar(10)
+  name      String   @db.VarChar(100)
+  order     Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sections  Section[]
+  
+  @@unique([courseId, code])
+  @@unique([courseId, order])
+  @@index([courseId])
+  @@map("levels")
+}
+
+model Section {
+  id        String   @id @db.VarChar(40)
+  levelId   String   @map("level_id") @db.VarChar(30)
+  name      String   @db.VarChar(150)
+  order     Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  level     Level     @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  modules   Module[]
+  
+  @@unique([levelId, order])
+  @@index([levelId])
+  @@map("sections")
+}
+
+model Module {
+  id         String     @id @db.VarChar(50)
+  sectionId  String     @map("section_id") @db.VarChar(40)
+  moduleType ModuleType @map("module_type")
+  name       String     @db.VarChar(150)
+  order      Int
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  section    Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  lessons    Lesson[]
+  
+  @@unique([sectionId, order])
+  @@index([sectionId])
+  @@map("modules")
+}
+
+model Lesson {
+  id               String    @id @db.VarChar(60)
+  moduleId         String    @map("module_id") @db.VarChar(50)
+  experiencePoints Int       @default(10) @map("experience_points")
+  order            Int
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  module           Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  exercises        LessonExercise[]
+  userProgress     UserProgress[]
+  
+  @@unique([moduleId, order])
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+model Exercise {
+  id           String           @id @db.VarChar(15)
+  exerciseType ExerciseType     @map("exercise_type")
+  data         Json             @db.JsonB
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  
+  // Relations
+  lessons      LessonExercise[]
+  
+  @@index([exerciseType])
+  @@map("exercises")
+}
+
+model LessonExercise {
+  lessonId   String   @map("lesson_id") @db.VarChar(60)
+  exerciseId String   @map("exercise_id") @db.VarChar(15)
+  order      Int
+  
+  // Relations
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  
+  @@id([lessonId, exerciseId])
+  @@index([lessonId])
+  @@index([exerciseId])
+  @@map("lesson_exercises")
+}
+
+enum Role {
+  student
+  content_creator
+  admin
+}
+
+enum ModuleType {
+  informative
+  basic_lesson
+  reading
+  dialogue
+  exam
+}
+
+enum ExerciseType {
+  translation
+  fill_in_the_blank @map("fill-in-the-blank")
+  vof
+  pairs
+  informative
+  ordering
+}

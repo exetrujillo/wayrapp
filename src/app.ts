@@ -21,7 +21,7 @@ import { logger } from '@/shared/utils/logger';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env['PORT'] || 3000;
 
 // Security middleware
 app.use(helmet());
@@ -29,7 +29,7 @@ app.use(compression());
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    origin: process.env['CORS_ORIGIN']?.split(',') || ['http://localhost:3000'],
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -37,8 +37,8 @@ app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+    windowMs: parseInt(process.env['RATE_LIMIT_WINDOW_MS'] || '900000'), // 15 minutes
+    max: parseInt(process.env['RATE_LIMIT_MAX_REQUESTS'] || '100'),
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false
@@ -58,7 +58,7 @@ app.get('/health', (req, res) => {
         status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env['NODE_ENV'] || 'development'
     });
 });
 
@@ -89,7 +89,7 @@ app.use('*', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     logger.info(`WayrApp API server running on port ${PORT}`, {
-        environment: process.env.NODE_ENV || 'development',
+        environment: process.env['NODE_ENV'] || 'development',
         port: PORT
     });
 });

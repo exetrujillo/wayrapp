@@ -1,4 +1,11 @@
-import { PrismaClient } from '@prisma/client';
+/**
+ * Database Connection Manager
+ * Singleton pattern for Prisma client with logging and connection management
+ * 
+ * @author Exequiel Trujillo
+ */
+
+import { PrismaClient, Prisma } from '@prisma/client';
 import { logger } from '@/shared/utils/logger';
 
 // Singleton pattern for Prisma client
@@ -7,64 +14,11 @@ class DatabaseConnection {
 
   public static getInstance(): PrismaClient {
     if (!DatabaseConnection.instance) {
+      // Configure Prisma client with appropriate logging
+      const logLevel = process.env['NODE_ENV'] === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'];
+      
       DatabaseConnection.instance = new PrismaClient({
-        log: [
-          {
-            emit: 'event',
-            level: 'query',
-          },
-          {
-            emit: 'event',
-            level: 'error',
-          },
-          {
-            emit: 'event',
-            level: 'info',
-          },
-          {
-            emit: 'event',
-            level: 'warn',
-          },
-        ],
-      });
-
-      // Log database queries in development
-      if (process.env.NODE_ENV === 'development') {
-        DatabaseConnection.instance.$on('query', (e) => {
-          logger.debug('Database Query', {
-            query: e.query,
-            params: e.params,
-            duration: `${e.duration}ms`,
-            timestamp: e.timestamp
-          });
-        });
-      }
-
-      // Log database errors
-      DatabaseConnection.instance.$on('error', (e) => {
-        logger.error('Database Error', {
-          message: e.message,
-          target: e.target,
-          timestamp: e.timestamp
-        });
-      });
-
-      // Log database info
-      DatabaseConnection.instance.$on('info', (e) => {
-        logger.info('Database Info', {
-          message: e.message,
-          target: e.target,
-          timestamp: e.timestamp
-        });
-      });
-
-      // Log database warnings
-      DatabaseConnection.instance.$on('warn', (e) => {
-        logger.warn('Database Warning', {
-          message: e.message,
-          target: e.target,
-          timestamp: e.timestamp
-        });
+        log: logLevel as any,
       });
 
       logger.info('Database connection initialized');
