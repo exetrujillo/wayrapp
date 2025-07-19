@@ -23,3 +23,13 @@ export {
   securityHeaders,
   requestSizeLimiter
 } from './security';
+
+// Authentication and authorization
+export {
+  authenticateToken,
+  requireRole,
+  requirePermission,
+  optionalAuth,
+  requireOwnership,
+  PERMISSIONS
+} from './auth';

@@ -64,7 +64,10 @@ app.get('/health', (_req, res) => {
     });
 });
 
-// API routes will be added here
+// Import routes
+import authRoutes from '@/modules/users/routes/authRoutes';
+
+// API routes
 app.get('/api', (_req, res) => {
     res.json({
         message: 'WayrApp API v1.0.0',
@@ -72,6 +75,9 @@ app.get('/api', (_req, res) => {
         health: '/health'
     });
 });
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);
