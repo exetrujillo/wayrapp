@@ -5,7 +5,7 @@
  * @author Exequiel Trujillo
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { logger } from '@/shared/utils/logger';
 
 // Singleton pattern for Prisma client

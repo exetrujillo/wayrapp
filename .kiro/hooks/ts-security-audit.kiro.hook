@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Security Vulnerability Scanner",
+  "description": "Automatically performs a security audit on TypeScript files when saved, checking for hardcoded secrets, insecure direct object references, SQL injection risks, and missing authorization checks",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are a senior security engineer. Perform a security audit on the following TypeScript file content. Look for common vulnerabilities such as:\n1. Hardcoded secrets (API keys, passwords, long random strings)\n2. Insecure direct object references\n3. Potential for SQL injection (even with an ORM, check for raw query usage)\n4. Missing authorization checks on endpoints that modify data\n\nIf you find a potential vulnerability, add a detailed `// SECURITY_AUDIT_TODO:` comment directly above the suspicious line of code, explaining the risk and suggesting a remediation. Return the modified file content with the security comments added."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "TDD Service Test Generator",
+  "description": "Automatically generates comprehensive Jest unit tests for public methods in service files when they are saved",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/services/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are an expert Test-Driven Development engineer. A service file has been modified. Analyze the saved file and identify all public methods (methods that are exported or part of exported classes). For each public method:\n\n1. Create or update a corresponding unit test file ending in `.test.ts` in the same directory\n2. Generate comprehensive Jest test cases that cover:\n   - Happy path scenarios\n   - Edge cases (empty inputs, null/undefined values, boundary conditions)\n   - Error scenarios and exception handling\n   - Different input combinations and data types\n3. Mock all external dependencies including:\n   - Database repositories\n   - External services\n   - HTTP clients\n   - File system operations\n   - Third-party libraries\n4. Use proper Jest mocking patterns (jest.mock, jest.fn(), etc.)\n5. Include setup and teardown as needed\n6. Follow Jest best practices for test structure and naming\n\nEnsure tests are thorough, maintainable, and follow TDD principles. Focus on testing behavior rather than implementation details."
+  }
+}

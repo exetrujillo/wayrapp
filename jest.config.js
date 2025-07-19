@@ -23,7 +23,7 @@ module.exports = {
     'html'
   ],
   setupFilesAfterEnv: ['<rootDir>/src/shared/test/setup.ts'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
   testTimeout: 10000

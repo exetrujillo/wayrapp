@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Code Formatter",
+  "description": "Automatically formats TypeScript files using Prettier when saved to ensure consistent code style",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are a code formatter. A TypeScript file has been saved and needs to be reformatted using Prettier. Please reformat the entire file using the project's configured Prettier rules to ensure consistent code style. Do not change the logic, only apply formatting. Return the complete reformatted file content."
+  }
+}

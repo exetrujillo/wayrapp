@@ -23,10 +23,10 @@ export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-  let code = ErrorCodes.INTERNAL_ERROR;
+  let code: string = ErrorCodes.INTERNAL_ERROR;
   let message = 'Internal server error';
   let details: any = undefined;
 
@@ -61,7 +61,7 @@ export const errorHandler = (
     switch (error.code) {
       case 'P2002':
         message = 'Unique constraint violation';
-        details = { field: error.meta?.target };
+        details = { field: error.meta?.['target'] };
         statusCode = HttpStatus.CONFLICT;
         code = ErrorCodes.CONFLICT;
         break;

@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Package.json Protection Hook",
+  "description": "Monitors package.json for direct modifications and reminds the user to use npm/yarn commands instead",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "package.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "CRITICAL POLICY VIOLATION: The package.json file has been modified directly. According to the Global Operating Policy, you must NEVER modify package.json directly. Instead, you must use explicit npm or yarn commands (e.g., `npm install express`, `npm uninstall body-parser`, `npm install -D typescript`). Please revert any direct changes to package.json and provide the appropriate npm/yarn command that should be executed instead. This policy is critical for maintaining project integrity."
+  }
+}

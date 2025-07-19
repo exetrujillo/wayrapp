@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "API Endpoint Documentation Generator",
+  "description": "Analyzes Express route files for endpoint definitions and generates comprehensive API documentation in Markdown format",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/routes/**/*.ts",
+      "**/routes/**/*.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are a technical writer creating API documentation. A file in a 'routes' directory has been modified. Analyze the file for Express route definitions (app.get, app.post, app.use, router.get, router.post, etc.). For each endpoint found, generate a Markdown section detailing:\n\n1. The full HTTP path and method (e.g., `POST /api/courses/{courseId}/levels`)\n2. A brief description of its purpose based on the route handler code\n3. The required user role for access, based on any middleware used (auth, permissions, etc.)\n4. An example of the expected request body structure, if applicable\n5. Expected response format and status codes\n\nFormat the output as clean Markdown and append it to a file named `API_DOCUMENTATION.md` in the project root. If the file doesn't exist, create it with a proper header. Include the current timestamp and source file path for each generated section."
+  }
+}

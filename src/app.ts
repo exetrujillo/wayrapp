@@ -10,11 +10,18 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
-import { errorHandler } from '@/shared/middleware/errorHandler';
-import { requestLogger } from '@/shared/middleware/requestLogger';
+import { 
+  errorHandler, 
+  requestLogger,
+  corsOptions,
+  defaultRateLimiter,
+  helmetOptions,
+  sanitizeInput,
+  securityHeaders,
+  requestSizeLimiter
+} from '@/shared/middleware';
 import { logger } from '@/shared/utils/logger';
 
 // Load environment variables
@@ -24,36 +31,31 @@ const app = express();
 const PORT = process.env['PORT'] || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet(helmetOptions));
 app.use(compression());
+app.use(securityHeaders);
 
 // CORS configuration
-const corsOptions = {
-    origin: process.env['CORS_ORIGIN']?.split(',') || ['http://localhost:3000'],
-    credentials: true,
-    optionsSuccessStatus: 200
-};
 app.use(cors(corsOptions));
 
 // Rate limiting
-const limiter = rateLimit({
-    windowMs: parseInt(process.env['RATE_LIMIT_WINDOW_MS'] || '900000'), // 15 minutes
-    max: parseInt(process.env['RATE_LIMIT_MAX_REQUESTS'] || '100'),
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false
-});
-app.use(limiter);
+app.use(defaultRateLimiter);
+
+// Request size limiting
+app.use(requestSizeLimiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Input sanitization
+app.use(sanitizeInput);
+
 // Request logging
 app.use(requestLogger);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
     res.status(200).json({
         status: 'OK',
         timestamp: new Date().toISOString(),
@@ -63,7 +65,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes will be added here
-app.get('/api', (req, res) => {
+app.get('/api', (_req, res) => {
     res.json({
         message: 'WayrApp API v1.0.0',
         documentation: '/api/docs',
