@@ -30,15 +30,9 @@ export class UserController {
     // Risk: Malformed user IDs from JWT could cause database errors or injection attacks.
     // Remediation: Validate userId format (UUID, length, allowed characters) before using in database queries.
     const userId = req.user.sub;
+    
+    // Service will throw an error if user is not found
     const user = await this.userService.getUserProfile(userId);
-
-    if (!user) {
-      throw new AppError(
-        'User not found',
-        HttpStatus.NOT_FOUND,
-        ErrorCodes.NOT_FOUND
-      );
-    }
 
     const response: ApiResponse<typeof user> = {
       success: true,
@@ -70,6 +64,8 @@ export class UserController {
     // SECURITY_AUDIT_TODO: No check to prevent users from updating sensitive fields they shouldn't modify.
     // Risk: If UpdateUserDto includes fields like 'role', 'is_active', or 'created_at', users could modify their own privileges.
     // Remediation: Filter validatedData to only include user-modifiable fields (name, email, preferences) before service call.
+    
+    // Service will throw an error if user is not found or update fails
     const updatedUser = await this.userService.updateUser(userId, validatedData as UpdateUserDto);
 
     // SECURITY_AUDIT_TODO: Logging user data without sanitization could expose sensitive information.
@@ -108,6 +104,8 @@ export class UserController {
     // SECURITY_AUDIT_TODO: No rate limiting specifically for password change attempts.
     // Risk: Attackers could brute force current passwords or cause account lockout through repeated attempts.
     // Remediation: Implement stricter rate limiting for password change endpoints (e.g., 3 attempts per hour per user).
+    
+    // Service will throw an error if current password is incorrect or user is not found
     await this.userService.updatePassword(userId, current_password, new_password);
 
     // SECURITY_AUDIT_TODO: Password change events should be logged with more security context.
@@ -157,6 +155,7 @@ export class UserController {
     }
     if (req.query['search']) filters['search'] = req.query['search'];
 
+    // Service will handle any errors (e.g., database connection issues)
     const users = await this.userService.findAll({
       page,
       limit,
@@ -192,18 +191,13 @@ export class UserController {
         ErrorCodes.VALIDATION_ERROR
       );
     }
+    
     // SECURITY_AUDIT_TODO: User ID parameter is not validated for format/type.
     // Risk: Malformed IDs could cause database errors or be used for injection attacks.
     // Remediation: Validate userId format (UUID, length, allowed characters) before database query.
+    
+    // Service will throw an error if user is not found
     const user = await this.userService.getUserProfile(userId);
-
-    if (!user) {
-      throw new AppError(
-        'User not found',
-        HttpStatus.NOT_FOUND,
-        ErrorCodes.NOT_FOUND
-      );
-    }
 
     const response: ApiResponse<typeof user> = {
       success: true,
@@ -218,18 +212,17 @@ export class UserController {
    * Update user role (admin only)
    * PUT /api/users/:id/role
    */
-  updateUserRole = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateUserRole = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     // SECURITY_AUDIT_TODO: Missing authorization check for admin-only endpoint.
     // This endpoint allows role modification but lacks proper access control validation.
     // Risk: Any authenticated user could potentially escalate privileges or modify other users' roles.
     // Remediation: Add middleware or check: if (req.user?.role !== 'admin') throw new AppError('Forbidden', 403);
 
-    const { id: userId } = req.params; // Saca el id de los parámetros
-    const { role } = req.body; // Saca el rol del body
+    const { id: userId } = req.params;
+    const { role } = req.body;
 
     if (!userId) {
-      // Usamos return next() para asegurar que la función se detiene aquí
-      return next(new AppError('User ID is required', HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR));
+      throw new AppError('User ID is required', HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR);
     }
 
     // SECURITY_AUDIT_TODO: Role parameter is not validated against allowed role values.
@@ -244,14 +237,8 @@ export class UserController {
     // Risk: Lower-privilege admins could assign roles higher than their own authorization level.
     // Remediation: Implement role hierarchy checks before allowing role assignment.
 
-    // Llama a updateUser directamente. El servicio updateUser ya debería
-    // comprobar si el usuario existe y lanzar un error si no.
-    // Esto simplifica el controlador y evita llamar a la DB dos veces.
+    // Service will throw an error if user is not found or update fails
     const updatedUser = await this.userService.updateUser(userId, { role });
-
-    // La comprobación de si el usuario existe se delega al servicio,
-    // que es donde pertenece la lógica de negocio. Si updateUser falla,
-    // el asyncHandler lo atrapará y lo pasará a next().
 
     logger.info('User role updated', { userId, role });
 

@@ -112,18 +112,16 @@ describe('UserController', () => {
     });
 
     it('should call next with error when user is not found', async () => {
-      // Arrange
-      mockUserService.getUserProfile.mockResolvedValue(null);
+      // Arrange: The service itself throws the error
+      const notFoundError = new AppError('User not found', HttpStatus.NOT_FOUND, 'NOT_FOUND');
+      mockUserService.getUserProfile.mockRejectedValue(notFoundError);
 
       // Act
       await Promise.resolve(userController.getProfile(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.NOT_FOUND);
-      expect(error.message).toBe('User not found');
+      expect(mockNext).toHaveBeenCalledWith(notFoundError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -181,7 +179,7 @@ describe('UserController', () => {
     });
 
     it('should call next with error when service throws error', async () => {
-      // Arrange
+      // Arrange: The service itself throws the error
       const updateData = { username: 'newusername' };
       mockRequest.body = updateData;
       
@@ -191,12 +189,9 @@ describe('UserController', () => {
       // Act
       await Promise.resolve(userController.updateProfile(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.NOT_FOUND);
-      expect(error.message).toBe('User not found');
+      expect(mockNext).toHaveBeenCalledWith(serviceError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -249,7 +244,7 @@ describe('UserController', () => {
     });
 
     it('should call next with error when service throws error', async () => {
-      // Arrange
+      // Arrange: The service itself throws the error
       const passwordData = {
         current_password: 'wrongPassword',
         new_password: 'newPassword456!'
@@ -262,12 +257,9 @@ describe('UserController', () => {
       // Act
       await Promise.resolve(userController.updatePassword(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.UNAUTHORIZED);
-      expect(error.message).toBe('Current password is incorrect');
+      expect(mockNext).toHaveBeenCalledWith(serviceError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -362,19 +354,16 @@ describe('UserController', () => {
     });
 
     it('should call next with error when service throws error', async () => {
-      // Arrange
+      // Arrange: The service itself throws the error
       const serviceError = new AppError('Database error', HttpStatus.INTERNAL_SERVER_ERROR, 'DATABASE_ERROR');
       (mockUserService as any).findAll = jest.fn().mockRejectedValue(serviceError);
 
       // Act
       await Promise.resolve(userController.getAllUsers(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(error.message).toBe('Database error');
+      expect(mockNext).toHaveBeenCalledWith(serviceError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -411,19 +400,17 @@ describe('UserController', () => {
     });
 
     it('should call next with error when user is not found', async () => {
-      // Arrange
+      // Arrange: The service itself throws the error
       mockRequest.params = { id: 'nonexistent-user' };
-      mockUserService.getUserProfile.mockResolvedValue(null);
+      const notFoundError = new AppError('User not found', HttpStatus.NOT_FOUND, 'NOT_FOUND');
+      mockUserService.getUserProfile.mockRejectedValue(notFoundError);
 
       // Act
       await Promise.resolve(userController.getUserById(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.NOT_FOUND);
-      expect(error.message).toBe('User not found');
+      expect(mockNext).toHaveBeenCalledWith(notFoundError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -478,7 +465,7 @@ describe('UserController', () => {
     });
 
     it('should call next with error when user does not exist', async () => {
-      // Arrange
+      // Arrange: The service itself throws the error
       mockRequest.params = { id: 'nonexistent-user' };
       mockRequest.body = { role: 'admin' };
       
@@ -488,12 +475,9 @@ describe('UserController', () => {
       // Act
       await Promise.resolve(userController.updateUserRole(mockRequest as Request, mockResponse as Response, mockNext));
       
-      // Assert
+      // Assert: We check if asyncHandler correctly passed the service's error to next()
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AppError));
-      const error = (mockNext as jest.Mock).mock.calls[0][0];
-      expect(error.statusCode).toBe(HttpStatus.NOT_FOUND);
-      expect(error.message).toBe('User not found');
+      expect(mockNext).toHaveBeenCalledWith(serviceError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
