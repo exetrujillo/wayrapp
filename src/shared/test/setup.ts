@@ -1,5 +1,15 @@
 // Jest setup file for global test configuration
-import { logger } from '@/shared/utils/logger';
+import dotenv from "dotenv";
+import { logger } from "@/shared/utils/logger";
+import { prisma } from "@/shared/database/connection";
+
+// Load environment variables from .env file
+dotenv.config();
+
+// Mock environment variables for testing (only if not already set)
+process.env["NODE_ENV"] = "test";
+process.env["JWT_SECRET"] = process.env["JWT_SECRET"] || "test-jwt-secret";
+// Don't override DATABASE_URL if it's already set from .env file
 
 // Suppress logs during testing
 logger.silent = true;
@@ -10,10 +20,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Global cleanup after all tests
+  // Global cleanup after all tests - close database connection
+  await prisma.$disconnect();
 });
-
-// Mock environment variables for testing
-process.env['NODE_ENV'] = 'test';
-process.env['JWT_SECRET'] = 'test-jwt-secret';
-process.env['DATABASE_URL'] = 'postgresql://test:test@localhost:5432/wayrapp_test';

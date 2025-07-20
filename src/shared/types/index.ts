@@ -32,7 +32,7 @@ export interface PaginatedResult<T> {
 export interface QueryOptions {
   page?: number;
   limit?: number;
-  sortBy?: string;
+  sortBy?: string | undefined;
   sortOrder?: 'asc' | 'desc';
   filters?: Record<string, any>;
 }

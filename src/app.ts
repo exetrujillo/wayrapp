@@ -1,34 +1,31 @@
 /**
  * WayrApp Backend API
  * Open-source language learning platform
- * 
+ *
  * @author Exequiel Trujillo
  * @version 1.0.0
  */
 
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import dotenv from 'dotenv';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import dotenv from "dotenv";
 
-import { 
-  errorHandler, 
+import {
+  errorHandler,
   requestLogger,
   corsOptions,
   defaultRateLimiter,
   helmetOptions,
   sanitizeInput,
   securityHeaders,
-  requestSizeLimiter
-} from '@/shared/middleware';
-import { logger } from '@/shared/utils/logger';
-
+  requestSizeLimiter,
+} from "@/shared/middleware";
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env['PORT'] || 3000;
 
 // Security middleware
 app.use(helmet(helmetOptions));
@@ -45,8 +42,8 @@ app.use(defaultRateLimiter);
 app.use(requestSizeLimiter);
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Input sanitization
 app.use(sanitizeInput);
@@ -55,62 +52,62 @@ app.use(sanitizeInput);
 app.use(requestLogger);
 
 // Health check endpoint
-app.get('/health', (_req, res) => {
-    res.status(200).json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env['NODE_ENV'] || 'development'
-    });
+app.get("/health", (_req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env["NODE_ENV"] || "development",
+  });
 });
 
 // Import routes
-import authRoutes from '@/modules/users/routes/authRoutes';
-import userRoutes from '@/modules/users/routes/userRoutes';
-import { createContentRoutes, createLessonRoutes, createExerciseRoutes } from '@/modules/content/routes';
-import { prisma } from '@/shared/database/connection';
+import authRoutes from "@/modules/users/routes/authRoutes";
+import userRoutes from "@/modules/users/routes/userRoutes";
+import {
+  createContentRoutes,
+  createLessonRoutes,
+  createExerciseRoutes,
+} from "@/modules/content/routes";
+import { createProgressRoutes } from "@/modules/progress/routes/progressRoutes";
+import { prisma } from "@/shared/database/connection";
 
 // API routes
-app.get('/api', (_req, res) => {
-    res.json({
-        message: 'WayrApp API v1.0.0',
-        documentation: '/api/docs',
-        health: '/health'
-    });
+app.get("/api", (_req, res) => {
+  res.json({
+    message: "WayrApp API v1.0.0",
+    documentation: "/api/docs",
+    health: "/health",
+  });
 });
 
 // Authentication routes
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 
 // User routes
-app.use('/api/users', userRoutes);
+app.use("/api/users", userRoutes);
 
 // Content routes
-app.use('/api', createContentRoutes(prisma));
-app.use('/api', createLessonRoutes(prisma));
-app.use('/api', createExerciseRoutes(prisma));
+app.use("/api", createContentRoutes(prisma));
+app.use("/api", createLessonRoutes(prisma));
+app.use("/api", createExerciseRoutes(prisma));
+
+// Progress routes
+app.use("/api", createProgressRoutes(prisma));
 
 // Global error handler (must be last)
 app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({
-        error: {
-            code: 'NOT_FOUND',
-            message: 'Endpoint not found',
-            path: req.originalUrl,
-            timestamp: new Date().toISOString()
-        }
-    });
-});
-
-// Start server
-app.listen(PORT, () => {
-    logger.info(`WayrApp API server running on port ${PORT}`, {
-        environment: process.env['NODE_ENV'] || 'development',
-        port: PORT
-    });
+app.use("*", (req, res) => {
+  res.status(404).json({
+    error: {
+      code: "NOT_FOUND",
+      message: "Endpoint not found",
+      path: req.originalUrl,
+      timestamp: new Date().toISOString(),
+    },
+  });
 });
 
 export default app;
