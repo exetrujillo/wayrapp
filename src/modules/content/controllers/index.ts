@@ -1,0 +1,1 @@
+export { ContentController } from './ContentController';

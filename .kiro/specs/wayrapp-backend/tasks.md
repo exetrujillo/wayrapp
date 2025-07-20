@@ -62,7 +62,10 @@
   - Set up user routes with proper authentication and authorization
   - _Requirements: 3.7, 9.3, 9.6_
 
-- [ ] 6. Content Management Module - Core Entities
+- [x] 6. Content Management Module - Core Entities
+
+
+
   - Create Course, Level, Section, Module interfaces and validation schemas
   - Implement repositories for hierarchical content entities using Prisma
   - Build ContentService with business logic for content CRUD operations

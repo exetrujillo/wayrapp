@@ -36,7 +36,7 @@ export interface Section {
 export interface Module {
   id: string;
   section_id: string;
-  module_type: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
+  module_type: "informative" | "basic_lesson" | "reading" | "dialogue" | "exam";
   name: string;
   order: number;
   created_at: Date;
@@ -56,7 +56,13 @@ export interface Lesson {
 
 export interface Exercise {
   id: string;
-  exercise_type: 'translation' | 'fill-in-the-blank' | 'vof' | 'pairs' | 'informative' | 'ordering';
+  exercise_type:
+    | "translation"
+    | "fill-in-the-blank"
+    | "vof"
+    | "pairs"
+    | "informative"
+    | "ordering";
   data: any;
   created_at: Date;
   updated_at: Date;
@@ -75,8 +81,8 @@ export interface CreateCourseDto {
   source_language: string;
   target_language: string;
   name: string;
-  description?: string;
-  is_public?: boolean;
+  description?: string | undefined;
+  is_public?: boolean | undefined;
 }
 
 export interface CreateLevelDto {
@@ -97,7 +103,7 @@ export interface CreateSectionDto {
 export interface CreateModuleDto {
   id: string;
   section_id: string;
-  module_type: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
+  module_type: "informative" | "basic_lesson" | "reading" | "dialogue" | "exam";
   name: string;
   order: number;
 }
@@ -111,7 +117,13 @@ export interface CreateLessonDto {
 
 export interface CreateExerciseDto {
   id: string;
-  exercise_type: 'translation' | 'fill-in-the-blank' | 'vof' | 'pairs' | 'informative' | 'ordering';
+  exercise_type:
+    | "translation"
+    | "fill-in-the-blank"
+    | "vof"
+    | "pairs"
+    | "informative"
+    | "ordering";
   data: any;
 }
 
@@ -142,3 +154,6 @@ export interface PackagedModule extends Module {
 export interface PackagedLesson extends Lesson {
   exercises: LessonExercise[];
 }
+
+// Re-export schema types
+export * from "../schemas";

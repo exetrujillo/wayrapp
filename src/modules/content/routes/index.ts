@@ -1,0 +1,1 @@
+export { createContentRoutes } from './contentRoutes';

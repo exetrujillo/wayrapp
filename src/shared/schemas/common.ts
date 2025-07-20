@@ -5,12 +5,14 @@ import { z } from 'zod';
  */
 
 // Pagination schema for query parameters
-export const PaginationSchema = z.object({
+export const BasePaginationSchema = z.object({
   page: z.string().optional().transform((val) => val ? parseInt(val, 10) : 1),
   limit: z.string().optional().transform((val) => val ? parseInt(val, 10) : 20),
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc')
-}).refine((data) => {
+});
+
+export const PaginationSchema = BasePaginationSchema.refine((data) => {
   return data.page >= 1 && data.limit >= 1 && data.limit <= 100;
 }, {
   message: 'Page must be >= 1 and limit must be between 1 and 100'
