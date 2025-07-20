@@ -198,6 +198,20 @@ export class ModuleRepository {
     return count > 0;
   }
 
+  async existsLessonOrderInModule(
+    moduleId: string,
+    order: number,
+    excludeId?: string,
+  ): Promise<boolean> {
+    const where: any = { moduleId, order };
+    if (excludeId) {
+      where.id = { not: excludeId };
+    }
+
+    const count = await this.prisma.lesson.count({ where });
+    return count > 0;
+  }
+
   private mapPrismaToModel(module: PrismaModule): Module {
     return {
       id: module.id,

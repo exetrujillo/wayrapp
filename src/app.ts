@@ -67,6 +67,8 @@ app.get('/health', (_req, res) => {
 // Import routes
 import authRoutes from '@/modules/users/routes/authRoutes';
 import userRoutes from '@/modules/users/routes/userRoutes';
+import { createContentRoutes, createLessonRoutes, createExerciseRoutes } from '@/modules/content/routes';
+import { prisma } from '@/shared/database/connection';
 
 // API routes
 app.get('/api', (_req, res) => {
@@ -82,6 +84,11 @@ app.use('/api/auth', authRoutes);
 
 // User routes
 app.use('/api/users', userRoutes);
+
+// Content routes
+app.use('/api', createContentRoutes(prisma));
+app.use('/api', createLessonRoutes(prisma));
+app.use('/api', createExerciseRoutes(prisma));
 
 // Global error handler (must be last)
 app.use(errorHandler);

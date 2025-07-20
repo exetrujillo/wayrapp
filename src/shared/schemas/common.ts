@@ -68,7 +68,7 @@ export const RoleSchema = z.enum(['student', 'content_creator', 'admin']);
 export const ModuleTypeSchema = z.enum(['informative', 'basic_lesson', 'reading', 'dialogue', 'exam']);
 
 // Exercise type validation
-export const ExerciseTypeSchema = z.enum(['translation', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering']);
+export const ExerciseTypeSchema = z.enum(['translation', 'fill_in_the_blank', 'vof', 'pairs', 'informative', 'ordering']);
 
 // Generic text field validation
 export const TextFieldSchema = (minLength: number = 1, maxLength: number = 255) => 
