@@ -7,7 +7,7 @@ import { User, CreateUserDto, UpdateUserDto } from '../types';
 import { UserRepository } from '../repositories/userRepository';
 
 import { AppError } from '@/shared/middleware/errorHandler';
-import { ErrorCodes, HttpStatus } from '@/shared/types';
+import { ErrorCodes, HttpStatus, QueryOptions, PaginatedResult } from '@/shared/types';
 import { logger } from '@/shared/utils/logger';
 
 export class UserService {
@@ -61,11 +61,11 @@ export class UserService {
     }
 
     const user = await this.userRepository.create(userData);
-    
-    logger.info('User created successfully', { 
-      userId: user.id, 
+
+    logger.info('User created successfully', {
+      userId: user.id,
       email: user.email,
-      role: user.role 
+      role: user.role
     });
 
     return user;
@@ -97,46 +97,102 @@ export class UserService {
     }
 
     const updatedUser = await this.userRepository.update(id, updates);
-    
+
     logger.info('User updated successfully', { userId: id });
 
     return updatedUser;
   }
 
   /**
-   * Verify user password
-   * Note: This is a placeholder implementation
-   * In a real app, you'd store password hashes and compare them
+   * Create new user with password hashing
    */
-  async verifyPassword(userId: string, _password: string): Promise<boolean> {
-    // This is a placeholder implementation
-    // In a real application, you would:
-    // 1. Retrieve the password hash from the database
-    // 2. Compare the provided password with the hash using bcrypt
-    
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
+  async createUserWithPassword(
+    userData: CreateUserDto & { password: string }
+  ): Promise<User> {
+    // Check if email already exists
+    const existingUser = await this.findByEmail(userData.email);
+    if (existingUser) {
+      throw new AppError(
+        'Email already registered',
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
+    }
+
+    // Check if username already exists (if provided)
+    if (userData.username) {
+      const existingUsername = await this.findByUsername(userData.username);
+      if (existingUsername) {
+        throw new AppError(
+          'Username already taken',
+          HttpStatus.CONFLICT,
+          ErrorCodes.CONFLICT
+        );
+      }
+    }
+
+    // Hash password before storing
+    const { hashPassword } = await import('@/shared/utils/auth');
+    const passwordHash = await hashPassword(userData.password);
+
+    const user = await this.userRepository.createWithPassword({
+      ...userData,
+      passwordHash
+    });
+
+    logger.info('User created successfully with hashed password', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return user;
+  }
+
+  /**
+   * Verify user password against stored hash
+   */
+  async verifyPassword(userId: string, password: string): Promise<boolean> {
+    const user = await this.userRepository.findByIdWithPassword(userId);
+    if (!user || !user.password_hash) {
       return false;
     }
 
-    // For now, we'll assume password verification is handled elsewhere
-    // or that the user object contains the password hash
-    // This would typically be: return comparePassword(password, user.password_hash);
+    const { comparePassword } = await import('@/shared/utils/auth');
+    return comparePassword(password, user.password_hash);
+  }
+  
+  /**
+   * Verify user by email and password
+   * Returns the user if credentials are valid, null otherwise
+   */
+  async verifyUserByEmail(email: string, password: string): Promise<User | null> {
+    const user = await this.userRepository.findByEmailWithPassword(email);
+    if (!user || !user.password_hash) {
+      return null;
+    }
+
+    const { comparePassword } = await import('@/shared/utils/auth');
+    const isPasswordValid = await comparePassword(password, user.password_hash);
     
-    logger.warn('Password verification not fully implemented - using placeholder');
-    return true; // Placeholder - always returns true for now
+    if (!isPasswordValid) {
+      return null;
+    }
+    
+    return user;
   }
 
   /**
    * Update user's last login timestamp
    */
   async updateLastLogin(userId: string): Promise<void> {
-    // This would typically update a last_login field in the database
-    // For now, we'll just log it
-    logger.info('User last login updated', { userId });
-    
-    // Placeholder implementation
-    // await this.userRepository.updateLastLogin(userId, new Date());
+    try {
+      await this.userRepository.updateLastLogin(userId, new Date());
+      logger.info('User last login updated', { userId });
+    } catch (error) {
+      // Don't throw an error if this fails, just log it
+      logger.warn('Failed to update user last login', { userId, error });
+    }
   }
 
   /**
@@ -144,9 +200,9 @@ export class UserService {
    */
   async deactivateUser(id: string): Promise<User> {
     const user = await this.updateUser(id, { is_active: false });
-    
+
     logger.info('User account deactivated', { userId: id });
-    
+
     return user;
   }
 
@@ -155,9 +211,9 @@ export class UserService {
    */
   async activateUser(id: string): Promise<User> {
     const user = await this.updateUser(id, { is_active: true });
-    
+
     logger.info('User account activated', { userId: id });
-    
+
     return user;
   }
 
@@ -170,16 +226,51 @@ export class UserService {
   }
 
   /**
+   * Find all users with pagination and filtering
+   */
+  async findAll(options: QueryOptions = {}): Promise<PaginatedResult<User>> {
+    return this.userRepository.findAll(options);
+  }
+
+  /**
+   * Update user password
+   */
+  async updatePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    // Verify current password
+    const isCurrentPasswordValid = await this.verifyPassword(userId, currentPassword);
+    if (!isCurrentPasswordValid) {
+      logger.warn('Password update failed - invalid current password', { userId });
+      throw new AppError(
+        'Current password is incorrect',
+        HttpStatus.UNAUTHORIZED,
+        ErrorCodes.AUTHENTICATION_ERROR
+      );
+    }
+
+    // Hash new password
+    const { hashPassword } = await import('@/shared/utils/auth');
+    const newPasswordHash = await hashPassword(newPassword);
+
+    // Update password in database
+    await this.userRepository.updatePassword(userId, newPasswordHash);
+    
+    logger.info('User password updated successfully', { userId });
+    return true;
+  }
+
+  /**
    * Get user profile (safe version without sensitive data)
    */
-  async getUserProfile(id: string): Promise<Omit<User, 'password_hash'> | null> {
+  async getUserProfile(
+    id: string
+  ): Promise<Omit<User, 'password_hash'> | null> {
     const user = await this.findById(id);
     if (!user) {
       return null;
     }
 
     // Return user without sensitive fields
-    return {
+    const userProfile = {
       id: user.id,
       email: user.email,
       username: user.username ?? '', // if it's null, it becomes a void string.
@@ -189,7 +280,14 @@ export class UserService {
       is_active: user.is_active,
       role: user.role,
       created_at: user.created_at,
-      updated_at: user.updated_at
+      updated_at: user.updated_at,
     };
+    
+    // Add last_login_date only if it exists
+    if (user.last_login_date) {
+      (userProfile as any).last_login_date = user.last_login_date;
+    }
+    
+    return userProfile;
   }
 }

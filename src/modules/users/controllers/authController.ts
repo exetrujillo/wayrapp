@@ -6,11 +6,11 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { AppError, asyncHandler } from '@/shared/middleware/errorHandler';
-import { ErrorCodes, HttpStatus, ApiResponse } from '@/shared/types';
-import { 
-  generateTokenPair, 
+import { ErrorCodes, HttpStatus, ApiResponse, UserRole } from '@/shared/types';
+import {
+  generateTokenPair,
   verifyRefreshToken,
-  TokenPayload 
+  TokenPayload
 } from '@/shared/utils/auth';
 import { logger } from '@/shared/utils/logger';
 import { UserService } from '../services/userService';
@@ -25,6 +25,19 @@ const RefreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required')
 });
 
+const RegisterSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  country_code: z.string().length(2, 'Country code must be 2 characters').optional(),
+  profile_picture_url: z.string().url('Invalid URL format').optional()
+});
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -32,6 +45,14 @@ export interface LoginRequest {
 
 export interface RefreshTokenRequest {
   refreshToken: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  username?: string;
+  country_code?: string;
+  profile_picture_url?: string;
 }
 
 export interface AuthResponse {
@@ -47,24 +68,46 @@ export interface AuthResponse {
   };
 }
 
+import { TokenBlacklistService } from '../services/tokenBlacklistService';
+import { PrismaClient } from '@prisma/client';
+
 export class AuthController {
-  constructor(private userService: UserService) {}
+  private tokenBlacklistService: TokenBlacklistService;
+
+  constructor(
+    private userService: UserService,
+    tokenBlacklistService?: TokenBlacklistService
+  ) {
+    // If tokenBlacklistService is not provided, create a new instance
+    this.tokenBlacklistService = tokenBlacklistService || new TokenBlacklistService(new PrismaClient());
+  }
 
   /**
    * User login endpoint
    * POST /api/auth/login
    */
   login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for login attempts to prevent brute force attacks.
+    // Risk: Attackers could attempt multiple login combinations rapidly without throttling.
+    // Suggestion: Add rate limiting middleware (e.g., express-rate-limit) to limit login attempts per IP/user.
+    
     // Validate request body
     const validatedData = LoginSchema.parse(req.body);
     const { email, password } = validatedData;
 
     logger.info('Login attempt', { email });
 
-    // Find user by email
-    const user = await this.userService.findByEmail(email);
+    // SECURITY_AUDIT_TODO: Consider implementing account lockout after multiple failed attempts to prevent brute force attacks.
+    // Risk: Attackers could continuously attempt login with different passwords for the same email.
+    // Suggestion: Lock account temporarily after N failed attempts within a time window.
+    
+    // Verify user credentials
+    const user = await this.userService.verifyUserByEmail(email, password);
     if (!user) {
-      logger.warn('Login failed - user not found', { email });
+      // SECURITY_AUDIT_TODO: Consider using constant-time comparison and generic error messages to prevent user enumeration.
+      // Risk: Different response times or messages could reveal whether an email exists in the system.
+      // Suggestion: Use the same response time and message for both invalid email and invalid password.
+      logger.warn('Login failed - invalid credentials', { email });
       throw new AppError(
         'Invalid email or password',
         HttpStatus.UNAUTHORIZED,
@@ -82,23 +125,11 @@ export class AuthController {
       );
     }
 
-    // Verify password (assuming password is stored in user object for this implementation)
-    // In a real implementation, you'd have a separate password field or service
-    const isPasswordValid = await this.userService.verifyPassword(user.id, password);
-    if (!isPasswordValid) {
-      logger.warn('Login failed - invalid password', { email, userId: user.id });
-      throw new AppError(
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-        ErrorCodes.AUTHENTICATION_ERROR
-      );
-    }
-
     // Generate tokens
     const tokenPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role as UserRole
     };
 
     const tokens = generateTokenPair(tokenPayload);
@@ -106,10 +137,10 @@ export class AuthController {
     // Update last login (optional)
     await this.userService.updateLastLogin(user.id);
 
-    logger.info('Login successful', { 
-      userId: user.id, 
+    logger.info('Login successful', {
+      userId: user.id,
       email: user.email,
-      role: user.role 
+      role: user.role as UserRole
     });
 
     const response: ApiResponse<AuthResponse> = {
@@ -119,8 +150,8 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          ...(user.username !== undefined && { username: user.username }),
-          role: user.role
+          username: user.username ?? undefined, // Convierte null a undefined
+          role: user.role as UserRole
         },
         tokens
       }
@@ -134,6 +165,10 @@ export class AuthController {
    * POST /api/auth/refresh
    */
   refresh = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for token refresh to prevent token abuse.
+    // Risk: Attackers could rapidly refresh tokens to maintain persistent access or overwhelm the system.
+    // Suggestion: Add rate limiting specific to refresh token endpoints.
+    
     // Validate request body
     const validatedData = RefreshTokenSchema.parse(req.body);
     const { refreshToken } = validatedData;
@@ -143,7 +178,18 @@ export class AuthController {
     try {
       // Verify refresh token
       const decoded = verifyRefreshToken(refreshToken);
-      
+
+      // Check if token is blacklisted
+      const isRevoked = await this.tokenBlacklistService.isTokenRevoked(refreshToken);
+      if (isRevoked) {
+        logger.warn('Token refresh failed - token revoked', { userId: decoded.sub });
+        throw new AppError(
+          'Invalid refresh token',
+          HttpStatus.UNAUTHORIZED,
+          ErrorCodes.AUTHENTICATION_ERROR
+        );
+      }
+
       // Get user to ensure they still exist and are active
       const user = await this.userService.findById(decoded.sub);
       if (!user) {
@@ -168,7 +214,7 @@ export class AuthController {
       const tokenPayload: TokenPayload = {
         userId: user.id,
         email: user.email,
-        role: user.role
+        role: user.role as UserRole
       };
 
       const tokens = generateTokenPair(tokenPayload);
@@ -200,28 +246,95 @@ export class AuthController {
    * POST /api/auth/logout
    */
   logout = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    // In a stateless JWT implementation, logout is typically handled client-side
-    // by removing the tokens from storage. However, we can log the event
-    // and potentially implement token blacklisting if needed.
-
     const userId = req.user?.sub;
-    
+    const refreshToken = req.body.refreshToken;
+
     if (userId) {
       logger.info('User logout', { userId });
-      
-      // Optional: Implement token blacklisting here
-      // await this.tokenBlacklistService.blacklistToken(token);
+
+      // Revoke refresh token if provided
+      if (refreshToken) {
+        await this.tokenBlacklistService.revokeToken(refreshToken, userId);
+        logger.info('Refresh token revoked', { userId });
+      } else {
+        logger.warn('Logout without refresh token', { userId });
+      }
     }
 
     const response: ApiResponse<{ message: string }> = {
       success: true,
       timestamp: new Date().toISOString(),
       data: {
-        message: 'Logged out successfully'
+        message: 'Logged out successfully. Please remove tokens from client storage.'
       }
     };
 
     res.status(HttpStatus.OK).json(response);
+  });
+
+  /**
+   * User registration endpoint
+   * POST /api/auth/register
+   */
+  register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for registration to prevent spam account creation.
+    // Risk: Attackers could create numerous fake accounts to overwhelm the system or for malicious purposes.
+    // Suggestion: Add rate limiting and consider email verification for new registrations.
+    
+    // Validate request body
+    const validatedData = RegisterSchema.parse(req.body);
+    const { email, password, username, country_code, profile_picture_url } = validatedData;
+
+    logger.info('Registration attempt', { email });
+
+    // SECURITY_AUDIT_TODO: Using 'any' type bypasses TypeScript safety checks for user data.
+    // Risk: Could allow unexpected properties to be passed to user creation, potentially causing data corruption.
+    // Suggestion: Define a proper interface for user creation data instead of using 'any'.
+    
+    // Create user with hashed password
+    const userData: any = {
+      email,
+      password,
+      role: 'student' as const
+    };
+
+    // Only add optional fields if they are defined
+    if (username !== undefined) userData.username = username;
+    if (country_code !== undefined) userData.country_code = country_code;
+    if (profile_picture_url !== undefined) userData.profile_picture_url = profile_picture_url;
+
+    const user = await this.userService.createUserWithPassword(userData);
+
+    // Generate tokens for automatic login
+    const tokenPayload: TokenPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role as UserRole
+    };
+
+    const tokens = generateTokenPair(tokenPayload);
+
+    logger.info('Registration successful', {
+      userId: user.id,
+      email: user.email,
+      role: user.role as UserRole
+    });
+
+    const response: ApiResponse<AuthResponse> = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username ?? undefined, // Convierte null a undefined
+          role: user.role as UserRole
+        },
+        tokens
+      }
+    };
+
+    res.status(HttpStatus.CREATED).json(response);
   });
 
   /**
@@ -246,13 +359,14 @@ export class AuthController {
       );
     }
 
-    const response: ApiResponse<{ 
+    const response: ApiResponse<{
       user: {
         id: string;
         email: string;
         username?: string | undefined;
         country_code?: string | undefined;
         registration_date: Date;
+        last_login_date?: Date | undefined;
         profile_picture_url?: string | undefined;
         is_active: boolean;
         role: string;
@@ -266,12 +380,13 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          ...(user.username !== undefined && { username: user.username }),
-          ...(user.country_code !== undefined && { country_code: user.country_code }),
+          username: user.username ?? undefined, // Convierte null a undefined
+          country_code: user.country_code ?? undefined,
           registration_date: user.registration_date,
-          ...(user.profile_picture_url !== undefined && { profile_picture_url: user.profile_picture_url }),
+          last_login_date: user.last_login_date ?? undefined,
+          profile_picture_url: user.profile_picture_url ?? undefined,
           is_active: user.is_active,
-          role: user.role,
+          role: user.role as UserRole,
           created_at: user.created_at,
           updated_at: user.updated_at
         }

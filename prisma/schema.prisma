@@ -15,8 +15,10 @@ model User {
   id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email               String    @unique @db.VarChar(255)
   username            String?   @unique @db.VarChar(50)
+  passwordHash        String?   @map("password_hash") @db.VarChar(255)
   countryCode         String?   @map("country_code") @db.Char(2)
   registrationDate    DateTime  @default(now()) @map("registration_date") @db.Timestamptz
+  lastLoginDate       DateTime? @map("last_login_date") @db.Timestamptz
   profilePictureUrl   String?   @map("profile_picture_url") @db.VarChar(255)
   isActive            Boolean   @default(true) @map("is_active")
   role                Role      @default(student)
@@ -27,6 +29,7 @@ model User {
   progress            UserProgress?
   following           Follow[] @relation("Follower")
   followers           Follow[] @relation("Followed")
+  revokedTokens       RevokedToken[]
   
   @@map("users")
 }
@@ -179,6 +182,22 @@ model LessonExercise {
   @@index([lessonId])
   @@index([exerciseId])
   @@map("lesson_exercises")
+}
+
+model RevokedToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  userId    String   @map("user_id") @db.Uuid
+  revokedAt DateTime @default(now()) @map("revoked_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("revoked_tokens")
 }
 
 enum Role {

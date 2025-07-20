@@ -172,8 +172,10 @@ interface User {
   id: string; // UUID
   email: string; // VARCHAR(255)
   username?: string; // VARCHAR(50)
+  passwordHash?: string; // VARCHAR(255) - Securely hashed password
   country_code?: string; // CHAR(2)
   registration_date: Date;
+  last_login_date?: Date; // Track user login activity
   profile_picture_url?: string; // VARCHAR(255)
   is_active: boolean;
   role: 'student' | 'content_creator' | 'admin';
@@ -185,6 +187,14 @@ interface Follow {
   follower_id: string;
   followed_id: string;
   created_at: Date;
+}
+
+interface RevokedToken {
+  id: string; // UUID
+  token: string; // VARCHAR(500)
+  userId: string; // UUID - References User.id
+  revokedAt: Date;
+  expiresAt: Date;
 }
 ```
 
@@ -250,14 +260,28 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(50) UNIQUE,
+    password_hash VARCHAR(255),
     country_code CHAR(2),
     registration_date TIMESTAMPTZ DEFAULT NOW(),
+    last_login_date TIMESTAMPTZ,
     profile_picture_url VARCHAR(255),
     is_active BOOLEAN DEFAULT true,
     role VARCHAR(20) NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'content_creator', 'admin')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Table for Revoked Tokens
+CREATE TABLE revoked_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    token VARCHAR(500) UNIQUE NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    revoked_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX idx_revoked_tokens_token ON revoked_tokens(token);
+CREATE INDEX idx_revoked_tokens_user_id ON revoked_tokens(user_id);
+CREATE INDEX idx_revoked_tokens_expires_at ON revoked_tokens(expires_at);
 CREATE TRIGGER set_timestamp_users BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 
 -- Table for Follows (Social Graph)
@@ -379,8 +403,10 @@ model User {
   id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email               String    @unique @db.VarChar(255)
   username            String?   @unique @db.VarChar(50)
+  passwordHash        String?   @map("password_hash") @db.VarChar(255)
   countryCode         String?   @map("country_code") @db.Char(2)
   registrationDate    DateTime  @default(now()) @map("registration_date") @db.Timestamptz
+  lastLoginDate       DateTime? @map("last_login_date") @db.Timestamptz
   profilePictureUrl   String?   @map("profile_picture_url") @db.VarChar(255)
   isActive            Boolean   @default(true) @map("is_active")
   role                Role      @default(student)
@@ -391,8 +417,25 @@ model User {
   progress            UserProgress?
   following           Follow[] @relation("Follower")
   followers           Follow[] @relation("Followed")
+  revokedTokens       RevokedToken[]
   
   @@map("users")
+}
+
+model RevokedToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  userId    String   @map("user_id") @db.Uuid
+  revokedAt DateTime @default(now()) @map("revoked_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("revoked_tokens")
 }
 
 model Follow {
@@ -710,13 +753,16 @@ PUT    /api/lessons/{lessonId}/exercises/reorder             # Reorder ALL exerc
 
 ```
 # Authentication
+POST   /api/auth/register              # Register new user with secure password
 POST   /api/auth/login                 # User login (JWT)
 POST   /api/auth/refresh               # Refresh JWT token
-POST   /api/auth/logout                # User logout
+POST   /api/auth/logout                # User logout (revokes refresh token)
+GET    /api/auth/me                    # Get current authenticated user info
 
 # Users
 GET    /api/users/profile              # Get current user profile
 PUT    /api/users/profile              # Update current user profile
+PUT    /api/users/password             # Update user password (requires current password)
 GET    /api/users                      # List users (admin only)
 GET    /api/users/{id}                 # Get user by ID (admin only)
 PUT    /api/users/{id}/role            # Update user role (admin only)
@@ -868,7 +914,61 @@ Content-Type: application/json
 
 ## Security Implementation
 
-### JWT Authentication Flow
+### Authentication and Authorization System
+
+#### Authentication Flow
+
+1. **User Registration**
+   - User submits email, password, and optional profile information
+   - Password is validated for strength requirements
+   - Password is hashed using bcrypt before storage
+   - User is created with default 'student' role
+   - JWT tokens (access and refresh) are generated and returned
+
+2. **User Login**
+   - User submits email and password
+   - System retrieves user by email and verifies password hash
+   - If valid, JWT tokens are generated and returned
+   - Last login timestamp is updated
+
+3. **Token Refresh**
+   - Client submits refresh token
+   - System verifies token validity and checks if it's been revoked
+   - If valid, new access and refresh tokens are generated
+   - Old refresh token remains valid until expiration
+
+4. **User Logout**
+   - Client submits refresh token with authenticated request
+   - System adds token to revoked tokens list
+   - Client is instructed to remove tokens from storage
+
+#### Security Features
+
+1. **Password Security**
+   - Passwords are hashed using bcrypt with appropriate salt rounds
+   - Password strength requirements enforced:
+     - Minimum 8 characters
+     - At least one uppercase letter
+     - At least one lowercase letter
+     - At least one number
+     - At least one special character
+
+2. **JWT Token Security**
+   - Access tokens expire after 15 minutes
+   - Refresh tokens expire after 7 days
+   - Tokens include user ID, email, and role
+   - Refresh tokens can be revoked on logout
+   - Expired tokens are automatically cleaned up
+
+3. **Authorization Controls**
+   - Role-based access control (RBAC) with three roles:
+     - student: Basic access to courses and own progress
+     - content_creator: Can create and update content
+     - admin: Full system access
+   - Permission-based access control for granular permissions
+   - Resource ownership validation for user-specific resources
+
+#### JWT Authentication Flow
 
 ```typescript
 interface JWTPayload {
@@ -879,10 +979,34 @@ interface JWTPayload {
   exp: number;      // expiration
 }
 
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
 interface AuthMiddleware {
-  verifyToken(token: string): Promise<JWTPayload>;
-  requireAuth(req: Request, res: Response, next: NextFunction): void;
-  requireRole(roles: string[]): MiddlewareFunction;
+  authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void>;
+  requireRole(roles: string | string[]): MiddlewareFunction;
+  requirePermission(permission: string): MiddlewareFunction;
+  requireOwnership(userIdParam?: string): MiddlewareFunction;
+  optionalAuth(req: Request, res: Response, next: NextFunction): Promise<void>;
+}
+
+// Token generation and validation
+interface AuthUtils {
+  generateAccessToken(payload: TokenPayload): string;
+  generateRefreshToken(payload: TokenPayload): string;
+  generateTokenPair(payload: TokenPayload): TokenPair;
+  verifyRefreshToken(token: string): JWTPayload;
+  hashPassword(password: string): Promise<string>;
+  comparePassword(password: string, hash: string): Promise<boolean>;
+}
+
+// Token blacklisting for logout
+interface TokenBlacklistService {
+  revokeToken(token: string, userId: string): Promise<void>;
+  isTokenRevoked(token: string): Promise<boolean>;
+  cleanupExpiredTokens(): Promise<number>;
 }
 ```
 
@@ -946,11 +1070,43 @@ const AssignExerciseToLessonSchema = z.object({
   order: z.number().int().positive()
 });
 
-// User validation schemas
+// User and Authentication validation schemas
+const RegisterUserSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  country_code: z.string().length(2, 'Country code must be 2 characters').optional(),
+  profile_picture_url: z.string().url('Invalid URL format').optional()
+});
+
+const LoginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(1, 'Password is required')
+});
+
+const RefreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required')
+});
+
 const UpdateUserProfileSchema = z.object({
   username: z.string().max(50).optional(),
   country_code: z.string().length(2).optional(),
   profile_picture_url: z.string().max(255).url().optional()
+});
+
+const UpdatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
 });
 
 // Progress validation schemas
@@ -964,7 +1120,11 @@ type CreateCourseDto = z.infer<typeof CreateCourseSchema>;
 type CreateLevelDto = z.infer<typeof CreateLevelSchema>;
 type CreateExerciseDto = z.infer<typeof CreateExerciseSchema>;
 type AssignExerciseToLessonDto = z.infer<typeof AssignExerciseToLessonSchema>;
+type RegisterUserDto = z.infer<typeof RegisterUserSchema>;
+type LoginDto = z.infer<typeof LoginSchema>;
+type RefreshTokenDto = z.infer<typeof RefreshTokenSchema>;
 type UpdateUserProfileDto = z.infer<typeof UpdateUserProfileSchema>;
+type UpdatePasswordDto = z.infer<typeof UpdatePasswordSchema>;
 type UpdateProgressDto = z.infer<typeof UpdateProgressSchema>;
 ```
 

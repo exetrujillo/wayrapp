@@ -66,6 +66,7 @@ app.get('/health', (_req, res) => {
 
 // Import routes
 import authRoutes from '@/modules/users/routes/authRoutes';
+import userRoutes from '@/modules/users/routes/userRoutes';
 
 // API routes
 app.get('/api', (_req, res) => {
@@ -78,6 +79,9 @@ app.get('/api', (_req, res) => {
 
 // Authentication routes
 app.use('/api/auth', authRoutes);
+
+// User routes
+app.use('/api/users', userRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

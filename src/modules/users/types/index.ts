@@ -1,30 +1,33 @@
-// User module types and interfaces
+/**
+ * User Module Types
+ * Type definitions for user management
+ */
 
+import { z } from 'zod';
+import { UserRole } from '@/shared/types';
+
+// User model interface
 export interface User {
   id: string;
   email: string;
-  username?: string;
-  country_code?: string;
+  username?: string | null;
+  country_code?: string | null;
   registration_date: Date;
-  profile_picture_url?: string;
+  last_login_date?: Date | null;
+  profile_picture_url?: string | null;
   is_active: boolean;
-  role: 'student' | 'content_creator' | 'admin';
+  role: string;
   created_at: Date;
   updated_at: Date;
 }
 
-export interface Follow {
-  follower_id: string;
-  followed_id: string;
-  created_at: Date;
-}
-
+// DTOs (Data Transfer Objects)
 export interface CreateUserDto {
   email: string;
   username?: string;
   country_code?: string;
   profile_picture_url?: string;
-  role?: 'student' | 'content_creator' | 'admin';
+  role?: UserRole;
 }
 
 export interface UpdateUserDto {
@@ -32,9 +35,50 @@ export interface UpdateUserDto {
   country_code?: string;
   profile_picture_url?: string;
   is_active?: boolean;
+  role?: string;
 }
 
-export interface UserWithFollowCounts extends User {
-  followers_count: number;
-  following_count: number;
+export interface UpdatePasswordDto {
+  current_password: string;
+  new_password: string;
 }
+
+export interface UpdateRoleDto {
+  role: UserRole;
+}
+
+// Zod validation schemas
+export const CreateUserSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  country_code: z.string().length(2, 'Country code must be 2 characters').optional(),
+  profile_picture_url: z.string().url('Invalid URL format').optional(),
+  role: z.enum(['student', 'content_creator', 'admin']).default('student'),
+});
+
+export const UpdateUserSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  country_code: z.string().length(2, 'Country code must be 2 characters').optional(),
+  profile_picture_url: z.string().url('Invalid URL format').optional(),
+});
+
+export const UpdatePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required'),
+  new_password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+});
+
+export const UpdateRoleSchema = z.object({
+  role: z.enum(['student', 'content_creator', 'admin']),
+});
+
+// Export types for Zod schemas
+export type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
+export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
+export type UpdatePasswordSchemaType = z.infer<typeof UpdatePasswordSchema>;
+export type UpdateRoleSchemaType = z.infer<typeof UpdateRoleSchema>;
