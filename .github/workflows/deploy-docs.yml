@@ -2,54 +2,41 @@
 
 name: Deploy Documentation to GitHub Pages
 
-# Disparador (Trigger): Cuándo se debe ejecutar esta acción.
 on:
-  # Se ejecuta en cada push a la rama 'main'
   push:
     branches: ["main"]
-    # Pero SOLO si los cambios ocurrieron en la carpeta 'docs' o en este archivo.
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
-  # Permite ejecutarlo manualmente desde la pestaña "Actions" de GitHub.
   workflow_dispatch:
 
-# Permisos: Le da al workflow los permisos necesarios para publicar.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Concurrencia: Asegura que solo un despliegue se ejecute a la vez.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Trabajo de Despliegue
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      # 1. Clona tu repositorio en el servidor de GitHub.
       - name: Checkout
         uses: actions/checkout@v4
         
-      # 2. Prepara el entorno para GitHub Pages.
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
-      # 3. Sube la carpeta de documentación como un "artefacto".
-      # GitHub Pages usará esta carpeta como la fuente para construir el sitio.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs' # <-- ¡La línea más importante!
+          path: './docs'
           
-      # 4. Despliega el sitio.
-      # GitHub Pages tomará el artefacto, verá el _config.yml, ejecutará Jekyll y publicará.
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

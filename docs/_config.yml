@@ -1,15 +1,12 @@
 # docs/_config.yml
 
-# --- Información del Sitio ---
 title: WayrApp API Documentation
-description: >- # El ">-" significa que el texto puede tener múltiples líneas.
+description: >-
   Comprehensive API documentation for the WayrApp open-source language learning platform.
   Find everything you need to integrate with our backend.
-theme: jekyll-theme-minimal # Un tema limpio y moderno, perfecto para documentación.
+theme: jekyll-theme-minimal
+baseurl: "/wayrapp"
 
-# --- Navegación del Sitio ---
-# Esto creará los enlaces en la barra de navegación de tu sitio.
-# El 'title' es lo que el usuario ve, y la 'url' es el enlace al archivo.
 nav:
   - title: API Overview
     url: /API_OVERVIEW
@@ -30,6 +27,6 @@ nav:
   - title: Database Setup
     url: /DATABASE_SETUP
 
-# --- Plugins y Metadatos ---
+
 plugins:
-  - jekyll-seo-tag # Añade automáticamente etiquetas meta para SEO (Google, etc.)
+  - jekyll-seo-tag
