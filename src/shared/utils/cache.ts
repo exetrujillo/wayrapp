@@ -83,10 +83,12 @@ export const CACHE_KEYS = {
 // Singleton cache instance
 export const cacheService = new CacheService();
 
-// Set up periodic cleanup (every 10 minutes)
-setInterval(
-  () => {
-    cacheService.cleanup();
-  },
-  10 * 60 * 1000,
-);
+// Set up periodic cleanup (every 10 minutes) - only in non-test environments
+if (process.env['NODE_ENV'] !== 'test') {
+  setInterval(
+    () => {
+      cacheService.cleanup();
+    },
+    10 * 60 * 1000,
+  );
+}

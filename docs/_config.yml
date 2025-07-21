@@ -23,6 +23,8 @@ nav:
     url: /USERS
   - title: Content
     url: /CONTENT
+  - title: Integration Tests
+    url: /INTEGRATION_TESTS
   - title: Lessons & Exercises
     url: /LESSONS_EXERCISES
   - title: Progress
