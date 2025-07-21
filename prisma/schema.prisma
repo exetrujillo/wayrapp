@@ -36,8 +36,8 @@ model User {
   @@index([role, isActive], map: "idx_users_role_active")
   @@index([registrationDate(sort: Desc)], map: "idx_users_registration_date")
   @@index([lastLoginDate(sort: Desc)], map: "idx_users_last_login")
-  @@index([email], map: "idx_users_active_email", where: "is_active = true")
-  @@index([username], map: "idx_users_active_username", where: "is_active = true AND username IS NOT NULL")
+  @@index([email], map: "idx_users_active_email")
+  @@index([username], map: "idx_users_active_username")
   @@map("users")
 }
 
@@ -118,8 +118,8 @@ model Course {
   // Performance optimization indexes
   @@index([sourceLanguage, targetLanguage, isPublic], map: "idx_courses_source_target_public")
   @@index([isPublic, createdAt(sort: Desc)], map: "idx_courses_public_created")
-  @@index([name], map: "idx_courses_public_name", where: "is_public = true")
-  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages", where: "is_public = true")
+  @@index([name], map: "idx_courses_public_name")
+  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages")
   @@map("courses")
 }
 

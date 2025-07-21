@@ -4,9 +4,11 @@
   "description": "WayrApp - Open-source language learning platform backend API",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
+    "postinstall": "prisma generate",
+    "vercel-build": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -15,6 +17,7 @@
     "test:integration:watch": "jest --config jest.integration.config.js --watch",
     "test:integration:coverage": "jest --config jest.integration.config.js --coverage",
     "test:all": "npm run test:unit && npm run test:integration",
+    "format": "prettier --write \"src/**/*.ts\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -26,7 +29,9 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "security:audit": "node scripts/security-audit.js",
-    "security:deps": "npm audit"
+    "security:deps": "npm audit",
+    "deploy:prepare": "node scripts/deploy.js",
+    "deploy:vercel": "vercel --prod"
   },
   "keywords": [
     "language-learning",

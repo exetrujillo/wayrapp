@@ -5,7 +5,8 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "exactOptionalPropertyTypes": false,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "types": ["node", "jest"]
   },
   "include": [
     "src/**/*",
