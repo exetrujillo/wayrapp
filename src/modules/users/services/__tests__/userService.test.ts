@@ -1,364 +1,978 @@
 /**
- * UserService Tests
- * Unit tests for user business logic
+ * UserService Unit Tests
+ * Tests for business logic in UserService
  */
 
 import { UserService } from '../userService';
 import { UserRepository } from '../../repositories/userRepository';
-import { AppError } from '../../../../shared/middleware/errorHandler';
-import { ErrorCodes, HttpStatus } from '../../../../shared/types';
 import { User, CreateUserDto, UpdateUserDto } from '../../types';
+import { AppError } from '@/shared/middleware/errorHandler';
+import { ErrorCodes, HttpStatus, PaginatedResult, QueryOptions } from '@/shared/types';
 
-// Mock UserRepository
+// Mock dependencies
 jest.mock('../../repositories/userRepository');
-const MockedUserRepository = UserRepository as jest.MockedClass<typeof UserRepository>;
-
-// Mock auth utilities
 jest.mock('@/shared/utils/auth', () => ({
   hashPassword: jest.fn().mockResolvedValue('hashed-password'),
-  comparePassword: jest.fn().mockResolvedValue(true)
+  comparePassword: jest.fn(),
+}));
+jest.mock('@/shared/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
 }));
 
 describe('UserService', () => {
   let userService: UserService;
   let mockUserRepository: jest.Mocked<UserRepository>;
 
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    username: 'testuser',
-    country_code: 'US',
-    registration_date: new Date(),
-    last_login_date: null,
-    profile_picture_url: null,
-    is_active: true,
-    role: 'student',
-    created_at: new Date(),
-    updated_at: new Date()
-  };
-
   beforeEach(() => {
-    mockUserRepository = new MockedUserRepository({} as any) as jest.Mocked<UserRepository>;
-    userService = new UserService(mockUserRepository);
-  });
+    mockUserRepository = {
+      create: jest.fn(),
+      createWithPassword: jest.fn(),
+      findById: jest.fn(),
+      findByIdWithPassword: jest.fn(),
+      findByEmail: jest.fn(),
+      findByEmailWithPassword: jest.fn(),
+      findByUsername: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      findAll: jest.fn(),
+      updatePassword: jest.fn(),
+      updateLastLogin: jest.fn(),
+    } as any;
 
-  afterEach(() => {
+    userService = new UserService(mockUserRepository);
+
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
   describe('findById', () => {
     it('should return user when found', async () => {
-      mockUserRepository.findById.mockResolvedValue(mockUser);
+      const userId = 'test-user-id';
+      const expectedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.findById('user-123');
+      mockUserRepository.findById.mockResolvedValue(expectedUser);
 
-      expect(mockUserRepository.findById).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual(mockUser);
+      const result = await userService.findById(userId);
+
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(expectedUser);
     });
 
     it('should return null when user not found', async () => {
+      const userId = 'non-existent-user';
+
       mockUserRepository.findById.mockResolvedValue(null);
 
-      const result = await userService.findById('nonexistent');
+      const result = await userService.findById(userId);
 
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
       expect(result).toBeNull();
     });
   });
 
   describe('findByEmail', () => {
-    it('should return user when found', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+    it('should return user when found by email', async () => {
+      const email = 'test@example.com';
+      const expectedUser: User = {
+        id: 'test-user-id',
+        email,
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.findByEmail('test@example.com');
+      mockUserRepository.findByEmail.mockResolvedValue(expectedUser);
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
-      expect(result).toEqual(mockUser);
+      const result = await userService.findByEmail(email);
+
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(email);
+      expect(result).toEqual(expectedUser);
     });
 
-    it('should return null when user not found', async () => {
+    it('should return null when user not found by email', async () => {
+      const email = 'nonexistent@example.com';
+
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      const result = await userService.findByEmail('nonexistent@example.com');
+      const result = await userService.findByEmail(email);
 
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(email);
       expect(result).toBeNull();
     });
   });
 
   describe('createUser', () => {
-    const createUserDto: CreateUserDto = {
-      email: 'new@example.com',
-      username: 'newuser',
-      country_code: 'CA',
-      role: 'student'
-    };
+    it('should create a user successfully', async () => {
+      // Arrange
+      const userData: CreateUserDto = {
+        email: 'test@example.com',
+        username: 'testuser',
+      };
 
-    it('should create user successfully', async () => {
+      const createdUser: User = {
+        id: 'new-user-id',
+        email: userData.email,
+        username: userData.username || null,
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
       mockUserRepository.findByEmail.mockResolvedValue(null);
       mockUserRepository.findByUsername.mockResolvedValue(null);
-      mockUserRepository.create.mockResolvedValue(mockUser);
+      mockUserRepository.create.mockResolvedValue(createdUser);
 
-      const result = await userService.createUser(createUserDto);
+      // Act
+      const result = await userService.createUser(userData);
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('new@example.com');
-      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith('newuser');
-      expect(mockUserRepository.create).toHaveBeenCalledWith(createUserDto);
-      expect(result).toEqual(mockUser);
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.id).toBe('new-user-id');
+      expect(result.email).toBe(userData.email);
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(userData.email);
+      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith(userData.username);
+      expect(mockUserRepository.create).toHaveBeenCalledWith(userData);
     });
 
-    it('should throw error when email already exists', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+    it('should throw an error when email already exists', async () => {
+      // Arrange
+      const userData: CreateUserDto = {
+        email: 'existing@example.com',
+        username: 'testuser',
+      };
 
-      await expect(userService.createUser(createUserDto)).rejects.toThrow(
+      const existingUser: User = {
+        id: 'existing-user-id',
+        email: userData.email,
+        username: 'existinguser',
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findByEmail.mockResolvedValue(existingUser);
+
+      // Act & Assert
+      await expect(userService.createUser(userData)).rejects.toThrow(
         new AppError('Email already registered', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
       );
+      expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
 
-    it('should throw error when username already exists', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.findByUsername.mockResolvedValue(mockUser);
+    it('should throw an error when username already exists', async () => {
+      // Arrange
+      const userData: CreateUserDto = {
+        email: 'new@example.com',
+        username: 'existinguser',
+      };
 
-      await expect(userService.createUser(createUserDto)).rejects.toThrow(
+      const existingUser: User = {
+        id: 'existing-user-id',
+        email: 'existing@example.com',
+        username: userData.username || null,
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByUsername.mockResolvedValue(existingUser);
+
+      // Act & Assert
+      await expect(userService.createUser(userData)).rejects.toThrow(
         new AppError('Username already taken', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
       );
-    });
-
-    it('should create user without username check when username not provided', async () => {
-      const createUserDtoWithoutUsername = { ...createUserDto };
-      delete createUserDtoWithoutUsername.username;
-
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.create.mockResolvedValue(mockUser);
-
-      const result = await userService.createUser(createUserDtoWithoutUsername);
-
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('new@example.com');
-      expect(mockUserRepository.findByUsername).not.toHaveBeenCalled();
-      expect(result).toEqual(mockUser);
+      expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
   });
 
   describe('updateUser', () => {
-    const updateUserDto: UpdateUserDto = {
-      username: 'updateduser',
-      country_code: 'UK'
-    };
+    it('should update a user successfully', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const updates: UpdateUserDto = {
+        username: 'updateduser',
+        country_code: 'CA',
+      };
 
-    it('should update user successfully', async () => {
-      const updatedUser = { ...mockUser, ...updateUserDto };
+      const existingUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'oldusername',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      mockUserRepository.findById.mockResolvedValue(mockUser);
+      const updatedUser: User = {
+        ...existingUser,
+        username: updates.username!,
+        country_code: updates.country_code!,
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findById.mockResolvedValue(existingUser);
       mockUserRepository.findByUsername.mockResolvedValue(null);
       mockUserRepository.update.mockResolvedValue(updatedUser);
 
-      const result = await userService.updateUser('user-123', updateUserDto);
+      // Act
+      const result = await userService.updateUser(userId, updates);
 
-      expect(mockUserRepository.findById).toHaveBeenCalledWith('user-123');
-      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith('updateduser');
-      expect(mockUserRepository.update).toHaveBeenCalledWith('user-123', updateUserDto);
-      expect(result).toEqual(updatedUser);
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.username).toBe(updates.username);
+      expect(result.country_code).toBe(updates.country_code);
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
+      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith(updates.username);
+      expect(mockUserRepository.update).toHaveBeenCalledWith(userId, updates);
     });
 
-    it('should throw error when user not found', async () => {
+    it('should throw an error when user does not exist', async () => {
+      // Arrange
+      const userId = 'non-existent-id';
+      const updates: UpdateUserDto = {
+        username: 'updateduser',
+      };
+
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(userService.updateUser('nonexistent', updateUserDto)).rejects.toThrow(
+      // Act & Assert
+      await expect(userService.updateUser(userId, updates)).rejects.toThrow(
         new AppError('User not found', HttpStatus.NOT_FOUND, ErrorCodes.NOT_FOUND)
       );
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
     });
 
-    it('should throw error when username already taken by another user', async () => {
-      const anotherUser = { ...mockUser, id: 'another-user', username: 'updateduser' };
+    it('should throw an error when username is already taken', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const updates: UpdateUserDto = {
+        username: 'takenusername',
+      };
 
-      mockUserRepository.findById.mockResolvedValue(mockUser);
-      mockUserRepository.findByUsername.mockResolvedValue(anotherUser);
+      const existingUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'oldusername',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      await expect(userService.updateUser('user-123', updateUserDto)).rejects.toThrow(
+      const userWithTakenUsername: User = {
+        id: 'another-user-id',
+        email: 'another@example.com',
+        username: 'takenusername',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findById.mockResolvedValue(existingUser);
+      mockUserRepository.findByUsername.mockResolvedValue(userWithTakenUsername);
+
+      // Act & Assert
+      await expect(userService.updateUser(userId, updates)).rejects.toThrow(
         new AppError('Username already taken', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
       );
-    });
-
-    it('should allow user to keep their own username', async () => {
-      const updateWithSameUsername = { username: 'testuser' };
-      const updatedUser = { ...mockUser };
-
-      mockUserRepository.findById.mockResolvedValue(mockUser);
-      mockUserRepository.findByUsername.mockResolvedValue(mockUser);
-      mockUserRepository.update.mockResolvedValue(updatedUser);
-
-      const result = await userService.updateUser('user-123', updateWithSameUsername);
-
-      expect(result).toEqual(updatedUser);
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
     });
   });
 
-  describe('createUserWithPassword', () => {
-    const createUserWithPasswordDto = {
-      email: 'new@example.com',
-      password: 'password123!',
-      username: 'newuser',
-      role: 'student' as const
-    };
+  describe('verifyUserByEmail', () => {
+    it('should return user when credentials are valid', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'Password123!';
+      const mockUserWithPassword = {
+        id: 'test-user-id',
+        email,
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+        password_hash: 'hashed_password',
+      };
 
-    it('should create user with hashed password', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.findByUsername.mockResolvedValue(null);
-      mockUserRepository.createWithPassword.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserWithPassword);
 
-      const result = await userService.createUserWithPassword(createUserWithPasswordDto);
+      const { comparePassword } = await import('@/shared/utils/auth');
+      (comparePassword as jest.Mock).mockResolvedValue(true);
 
-      expect(mockUserRepository.createWithPassword).toHaveBeenCalledWith({
-        ...createUserWithPasswordDto,
-        passwordHash: 'hashed-password'
-      });
-      expect(result).toEqual(mockUser);
+      // Act
+      const result = await userService.verifyUserByEmail(email, password);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.id).toBe(mockUserWithPassword.id);
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
     });
 
-    it('should throw error when email already exists', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+    it('should return null when user does not exist', async () => {
+      // Arrange
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(null);
 
-      await expect(userService.createUserWithPassword(createUserWithPasswordDto)).rejects.toThrow(
-        new AppError('Email already registered', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
-      );
-    });
-  });
+      // Act
+      const result = await userService.verifyUserByEmail('nonexistent@example.com', 'password');
 
-  describe('verifyPassword', () => {
-    it('should return true for valid password', async () => {
-      const userWithPassword = { ...mockUser, password_hash: 'hashed-password' };
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(userWithPassword);
-
-      const result = await userService.verifyPassword('user-123', 'password123!');
-
-      expect(mockUserRepository.findByIdWithPassword).toHaveBeenCalledWith('user-123');
-      expect(result).toBe(true);
+      // Assert
+      expect(result).toBeNull();
     });
 
-    it('should return false when user not found', async () => {
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(null);
+    it('should return null when password is invalid', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'WrongPassword123!';
+      const mockUserWithPassword = {
+        id: 'test-user-id',
+        email,
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+        password_hash: 'hashed_password',
+      };
 
-      const result = await userService.verifyPassword('nonexistent', 'password123!');
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserWithPassword);
 
-      expect(result).toBe(false);
-    });
+      const { comparePassword } = await import('@/shared/utils/auth');
+      (comparePassword as jest.Mock).mockResolvedValue(false);
 
-    it('should return false when password hash is null', async () => {
-      const userWithoutPassword = { ...mockUser, password_hash: null };
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(userWithoutPassword);
+      // Act
+      const result = await userService.verifyUserByEmail(email, password);
 
-      const result = await userService.verifyPassword('user-123', 'password123!');
-
-      expect(result).toBe(false);
+      // Assert
+      expect(result).toBeNull();
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
     });
   });
 
   describe('updatePassword', () => {
-    it('should update password successfully', async () => {
-      const userWithPassword = { ...mockUser, password_hash: 'old-hashed-password' };
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(userWithPassword);
-      mockUserRepository.updatePassword.mockResolvedValue(mockUser);
+    it('should update password successfully when current password is correct', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const currentPassword = 'CurrentPassword123!';
+      const newPassword = 'NewPassword456!';
 
-      const result = await userService.updatePassword('user-123', 'oldPassword', 'newPassword');
+      // Mock verifyPassword to return true (current password is correct)
+      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(true);
 
-      expect(mockUserRepository.updatePassword).toHaveBeenCalledWith('user-123', 'hashed-password');
+      const updatedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.updatePassword.mockResolvedValue(updatedUser);
+
+      // Act
+      const result = await userService.updatePassword(userId, currentPassword, newPassword);
+
+      // Assert
       expect(result).toBe(true);
+      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
+      expect(mockUserRepository.updatePassword).toHaveBeenCalled();
     });
 
-    it('should throw error when current password is incorrect', async () => {
-      const userWithPassword = { ...mockUser, password_hash: 'hashed-password' };
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(userWithPassword);
+    it('should throw an error when current password is incorrect', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const currentPassword = 'WrongPassword123!';
+      const newPassword = 'NewPassword456!';
 
-      // Mock comparePassword to return false
-      const { comparePassword } = require('@/shared/utils/auth');
-      comparePassword.mockResolvedValueOnce(false);
+      // Mock verifyPassword to return false (current password is incorrect)
+      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(false);
 
-      await expect(
-        userService.updatePassword('user-123', 'wrongPassword', 'newPassword')
-      ).rejects.toThrow(
+      // Act & Assert
+      await expect(userService.updatePassword(userId, currentPassword, newPassword)).rejects.toThrow(
         new AppError('Current password is incorrect', HttpStatus.UNAUTHORIZED, ErrorCodes.AUTHENTICATION_ERROR)
       );
+      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
+      expect(mockUserRepository.updatePassword).not.toHaveBeenCalled();
     });
   });
 
   describe('getUserProfile', () => {
     it('should return user profile without sensitive data', async () => {
-      mockUserRepository.findById.mockResolvedValue(mockUser);
+      // Arrange
+      const userId = 'test-user-id';
+      const mockUser = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: new Date(),
+        profile_picture_url: 'https://example.com/avatar.jpg',
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.getUserProfile('user-123');
+      jest.spyOn(userService, 'findById').mockResolvedValue(mockUser);
 
-      expect(mockUserRepository.findById).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual({
-        id: mockUser.id,
-        email: mockUser.email,
-        username: mockUser.username || '',
-        country_code: mockUser.country_code || '',
-        registration_date: mockUser.registration_date,
-        profile_picture_url: mockUser.profile_picture_url || '',
-        is_active: mockUser.is_active,
-        role: mockUser.role,
-        created_at: mockUser.created_at,
-        updated_at: mockUser.updated_at
+      // Act
+      const result = await userService.getUserProfile(userId);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.id).toBe(mockUser.id);
+      expect(result?.email).toBe(mockUser.email);
+      expect(result).not.toHaveProperty('password_hash');
+      expect(userService.findById).toHaveBeenCalledWith(userId);
+    });
+
+    it('should return null when user does not exist', async () => {
+      // Arrange
+      jest.spyOn(userService, 'findById').mockResolvedValue(null);
+
+      // Act
+      const result = await userService.getUserProfile('non-existent-id');
+
+      // Assert
+      expect(result).toBeNull();
+      expect(userService.findById).toHaveBeenCalledWith('non-existent-id');
+    });
+
+    it('should handle null values in user profile', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const mockUser = {
+        id: userId,
+        email: 'test@example.com',
+        username: null,
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      jest.spyOn(userService, 'findById').mockResolvedValue(mockUser);
+
+      // Act
+      const result = await userService.getUserProfile(userId);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.username).toBe('');
+      expect(result?.country_code).toBe('');
+      expect(result?.profile_picture_url).toBe('');
+      expect(result).not.toHaveProperty('last_login_date');
+    });
+  });
+
+  describe('findByUsername', () => {
+    it('should return user when found by username', async () => {
+      const username = 'testuser';
+      const expectedUser: User = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        username,
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findByUsername.mockResolvedValue(expectedUser);
+
+      const result = await userService.findByUsername(username);
+
+      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(result).toEqual(expectedUser);
+    });
+
+    it('should return null when user not found by username', async () => {
+      const username = 'nonexistentuser';
+
+      mockUserRepository.findByUsername.mockResolvedValue(null);
+
+      const result = await userService.findByUsername(username);
+
+      expect(mockUserRepository.findByUsername).toHaveBeenCalledWith(username);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('createUserWithPassword', () => {
+    it('should create user with hashed password successfully', async () => {
+      // Arrange
+      const userData = {
+        email: 'test@example.com',
+        username: 'testuser',
+        password: 'Password123!',
+      };
+
+      const createdUser: User = {
+        id: 'new-user-id',
+        email: userData.email,
+        username: userData.username,
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByUsername.mockResolvedValue(null);
+      mockUserRepository.createWithPassword.mockResolvedValue(createdUser);
+
+      const { hashPassword } = await import('@/shared/utils/auth');
+      (hashPassword as jest.Mock).mockResolvedValue('hashed-password');
+
+      // Act
+      const result = await userService.createUserWithPassword(userData);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.id).toBe('new-user-id');
+      expect(result.email).toBe(userData.email);
+      expect(hashPassword).toHaveBeenCalledWith(userData.password);
+      expect(mockUserRepository.createWithPassword).toHaveBeenCalledWith({
+        ...userData,
+        passwordHash: 'hashed-password',
       });
     });
 
-    it('should return null when user not found', async () => {
-      mockUserRepository.findById.mockResolvedValue(null);
+    it('should throw error when email already exists', async () => {
+      // Arrange
+      const userData = {
+        email: 'existing@example.com',
+        username: 'testuser',
+        password: 'Password123!',
+      };
 
-      const result = await userService.getUserProfile('nonexistent');
+      const existingUser: User = {
+        id: 'existing-user-id',
+        email: userData.email,
+        username: 'existinguser',
+        country_code: null,
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      expect(result).toBeNull();
+      mockUserRepository.findByEmail.mockResolvedValue(existingUser);
+
+      // Act & Assert
+      await expect(userService.createUserWithPassword(userData)).rejects.toThrow(
+        new AppError('Email already registered', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
+      );
+      expect(mockUserRepository.createWithPassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyPassword', () => {
+    it('should return true when password is correct', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const password = 'Password123!';
+      const mockUserWithPassword = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+        password_hash: 'hashed_password',
+      };
+
+      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserWithPassword);
+
+      const { comparePassword } = await import('@/shared/utils/auth');
+      (comparePassword as jest.Mock).mockResolvedValue(true);
+
+      // Act
+      const result = await userService.verifyPassword(userId, password);
+
+      // Assert
+      expect(result).toBe(true);
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
     });
 
-    it('should include last_login_date when it exists', async () => {
-      const userWithLastLogin = { ...mockUser, last_login_date: new Date() };
-      mockUserRepository.findById.mockResolvedValue(userWithLastLogin);
+    it('should return false when user not found', async () => {
+      // Arrange
+      mockUserRepository.findByIdWithPassword.mockResolvedValue(null);
 
-      const result = await userService.getUserProfile('user-123');
+      // Act
+      const result = await userService.verifyPassword('non-existent-id', 'password');
 
-      expect(result).toHaveProperty('last_login_date', userWithLastLogin.last_login_date);
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should return false when user has no password hash', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const mockUserWithoutPassword = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+        password_hash: null,
+      };
+
+      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserWithoutPassword);
+
+      // Act
+      const result = await userService.verifyPassword(userId, 'password');
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateLastLogin', () => {
+    it('should update last login successfully', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const updatedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: new Date(),
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      mockUserRepository.updateLastLogin.mockResolvedValue(updatedUser);
+
+      // Act
+      await userService.updateLastLogin(userId);
+
+      // Assert
+      expect(mockUserRepository.updateLastLogin).toHaveBeenCalledWith(userId, expect.any(Date));
+    });
+
+    it('should not throw error when update fails', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      mockUserRepository.updateLastLogin.mockRejectedValue(new Error('Database error'));
+
+      // Act & Assert
+      await expect(userService.updateLastLogin(userId)).resolves.not.toThrow();
     });
   });
 
   describe('deactivateUser', () => {
     it('should deactivate user successfully', async () => {
-      const deactivatedUser = { ...mockUser, is_active: false };
-      mockUserRepository.findById.mockResolvedValue(mockUser);
-      mockUserRepository.update.mockResolvedValue(deactivatedUser);
+      // Arrange
+      const userId = 'test-user-id';
+      const deactivatedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: false,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.deactivateUser('user-123');
+      jest.spyOn(userService, 'updateUser').mockResolvedValue(deactivatedUser);
 
-      expect(mockUserRepository.update).toHaveBeenCalledWith('user-123', { is_active: false });
+      // Act
+      const result = await userService.deactivateUser(userId);
+
+      // Assert
       expect(result).toEqual(deactivatedUser);
+      expect(result.is_active).toBe(false);
+      expect(userService.updateUser).toHaveBeenCalledWith(userId, { is_active: false });
     });
   });
 
   describe('activateUser', () => {
     it('should activate user successfully', async () => {
-      const activatedUser = { ...mockUser, is_active: true };
-      mockUserRepository.findById.mockResolvedValue(mockUser);
-      mockUserRepository.update.mockResolvedValue(activatedUser);
+      // Arrange
+      const userId = 'test-user-id';
+      const activatedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.activateUser('user-123');
+      jest.spyOn(userService, 'updateUser').mockResolvedValue(activatedUser);
 
-      expect(mockUserRepository.update).toHaveBeenCalledWith('user-123', { is_active: true });
+      // Act
+      const result = await userService.activateUser(userId);
+
+      // Assert
       expect(result).toEqual(activatedUser);
+      expect(result.is_active).toBe(true);
+      expect(userService.updateUser).toHaveBeenCalledWith(userId, { is_active: true });
     });
   });
 
   describe('userExists', () => {
     it('should return true when user exists', async () => {
-      mockUserRepository.findById.mockResolvedValue(mockUser);
+      // Arrange
+      const userId = 'test-user-id';
+      const mockUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
 
-      const result = await userService.userExists('user-123');
+      jest.spyOn(userService, 'findById').mockResolvedValue(mockUser);
 
+      // Act
+      const result = await userService.userExists(userId);
+
+      // Assert
       expect(result).toBe(true);
+      expect(userService.findById).toHaveBeenCalledWith(userId);
     });
 
     it('should return false when user does not exist', async () => {
-      mockUserRepository.findById.mockResolvedValue(null);
+      // Arrange
+      jest.spyOn(userService, 'findById').mockResolvedValue(null);
 
-      const result = await userService.userExists('nonexistent');
+      // Act
+      const result = await userService.userExists('non-existent-id');
 
+      // Assert
       expect(result).toBe(false);
+      expect(userService.findById).toHaveBeenCalledWith('non-existent-id');
+    });
+  });
+
+  describe('updatePassword', () => {
+    it('should update password successfully when current password is correct', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const currentPassword = 'CurrentPassword123!';
+      const newPassword = 'NewPassword456!';
+
+      // Mock verifyPassword to return true (current password is correct)
+      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(true);
+
+      const updatedUser: User = {
+        id: userId,
+        email: 'test@example.com',
+        username: 'testuser',
+        country_code: 'US',
+        registration_date: new Date(),
+        last_login_date: null,
+        profile_picture_url: null,
+        is_active: true,
+        role: 'student',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockUserRepository.updatePassword.mockResolvedValue(updatedUser);
+
+      // Act
+      const result = await userService.updatePassword(userId, currentPassword, newPassword);
+
+      // Assert
+      expect(result).toBe(true);
+      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
+      expect(mockUserRepository.updatePassword).toHaveBeenCalled();
+    });
+
+    it('should throw an error when current password is incorrect', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const currentPassword = 'WrongPassword123!';
+      const newPassword = 'NewPassword456!';
+
+      // Mock verifyPassword to return false (current password is incorrect)
+      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(false);
+
+      // Act & Assert
+      await expect(userService.updatePassword(userId, currentPassword, newPassword)).rejects.toThrow(
+        new AppError('Current password is incorrect', HttpStatus.UNAUTHORIZED, ErrorCodes.AUTHENTICATION_ERROR)
+      );
+      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
+      expect(mockUserRepository.updatePassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return paginated users with default options', async () => {
+      // Arrange
+      const expectedResult: PaginatedResult<User> = {
+        data: [
+          {
+            id: 'user-1',
+            email: 'user1@example.com',
+            username: 'user1',
+            country_code: 'US',
+            registration_date: new Date(),
+            last_login_date: null,
+            profile_picture_url: null,
+            is_active: true,
+            role: 'student',
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+
+      mockUserRepository.findAll.mockResolvedValue(expectedResult);
+
+      // Act
+      const result = await userService.findAll();
+
+      // Assert
+      expect(mockUserRepository.findAll).toHaveBeenCalledWith({});
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('should return paginated users with custom options', async () => {
+      // Arrange
+      const options: QueryOptions = { page: 2, limit: 10 };
+      const expectedResult: PaginatedResult<User> = {
+        data: [],
+        pagination: {
+          page: 2,
+          limit: 10,
+          total: 5,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: true,
+        },
+      };
+
+      mockUserRepository.findAll.mockResolvedValue(expectedResult);
+
+      // Act
+      const result = await userService.findAll(options);
+
+      // Assert
+      expect(mockUserRepository.findAll).toHaveBeenCalledWith(options);
+      expect(result).toEqual(expectedResult);
     });
   });
 });

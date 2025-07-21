@@ -87,8 +87,8 @@ interface BaseContentEntity {
 // Hierarchical content interfaces aligned with production schema
 interface Course extends BaseContentEntity {
   id: string; // VARCHAR(20)
-  source_language: string; // VARCHAR(5)
-  target_language: string; // VARCHAR(5)
+  source_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu', 'aym')
+  target_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu', 'aym')
   name: string; // VARCHAR(100)
   description?: string;
   is_public: boolean;
@@ -309,8 +309,8 @@ CREATE TRIGGER set_timestamp_user_progress BEFORE UPDATE ON user_progress FOR EA
 
 CREATE TABLE courses (
     id VARCHAR(20) PRIMARY KEY,
-    source_language VARCHAR(5) NOT NULL,
-    target_language VARCHAR(5) NOT NULL,
+    source_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
+    target_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
     name VARCHAR(100) NOT NULL,
     description TEXT,
     is_public BOOLEAN DEFAULT true,
@@ -387,7 +387,7 @@ CREATE TABLE lesson_exercises (
 ### Prisma Schema Configuration
 
 ```prisma
-// This is your Prisma schema file,
+// This is the Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -415,27 +415,18 @@ model User {
   
   // Relations
   progress            UserProgress?
+  lessonCompletions   LessonCompletion[]
   following           Follow[] @relation("Follower")
   followers           Follow[] @relation("Followed")
   revokedTokens       RevokedToken[]
   
+  // Performance optimization indexes
+  @@index([role, isActive], map: "idx_users_role_active")
+  @@index([registrationDate(sort: Desc)], map: "idx_users_registration_date")
+  @@index([lastLoginDate(sort: Desc)], map: "idx_users_last_login")
+  @@index([email], map: "idx_users_active_email", where: "is_active = true")
+  @@index([username], map: "idx_users_active_username", where: "is_active = true AND username IS NOT NULL")
   @@map("users")
-}
-
-model RevokedToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  token     String   @unique @db.VarChar(500)
-  userId    String   @map("user_id") @db.Uuid
-  revokedAt DateTime @default(now()) @map("revoked_at") @db.Timestamptz
-  expiresAt DateTime @map("expires_at") @db.Timestamptz
-  
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([token])
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("revoked_tokens")
 }
 
 model Follow {
@@ -448,6 +439,7 @@ model Follow {
   followed    User     @relation("Followed", fields: [followedId], references: [id], onDelete: Cascade)
   
   @@id([followerId, followedId])
+  @@index([followedId])
   @@map("follows")
 }
 
@@ -464,13 +456,35 @@ model UserProgress {
   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   lastCompletedLesson    Lesson?   @relation(fields: [lastCompletedLessonId], references: [id], onDelete: SetNull)
   
+  // Performance optimization indexes
+  @@index([experiencePoints(sort: Desc)], map: "idx_user_progress_exp_points")
+  @@index([lastActivityDate(sort: Desc)], map: "idx_user_progress_activity")
+  @@index([streakCurrent(sort: Desc)], map: "idx_user_progress_streak")
   @@map("user_progress")
+}
+
+model LessonCompletion {
+  userId            String   @map("user_id") @db.Uuid
+  lessonId          String   @map("lesson_id") @db.VarChar(60)
+  completedAt       DateTime @map("completed_at") @db.Timestamptz
+  score             Int?
+  timeSpentSeconds  Int?     @map("time_spent_seconds")
+  
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson            Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@index([completedAt])
+  @@map("lesson_completions")
 }
 
 model Course {
   id             String   @id @db.VarChar(20)
-  sourceLanguage String   @map("source_language") @db.VarChar(5)
-  targetLanguage String   @map("target_language") @db.VarChar(5)
+  sourceLanguage String   @map("source_language") @db.VarChar(20) // BCP 47 language tag
+  targetLanguage String   @map("target_language") @db.VarChar(20) // BCP 47 language tag
   name           String   @db.VarChar(100)
   description    String?
   isPublic       Boolean  @default(true) @map("is_public")
@@ -480,6 +494,20 @@ model Course {
   // Relations
   levels         Level[]
   
+  // Basic indexes
+  @@index([sourceLanguage])
+  @@index([targetLanguage])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  @@index([sourceLanguage, targetLanguage])
+  
+  // Performance optimization indexes
+  @@index([sourceLanguage, targetLanguage, isPublic], map: "idx_courses_source_target_public")
+  @@index([isPublic, createdAt(sort: Desc)], map: "idx_courses_public_created")
+  @@index([name], map: "idx_courses_public_name", where: "is_public = true")
+  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages", where: "is_public = true")
   @@map("courses")
 }
 
@@ -498,6 +526,14 @@ model Level {
   
   @@unique([courseId, code])
   @@unique([courseId, order])
+  @@index([courseId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([courseId, order], map: "idx_levels_course_order")
+  @@index([courseId, createdAt(sort: Desc)], map: "idx_levels_course_created")
   @@map("levels")
 }
 
@@ -514,6 +550,14 @@ model Section {
   modules   Module[]
   
   @@unique([levelId, order])
+  @@index([levelId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([levelId, order], map: "idx_sections_level_order")
+  @@index([levelId, createdAt(sort: Desc)], map: "idx_sections_level_created")
   @@map("sections")
 }
 
@@ -531,6 +575,16 @@ model Module {
   lessons    Lesson[]
   
   @@unique([sectionId, order])
+  @@index([sectionId])
+  @@index([moduleType])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([sectionId, order], map: "idx_modules_section_order")
+  @@index([sectionId, moduleType], map: "idx_modules_section_type")
+  @@index([sectionId, createdAt(sort: Desc)], map: "idx_modules_section_created")
   @@map("modules")
 }
 
@@ -546,8 +600,18 @@ model Lesson {
   module           Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   exercises        LessonExercise[]
   userProgress     UserProgress[]
+  completions      LessonCompletion[]
   
   @@unique([moduleId, order])
+  @@index([moduleId])
+  @@index([experiencePoints])
+  @@index([createdAt])
+  @@index([updatedAt])
+  
+  // Performance optimization indexes
+  @@index([moduleId, order], map: "idx_lessons_module_order")
+  @@index([moduleId, experiencePoints], map: "idx_lessons_module_exp")
+  @@index([moduleId, createdAt(sort: Desc)], map: "idx_lessons_module_created")
   @@map("lessons")
 }
 
@@ -561,6 +625,10 @@ model Exercise {
   // Relations
   lessons      LessonExercise[]
   
+  @@index([exerciseType])
+  
+  // Performance optimization indexes
+  @@index([exerciseType, createdAt(sort: Desc)], map: "idx_exercises_type_created")
   @@map("exercises")
 }
 
@@ -574,7 +642,25 @@ model LessonExercise {
   exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
   
   @@id([lessonId, exerciseId])
+  @@index([lessonId])
+  @@index([exerciseId])
   @@map("lesson_exercises")
+}
+
+model RevokedToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  userId    String   @map("user_id") @db.Uuid
+  revokedAt DateTime @default(now()) @map("revoked_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("revoked_tokens")
 }
 
 enum Role {
@@ -1044,8 +1130,8 @@ import { z } from 'zod';
 // Course validation schemas
 const CreateCourseSchema = z.object({
   id: z.string().max(20),
-  source_language: z.string().max(5),
-  target_language: z.string().max(5),
+  source_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
+  target_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   is_public: z.boolean().default(true)

@@ -183,9 +183,9 @@ describe('Advanced Filters', () => {
       };
       
       const filterConfig = {
-        name: (value) => ({ name: { contains: value } }),
-        active: (value) => advancedFilters.booleanFilter('isActive', value),
-        type: (value) => advancedFilters.multiValueFilter('type', value)
+        name: (value: any) => ({ name: { contains: value } }),
+        active: (value: string | boolean | undefined) => advancedFilters.booleanFilter('isActive', value),
+        type: (value: string | string[] | undefined) => advancedFilters.multiValueFilter('type', value)
       };
       
       const result = advancedFilters.parseQueryFilters(queryFilters, filterConfig);

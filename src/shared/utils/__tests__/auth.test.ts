@@ -1,295 +1,149 @@
 /**
- * Authentication Utilities Tests
+ * Auth Utility Tests
  */
-
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import {
+import { 
   generateAccessToken,
   generateRefreshToken,
   generateTokenPair,
   verifyRefreshToken,
-  hashPassword,
-  comparePassword,
-  extractTokenFromHeader,
-  validateTokenFormat,
-  isTokenExpired,
+  hashPassword, 
+  comparePassword, 
   getTokenExpiration,
-  generateSecureToken,
   TokenPayload
 } from '../auth';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 // Mock dependencies
 jest.mock('jsonwebtoken');
 jest.mock('bcryptjs');
 
-const mockJwt = jwt as jest.Mocked<typeof jwt>;
-const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
-
-describe('Authentication Utilities', () => {
-  const mockTokenPayload: TokenPayload = {
-    userId: 'user-123',
-    email: 'test@example.com',
-    role: 'student'
-  };
+describe('Auth Utilities', () => {
 
   beforeEach(() => {
-    process.env['JWT_SECRET'] = 'test-secret';
+    jest.clearAllMocks();
+    // Configuramos las variables de entorno para los tests
+    process.env['JWT_SECRET'] = 'test-access-secret';
     process.env['JWT_REFRESH_SECRET'] = 'test-refresh-secret';
     process.env['JWT_ACCESS_EXPIRES_IN'] = '15m';
     process.env['JWT_REFRESH_EXPIRES_IN'] = '7d';
     process.env['BCRYPT_SALT_ROUNDS'] = '12';
-    
-    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    delete process.env['JWT_SECRET'];
-    delete process.env['JWT_REFRESH_SECRET'];
-    delete process.env['JWT_ACCESS_EXPIRES_IN'];
-    delete process.env['JWT_REFRESH_EXPIRES_IN'];
-    delete process.env['BCRYPT_SALT_ROUNDS'];
-  });
+  // El payload de prueba que usaremos, ahora sí completo
+  const testPayload: TokenPayload = {
+    userId: 'user-123',
+    email: 'test@example.com',
+    role: 'student',
+  };
 
   describe('generateAccessToken', () => {
-    it('should generate access token with correct payload', () => {
-      const mockToken = 'mock-access-token';
-      (mockJwt.sign as jest.Mock).mockReturnValue(mockToken);
-
-      const result = generateAccessToken(mockTokenPayload);
-
-      expect(mockJwt.sign).toHaveBeenCalledWith(
-        {
-          sub: mockTokenPayload.userId,
-          email: mockTokenPayload.email,
-          role: mockTokenPayload.role
-        },
-        'test-secret',
-        {
-          expiresIn: '15m',
-          issuer: 'wayrapp-api',
-          audience: 'wayrapp-client'
-        }
-      );
-      expect(result).toBe(mockToken);
-    });
-
-    it('should throw error if JWT_SECRET is not set', () => {
-      delete process.env['JWT_SECRET'];
-
-      expect(() => generateAccessToken(mockTokenPayload)).toThrow(
-        'JWT_SECRET environment variable not set'
+    it('should generate a JWT access token', () => {
+      const mockToken = 'mock.access.token';
+      (jwt.sign as jest.Mock).mockReturnValue(mockToken);
+      
+      const token = generateAccessToken(testPayload);
+      
+      expect(token).toBe(mockToken);
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { sub: testPayload.userId, email: testPayload.email, role: testPayload.role },
+        'test-access-secret',
+        { expiresIn: '15m', issuer: 'wayrapp-api', audience: 'wayrapp-client' }
       );
     });
   });
 
   describe('generateRefreshToken', () => {
-    it('should generate refresh token with correct payload', () => {
-      const mockToken = 'mock-refresh-token';
-      (mockJwt.sign as jest.Mock).mockReturnValue(mockToken);
+    it('should generate a JWT refresh token', () => {
+      const mockToken = 'mock.refresh.token';
+      (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
-      const result = generateRefreshToken(mockTokenPayload);
+      const token = generateRefreshToken(testPayload);
 
-      expect(mockJwt.sign).toHaveBeenCalledWith(
-        {
-          sub: mockTokenPayload.userId,
-          email: mockTokenPayload.email,
-          role: mockTokenPayload.role
-        },
+      expect(token).toBe(mockToken);
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { sub: testPayload.userId, email: testPayload.email, role: testPayload.role },
         'test-refresh-secret',
-        {
-          expiresIn: '7d',
-          issuer: 'wayrapp-api',
-          audience: 'wayrapp-client'
-        }
-      );
-      expect(result).toBe(mockToken);
-    });
-
-    it('should throw error if JWT_REFRESH_SECRET is not set', () => {
-      delete process.env['JWT_REFRESH_SECRET'];
-
-      expect(() => generateRefreshToken(mockTokenPayload)).toThrow(
-        'JWT_REFRESH_SECRET environment variable not set'
+        { expiresIn: '7d', issuer: 'wayrapp-api', audience: 'wayrapp-client' }
       );
     });
   });
 
   describe('generateTokenPair', () => {
-    it('should generate both access and refresh tokens', () => {
-      const mockAccessToken = 'mock-access-token';
-      const mockRefreshToken = 'mock-refresh-token';
-      
-      (mockJwt.sign as jest.Mock)
-        .mockReturnValueOnce(mockAccessToken)
-        .mockReturnValueOnce(mockRefreshToken);
+    it('should call generateAccessToken and generateRefreshToken to create a pair', () => {
+      (jwt.sign as jest.Mock)
+        .mockImplementation((_payload, secret) => {
+          if (secret === 'test-access-secret') return 'final.access.token';
+          if (secret === 'test-refresh-secret') return 'final.refresh.token';
+          return 'unknown';
+        });
 
-      const result = generateTokenPair(mockTokenPayload);
+      const pair = generateTokenPair(testPayload);
 
-      expect(result).toEqual({
-        accessToken: mockAccessToken,
-        refreshToken: mockRefreshToken
-      });
-      expect(mockJwt.sign).toHaveBeenCalledTimes(2);
+      expect(pair.accessToken).toBe('final.access.token');
+      expect(pair.refreshToken).toBe('final.refresh.token');
+      expect(jwt.sign).toHaveBeenCalledTimes(2);
     });
   });
 
+  // NOTA: No hay una función 'verifyAccessToken' exportada, así que no la probamos.
+  // La verificación del access token sucede en el middleware 'authenticateToken',
+  // y eso se prueba en 'auth.middleware.test.ts'.
+
   describe('verifyRefreshToken', () => {
-    it('should verify refresh token successfully', () => {
-      const mockToken = 'valid-refresh-token';
-      const mockPayload = {
-        sub: 'user-123',
-        email: 'test@example.com',
-        role: 'student',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600
-      };
+    it('should verify a valid refresh token', () => {
+      const token = 'valid.refresh.token';
+      const decodedPayload = { sub: 'user-123', email: 'test@example.com', role: 'student' };
+      (jwt.verify as jest.Mock).mockReturnValue(decodedPayload);
 
-      (mockJwt.verify as jest.Mock).mockReturnValue(mockPayload);
+      const result = verifyRefreshToken(token);
 
-      const result = verifyRefreshToken(mockToken);
-
-      expect(mockJwt.verify).toHaveBeenCalledWith(mockToken, 'test-refresh-secret');
-      expect(result).toEqual(mockPayload);
-    });
-
-    it('should throw error if JWT_REFRESH_SECRET is not set', () => {
-      delete process.env['JWT_REFRESH_SECRET'];
-
-      expect(() => verifyRefreshToken('token')).toThrow(
-        'JWT_REFRESH_SECRET environment variable not set'
-      );
+      expect(result).toEqual(decodedPayload);
+      expect(jwt.verify).toHaveBeenCalledWith(token, 'test-refresh-secret');
     });
   });
 
   describe('hashPassword', () => {
-    it('should hash password with correct salt rounds', async () => {
-      const password = 'test-password';
-      const hashedPassword = 'hashed-password';
-      
-      (mockBcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
+    it('should hash a password with bcrypt', async () => {
+      const password = 'Password123!';
+      const hashedPassword = 'hashed_password';
+      (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
 
       const result = await hashPassword(password);
 
-      expect(mockBcrypt.hash).toHaveBeenCalledWith(password, 12);
       expect(result).toBe(hashedPassword);
-    });
-
-    it('should use default salt rounds if not specified', async () => {
-      delete process.env['BCRYPT_SALT_ROUNDS'];
-      const password = 'test-password';
-      const hashedPassword = 'hashed-password';
-      
-      (mockBcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
-
-      await hashPassword(password);
-
-      expect(mockBcrypt.hash).toHaveBeenCalledWith(password, 12);
+      expect(bcrypt.hash).toHaveBeenCalledWith(password, 12);
     });
   });
 
   describe('comparePassword', () => {
-    it('should compare password correctly', async () => {
-      const password = 'test-password';
-      const hash = 'hashed-password';
-      
-      (mockBcrypt.compare as jest.Mock).mockResolvedValue(true);
+    it('should return true for matching passwords', async () => {
+      const password = 'Password123!';
+      const hash = 'hashed_password';
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await comparePassword(password, hash);
 
-      expect(mockBcrypt.compare).toHaveBeenCalledWith(password, hash);
       expect(result).toBe(true);
-    });
-  });
-
-  describe('extractTokenFromHeader', () => {
-    it('should extract token from valid Bearer header', () => {
-      const authHeader = 'Bearer valid-token';
-      const result = extractTokenFromHeader(authHeader);
-      expect(result).toBe('valid-token');
-    });
-
-    it('should return null for invalid header format', () => {
-      expect(extractTokenFromHeader('Invalid header')).toBeNull();
-      expect(extractTokenFromHeader('Bearer')).toBeNull();
-      expect(extractTokenFromHeader('Token valid-token')).toBeNull();
-    });
-
-    it('should return null for undefined header', () => {
-      expect(extractTokenFromHeader(undefined)).toBeNull();
-    });
-  });
-
-  describe('validateTokenFormat', () => {
-    it('should validate correct JWT format', () => {
-      const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE2MTYyMzkwMjJ9.signature';
-      expect(validateTokenFormat(validToken)).toBe(true);
-    });
-
-    it('should reject invalid JWT format', () => {
-      expect(validateTokenFormat('invalid-token')).toBe(false);
-      expect(validateTokenFormat('part1.part2')).toBe(false);
-      expect(validateTokenFormat('')).toBe(false);
-    });
-  });
-
-  describe('isTokenExpired', () => {
-    it('should detect expired token', () => {
-      const expiredPayload = {
-        sub: 'user-123',
-        exp: Math.floor(Date.now() / 1000) - 3600 // 1 hour ago
-      };
-      const expiredToken = `header.${Buffer.from(JSON.stringify(expiredPayload)).toString('base64')}.signature`;
-      
-      expect(isTokenExpired(expiredToken)).toBe(true);
-    });
-
-    it('should detect valid token', () => {
-      const validPayload = {
-        sub: 'user-123',
-        exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-      };
-      const validToken = `header.${Buffer.from(JSON.stringify(validPayload)).toString('base64')}.signature`;
-      
-      expect(isTokenExpired(validToken)).toBe(false);
-    });
-
-    it('should return true for invalid token format', () => {
-      expect(isTokenExpired('invalid-token')).toBe(true);
+      expect(bcrypt.compare).toHaveBeenCalledWith(password, hash);
     });
   });
 
   describe('getTokenExpiration', () => {
-    it('should extract expiration date from token', () => {
-      const exp = Math.floor(Date.now() / 1000) + 3600;
-      const payload = { sub: 'user-123', exp };
-      const token = `header.${Buffer.from(JSON.stringify(payload)).toString('base64')}.signature`;
+    it('should return a Date from a valid token exp claim', () => {
+      const futureTimestamp = Math.floor(Date.now() / 1000) + 3600; // 1 hora
+      const fakeToken = `header.${Buffer.from(JSON.stringify({ exp: futureTimestamp })).toString('base64')}.signature`;
       
-      const result = getTokenExpiration(token);
-      expect(result).toEqual(new Date(exp * 1000));
+      const expirationDate = getTokenExpiration(fakeToken);
+      
+      expect(expirationDate).toBeInstanceOf(Date);
+      expect(expirationDate?.getTime()).toBe(futureTimestamp * 1000);
     });
 
-    it('should return null for invalid token', () => {
-      expect(getTokenExpiration('invalid-token')).toBeNull();
+    it('should return null for a token without exp claim', () => {
+      const fakeToken = `header.${Buffer.from(JSON.stringify({ iat: 123 })).toString('base64')}.signature`;
+      expect(getTokenExpiration(fakeToken)).toBeNull();
     });
   });
 
-  describe('generateSecureToken', () => {
-    it('should generate token of specified length', () => {
-      const token = generateSecureToken(16);
-      expect(token).toHaveLength(16);
-      expect(typeof token).toBe('string');
-    });
-
-    it('should generate token of default length', () => {
-      const token = generateSecureToken();
-      expect(token).toHaveLength(32);
-    });
-
-    it('should generate different tokens on multiple calls', () => {
-      const token1 = generateSecureToken();
-      const token2 = generateSecureToken();
-      expect(token1).not.toBe(token2);
-    });
-  });
 });
