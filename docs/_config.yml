@@ -1,74 +1,35 @@
-# GitHub Pages Configuration for WayrApp Backend Documentation
+# docs/_config.yml
 
-title: WayrApp Backend API Documentation
-description: Comprehensive API documentation for WayrApp - Open-source language learning platform backend
-url: "https://wayrapp.github.io"
-baseurl: "/backend"
+# --- Información del Sitio ---
+title: WayrApp API Documentation
+description: >- # El ">-" significa que el texto puede tener múltiples líneas.
+  Comprehensive API documentation for the WayrApp open-source language learning platform.
+  Find everything you need to integrate with our backend.
+theme: jekyll-theme-minimal # Un tema limpio y moderno, perfecto para documentación.
 
-# Build settings
-markdown: kramdown
-highlighter: rouge
-theme: minima
+# --- Navegación del Sitio ---
+# Esto creará los enlaces en la barra de navegación de tu sitio.
+# El 'title' es lo que el usuario ve, y la 'url' es el enlace al archivo.
+nav:
+  - title: API Overview
+    url: /API_OVERVIEW
+  - title: Authentication
+    url: /AUTHENTICATION
+  - title: Users
+    url: /USERS
+  - title: Content
+    url: /CONTENT
+  - title: Lessons & Exercises
+    url: /LESSONS_EXERCISES
+  - title: Progress
+    url: /PROGRESS
+  - title: Packaged Content
+    url: /PACKAGED_CONTENT_API
+  - title: Pagination & Filtering
+    url: /PAGINATION_AND_FILTERING
+  - title: Database Setup
+    url: /DATABASE_SETUP
 
-# Plugins
+# --- Plugins y Metadatos ---
 plugins:
-  - jekyll-feed
-  - jekyll-sitemap
-  - jekyll-seo-tag
-
-# SEO settings
-author: Exequiel Trujillo
-twitter:
-  username: wayrapp
-  card: summary_large_image
-
-social:
-  name: WayrApp
-  links:
-    - https://github.com/wayrapp/backend
-
-# Navigation
-header_pages:
-  - API_OVERVIEW.md
-  - AUTHENTICATION.md
-  - USERS.md
-  - CONTENT.md
-  - LESSONS_EXERCISES.md
-  - PROGRESS.md
-  - PACKAGED_CONTENT_API.md
-  - DATABASE_SETUP.md
-
-# Exclude files from processing
-exclude:
-  - node_modules/
-  - vendor/
-  - Gemfile
-  - Gemfile.lock
-  - README.md
-  - package.json
-  - package-lock.json
-  - scripts/
-  - .github/
-
-# Include files
-include:
-  - _site/
-
-# Collections
-collections:
-  docs:
-    output: true
-    permalink: /:collection/:name/
-
-# Default settings
-defaults:
-  - scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "default"
-  - scope:
-      path: ""
-      type: "docs"
-    values:
-      layout: "default"
+  - jekyll-seo-tag # Añade automáticamente etiquetas meta para SEO (Google, etc.)

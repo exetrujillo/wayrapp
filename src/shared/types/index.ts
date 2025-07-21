@@ -32,9 +32,12 @@ export interface PaginatedResult<T> {
 export interface QueryOptions {
   page?: number;
   limit?: number;
+  offset?: number;
   sortBy?: string | undefined;
   sortOrder?: 'asc' | 'desc';
   filters?: Record<string, any>;
+  search?: string;
+  searchFields?: string[];
 }
 
 // User roles and permissions

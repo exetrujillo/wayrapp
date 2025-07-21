@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { ContentController } from '../controllers';
 import { validate } from '../../../shared/middleware/validation';
 import { authenticateToken, requireRole } from '../../../shared/middleware/auth';
+import { paginationMiddleware } from '../../../shared/middleware/pagination';
+import { SORT_FIELDS } from '../../../shared/utils/repositoryHelpers';
 import {
   CreateCourseSchema,
   UpdateCourseSchema,
@@ -29,7 +31,13 @@ export function createContentRoutes(prisma: PrismaClient): Router {
 
   // Course routes
   router.get('/courses', 
-    validate({ query: CourseQuerySchema }), 
+    validate({ query: CourseQuerySchema }),
+    paginationMiddleware({
+      allowedSortFields: SORT_FIELDS.COURSE,
+      defaultSortField: 'created_at',
+      allowedFilters: ['source_language', 'target_language', 'is_public'],
+      searchFields: ['name', 'description']
+    }),
     contentController.getCourses
   );
   
@@ -72,7 +80,13 @@ export function createContentRoutes(prisma: PrismaClient): Router {
     validate({ 
       params: CourseParamSchema, 
       query: LevelQuerySchema 
-    }), 
+    }),
+    paginationMiddleware({
+      allowedSortFields: SORT_FIELDS.LEVEL,
+      defaultSortField: 'order',
+      allowedFilters: ['code'],
+      searchFields: ['name']
+    }),
     contentController.getLevelsByCourse
   );
   
@@ -117,7 +131,13 @@ export function createContentRoutes(prisma: PrismaClient): Router {
     validate({ 
       params: LevelParamSchema, 
       query: SectionQuerySchema 
-    }), 
+    }),
+    paginationMiddleware({
+      allowedSortFields: SORT_FIELDS.SECTION,
+      defaultSortField: 'order',
+      allowedFilters: [],
+      searchFields: ['name']
+    }),
     contentController.getSectionsByLevel
   );
   
@@ -162,7 +182,13 @@ export function createContentRoutes(prisma: PrismaClient): Router {
     validate({ 
       params: SectionParamSchema, 
       query: ModuleQuerySchema 
-    }), 
+    }),
+    paginationMiddleware({
+      allowedSortFields: SORT_FIELDS.MODULE,
+      defaultSortField: 'order',
+      allowedFilters: ['module_type'],
+      searchFields: ['name']
+    }),
     contentController.getModulesBySection
   );
   

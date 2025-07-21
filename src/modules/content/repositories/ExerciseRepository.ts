@@ -1,6 +1,14 @@
 import { PrismaClient, Exercise as PrismaExercise } from "@prisma/client";
 import { Exercise, CreateExerciseDto } from "../types";
 import { PaginatedResult, QueryOptions } from "../../../shared/types";
+import {
+  buildPrismaQueryParams,
+  buildEnumFilterWhere,
+  combineWhereConditions,
+  createPaginationResult,
+  COMMON_FIELD_MAPPINGS,
+  SORT_FIELDS
+} from "../../../shared/utils/repositoryHelpers";
 
 export class ExerciseRepository {
   constructor(private prisma: PrismaClient) {}
@@ -28,28 +36,27 @@ export class ExerciseRepository {
   }
 
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Exercise>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "created_at",
-      sortOrder = "desc",
-      filters = {},
-    } = options;
+    const { filters = {} } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.EXERCISE,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
 
-    const where: any = {};
+    // Build where conditions
+    const exerciseTypeWhere = filters["exercise_type"] 
+      ? buildEnumFilterWhere(filters["exercise_type"].replace('-', '_'), 'exerciseType')
+      : {};
 
-    if (filters["exercise_type"]) {
-      where.exerciseType = filters["exercise_type"];
-    }
+    const where = combineWhereConditions(exerciseTypeWhere);
 
     const [exercises, total] = await Promise.all([
       this.prisma.exercise.findMany({
+        ...queryParams,
         where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
       }),
       this.prisma.exercise.count({ where }),
     ]);
@@ -58,17 +65,7 @@ export class ExerciseRepository {
       this.mapPrismaToModel(exercise)
     );
 
-    return {
-      data: mappedExercises,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
+    return createPaginationResult(mappedExercises, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<CreateExerciseDto>): Promise<Exercise> {
@@ -104,41 +101,30 @@ export class ExerciseRepository {
   }
 
   async findByType(exerciseType: string, options: QueryOptions = {}): Promise<PaginatedResult<Exercise>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "created_at",
-      sortOrder = "desc",
-    } = options;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.EXERCISE,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
 
-    const skip = (page - 1) * limit;
     const prismaExerciseType = exerciseType.replace('-', '_') as any;
+    const where = { exerciseType: prismaExerciseType };
 
     const [exercises, total] = await Promise.all([
       this.prisma.exercise.findMany({
-        where: { exerciseType: prismaExerciseType },
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        ...queryParams,
+        where,
       }),
-      this.prisma.exercise.count({ where: { exerciseType: prismaExerciseType } }),
+      this.prisma.exercise.count({ where }),
     ]);
 
     const mappedExercises = exercises.map((exercise) => 
       this.mapPrismaToModel(exercise)
     );
 
-    return {
-      data: mappedExercises,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
+    return createPaginationResult(mappedExercises, total, options.page || 1, options.limit || 20);
   }
 
   async findByIds(ids: string[]): Promise<Exercise[]> {

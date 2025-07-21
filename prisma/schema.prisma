@@ -32,6 +32,12 @@ model User {
   followers           Follow[] @relation("Followed")
   revokedTokens       RevokedToken[]
   
+  // Performance optimization indexes
+  @@index([role, isActive], map: "idx_users_role_active")
+  @@index([registrationDate(sort: Desc)], map: "idx_users_registration_date")
+  @@index([lastLoginDate(sort: Desc)], map: "idx_users_last_login")
+  @@index([email], map: "idx_users_active_email", where: "is_active = true")
+  @@index([username], map: "idx_users_active_username", where: "is_active = true AND username IS NOT NULL")
   @@map("users")
 }
 
@@ -62,6 +68,10 @@ model UserProgress {
   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   lastCompletedLesson    Lesson?   @relation(fields: [lastCompletedLessonId], references: [id], onDelete: SetNull)
   
+  // Performance optimization indexes
+  @@index([experiencePoints(sort: Desc)], map: "idx_user_progress_exp_points")
+  @@index([lastActivityDate(sort: Desc)], map: "idx_user_progress_activity")
+  @@index([streakCurrent(sort: Desc)], map: "idx_user_progress_streak")
   @@map("user_progress")
 }
 
@@ -96,9 +106,20 @@ model Course {
   // Relations
   levels         Level[]
   
+  // Basic indexes
   @@index([sourceLanguage])
   @@index([targetLanguage])
   @@index([isPublic])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  @@index([sourceLanguage, targetLanguage])
+  
+  // Performance optimization indexes
+  @@index([sourceLanguage, targetLanguage, isPublic], map: "idx_courses_source_target_public")
+  @@index([isPublic, createdAt(sort: Desc)], map: "idx_courses_public_created")
+  @@index([name], map: "idx_courses_public_name", where: "is_public = true")
+  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages", where: "is_public = true")
   @@map("courses")
 }
 
@@ -118,6 +139,13 @@ model Level {
   @@unique([courseId, code])
   @@unique([courseId, order])
   @@index([courseId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([courseId, order], map: "idx_levels_course_order")
+  @@index([courseId, createdAt(sort: Desc)], map: "idx_levels_course_created")
   @@map("levels")
 }
 
@@ -135,6 +163,13 @@ model Section {
   
   @@unique([levelId, order])
   @@index([levelId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([levelId, order], map: "idx_sections_level_order")
+  @@index([levelId, createdAt(sort: Desc)], map: "idx_sections_level_created")
   @@map("sections")
 }
 
@@ -153,6 +188,15 @@ model Module {
   
   @@unique([sectionId, order])
   @@index([sectionId])
+  @@index([moduleType])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([name])
+  
+  // Performance optimization indexes
+  @@index([sectionId, order], map: "idx_modules_section_order")
+  @@index([sectionId, moduleType], map: "idx_modules_section_type")
+  @@index([sectionId, createdAt(sort: Desc)], map: "idx_modules_section_created")
   @@map("modules")
 }
 
@@ -172,6 +216,14 @@ model Lesson {
   
   @@unique([moduleId, order])
   @@index([moduleId])
+  @@index([experiencePoints])
+  @@index([createdAt])
+  @@index([updatedAt])
+  
+  // Performance optimization indexes
+  @@index([moduleId, order], map: "idx_lessons_module_order")
+  @@index([moduleId, experiencePoints], map: "idx_lessons_module_exp")
+  @@index([moduleId, createdAt(sort: Desc)], map: "idx_lessons_module_created")
   @@map("lessons")
 }
 
@@ -186,6 +238,9 @@ model Exercise {
   lessons      LessonExercise[]
   
   @@index([exerciseType])
+  
+  // Performance optimization indexes
+  @@index([exerciseType, createdAt(sort: Desc)], map: "idx_exercises_type_created")
   @@map("exercises")
 }
 

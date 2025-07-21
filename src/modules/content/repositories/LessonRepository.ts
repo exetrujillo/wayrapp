@@ -1,6 +1,14 @@
 import { PrismaClient, Lesson as PrismaLesson } from "@prisma/client";
 import { Lesson, CreateLessonDto, LessonExercise } from "../types";
 import { PaginatedResult, QueryOptions } from "../../../shared/types";
+import {
+  buildPrismaQueryParams,
+  buildRangeFilterWhere,
+  combineWhereConditions,
+  createPaginationResult,
+  COMMON_FIELD_MAPPINGS,
+  SORT_FIELDS
+} from "../../../shared/utils/repositoryHelpers";
 
 export class LessonRepository {
   constructor(private prisma: PrismaClient) {}
@@ -45,76 +53,33 @@ export class LessonRepository {
     moduleId: string,
     options: QueryOptions = {},
   ): Promise<PaginatedResult<Lesson>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "order",
-      sortOrder = "asc",
-    } = options;
+    const { filters = {} } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.LESSON,
+      'order',
+      COMMON_FIELD_MAPPINGS
+    );
 
-    const [lessons, total] = await Promise.all([
-      this.prisma.lesson.findMany({
-        where: { moduleId },
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          exercises: {
-            include: {
-              exercise: true,
-            },
-            orderBy: {
-              order: "asc",
-            },
-          },
-        },
-      }),
-      this.prisma.lesson.count({ where: { moduleId } }),
-    ]);
+    // Build where conditions
+    const moduleWhere = { moduleId };
+    const experiencePointsWhere = buildRangeFilterWhere(
+      filters["experience_points_min"] ? parseInt(filters["experience_points_min"]) : undefined,
+      filters["experience_points_max"] ? parseInt(filters["experience_points_max"]) : undefined,
+      'experiencePoints'
+    );
 
-    const mappedLessons = lessons.map((lesson) => ({
-      ...this.mapPrismaToModel(lesson),
-      exercises: lesson.exercises.map((le) => this.mapLessonExercise(le)),
-    }));
-
-    return {
-      data: mappedLessons,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
-  }
-
-  async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Lesson>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "created_at",
-      sortOrder = "desc",
-      filters = {},
-    } = options;
-
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-
-    if (filters["module_id"]) {
-      where.moduleId = filters["module_id"];
-    }
+    const where = combineWhereConditions(
+      moduleWhere,
+      experiencePointsWhere
+    );
 
     const [lessons, total] = await Promise.all([
       this.prisma.lesson.findMany({
+        ...queryParams,
         where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
         include: {
           exercises: {
             include: {
@@ -134,17 +99,49 @@ export class LessonRepository {
       exercises: lesson.exercises.map((le) => this.mapLessonExercise(le)),
     }));
 
-    return {
-      data: mappedLessons,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
+    return createPaginationResult(mappedLessons, total, options.page || 1, options.limit || 20);
+  }
+
+  async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Lesson>> {
+    const { filters = {} } = options;
+
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.LESSON,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
+
+    // Build where conditions
+    const moduleWhere = filters["module_id"] ? { moduleId: filters["module_id"] } : {};
+
+    const where = combineWhereConditions(moduleWhere);
+
+    const [lessons, total] = await Promise.all([
+      this.prisma.lesson.findMany({
+        ...queryParams,
+        where,
+        include: {
+          exercises: {
+            include: {
+              exercise: true,
+            },
+            orderBy: {
+              order: "asc",
+            },
+          },
+        },
+      }),
+      this.prisma.lesson.count({ where }),
+    ]);
+
+    const mappedLessons = lessons.map((lesson) => ({
+      ...this.mapPrismaToModel(lesson),
+      exercises: lesson.exercises.map((le) => this.mapLessonExercise(le)),
+    }));
+
+    return createPaginationResult(mappedLessons, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<CreateLessonDto>): Promise<Lesson> {

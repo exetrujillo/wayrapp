@@ -1,6 +1,16 @@
 import { PrismaClient, Section as PrismaSection } from '@prisma/client';
 import { Section, CreateSectionDto } from '../types';
 import { PaginatedResult, QueryOptions } from '../../../shared/types';
+import {
+  buildPrismaQueryParams,
+  buildTextSearchWhere,
+  combineWhereConditions,
+  createPaginationResult,
+  COMMON_FIELD_MAPPINGS,
+  SORT_FIELDS,
+  buildChildCountInclude,
+  mapChildCounts
+} from '../../../shared/utils/repositoryHelpers';
 
 export class SectionRepository {
   constructor(private prisma: PrismaClient) {}
@@ -37,88 +47,91 @@ export class SectionRepository {
   }
 
   async findByLevelId(levelId: string, options: QueryOptions = {}): Promise<PaginatedResult<Section>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'order',
-      sortOrder = 'asc'
-    } = options;
+    const { search } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.SECTION,
+      'order',
+      COMMON_FIELD_MAPPINGS
+    );
+
+    // Build where conditions
+    const searchWhere = buildTextSearchWhere(search, ['name']);
+    const levelWhere = { levelId };
+
+    const where = combineWhereConditions(
+      levelWhere,
+      searchWhere
+    );
+
+    // Build include for child counts
+    const include = buildChildCountInclude(['modules']);
 
     const [sections, total] = await Promise.all([
       this.prisma.section.findMany({
-        where: { levelId },
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { modules: true }
-          }
-        }
+        ...queryParams,
+        where,
+        include,
       }),
-      this.prisma.section.count({ where: { levelId } })
+      this.prisma.section.count({ where })
     ]);
 
-    const mappedSections = sections.map(section => ({
-      ...this.mapPrismaToModel(section),
-      modules_count: section._count.modules
-    }));
+    // Map results with child counts
+    const mappedSections = sections.map((section) => {
+      const mapped = this.mapPrismaToModel(section);
+      return {
+        ...mapped,
+        ...mapChildCounts(section, { modules: 'modules_count' })
+      };
+    });
 
-    return {
-      data: mappedSections,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
-    };
+    return createPaginationResult(mappedSections, total, options.page || 1, options.limit || 20);
   }
 
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Section>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'desc'
-    } = options;
+    const { filters = {}, search } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.SECTION,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
+
+    // Build where conditions
+    const searchWhere = buildTextSearchWhere(search, ['name']);
+    const levelWhere = filters['level_id'] ? { levelId: filters['level_id'] } : {};
+
+    const where = combineWhereConditions(
+      searchWhere,
+      levelWhere
+    );
+
+    // Build include for child counts
+    const include = buildChildCountInclude(['modules']);
 
     const [sections, total] = await Promise.all([
       this.prisma.section.findMany({
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { modules: true }
-          }
-        }
+        ...queryParams,
+        where,
+        include,
       }),
-      this.prisma.section.count()
+      this.prisma.section.count({ where })
     ]);
 
-    const mappedSections = sections.map(section => ({
-      ...this.mapPrismaToModel(section),
-      modules_count: section._count.modules
-    }));
+    // Map results with child counts
+    const mappedSections = sections.map((section) => {
+      const mapped = this.mapPrismaToModel(section);
+      return {
+        ...mapped,
+        ...mapChildCounts(section, { modules: 'modules_count' })
+      };
+    });
 
-    return {
-      data: mappedSections,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
-    };
+    return createPaginationResult(mappedSections, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<Omit<CreateSectionDto, 'id' | 'level_id'>>): Promise<Section> {

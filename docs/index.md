@@ -1,3 +1,8 @@
+---
+layout: default
+title: API Overview
+---
+
 # WayrApp API Documentation
 
 ## Table of Contents
@@ -8,6 +13,7 @@
 - [Content](CONTENT.md) - Courses, Levels, Sections, Modules Management
 - [Lessons & Exercises](LESSONS_EXERCISES.md) - Lesson Management and Exercise Assignment
 - [Progress](PROGRESS.md) - Progress Tracking and Analytics
+- [Pagination & Filtering](PAGINATION_AND_FILTERING.md) - Pagination and filtering capabilities of the WayrApp API
 - [Packaged Content API](PACKAGED_CONTENT_API.md) - Offline Support Implementation Guide
 
 ## Base URL

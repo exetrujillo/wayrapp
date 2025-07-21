@@ -1,6 +1,17 @@
 import { PrismaClient, Course as PrismaCourse } from "@prisma/client";
 import { Course, CreateCourseDto } from "../types";
 import { PaginatedResult, QueryOptions } from "../../../shared/types";
+import {
+  buildPrismaQueryParams,
+  buildTextSearchWhere,
+  buildBooleanFilterWhere,
+  combineWhereConditions,
+  createPaginationResult,
+  COMMON_FIELD_MAPPINGS,
+  SORT_FIELDS,
+  buildChildCountInclude,
+  mapChildCounts
+} from "../../../shared/utils/repositoryHelpers";
 
 export class CourseRepository {
   constructor(private prisma: PrismaClient) {}
@@ -39,61 +50,55 @@ export class CourseRepository {
   }
 
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Course>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = "created_at",
-      sortOrder = "desc",
-      filters = {},
-    } = options;
+    const { filters = {}, search } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.COURSE,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
 
-    const where: any = {};
+    // Build where conditions
+    const searchWhere = buildTextSearchWhere(search, ['name', 'description']);
+    const sourceLanguageWhere = filters["source_language"] 
+      ? { sourceLanguage: filters["source_language"] } 
+      : {};
+    const targetLanguageWhere = filters["target_language"] 
+      ? { targetLanguage: filters["target_language"] } 
+      : {};
+    const isPublicWhere = buildBooleanFilterWhere(filters["is_public"], 'isPublic');
 
-    if (filters["source_language"]) {
-      where.sourceLanguage = filters["source_language"];
-    }
+    const where = combineWhereConditions(
+      searchWhere,
+      sourceLanguageWhere,
+      targetLanguageWhere,
+      isPublicWhere
+    );
 
-    if (filters["target_language"]) {
-      where.targetLanguage = filters["target_language"];
-    }
-
-    if (filters["is_public"] !== undefined) {
-      where.isPublic = filters["is_public"];
-    }
+    // Build include for child counts
+    const include = buildChildCountInclude(['levels']);
 
     const [courses, total] = await Promise.all([
       this.prisma.course.findMany({
+        ...queryParams,
         where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { levels: true },
-          },
-        },
+        include,
       }),
       this.prisma.course.count({ where }),
     ]);
 
-    const mappedCourses = courses.map((course) => ({
-      ...this.mapPrismaToModel(course),
-      levels_count: course._count.levels,
-    }));
+    // Map results with child counts
+    const mappedCourses = courses.map((course) => {
+      const mapped = this.mapPrismaToModel(course);
+      return {
+        ...mapped,
+        ...mapChildCounts(course, { levels: 'levels_count' })
+      };
+    });
 
-    return {
-      data: mappedCourses,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
+    return createPaginationResult(mappedCourses, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<CreateCourseDto>): Promise<Course> {

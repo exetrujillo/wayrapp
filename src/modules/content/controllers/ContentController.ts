@@ -5,11 +5,7 @@ import {
     CreateCourseSchema,
     CreateLevelDto,
     CreateSectionDto,
-    CreateModuleDto,
-    CourseQuery,
-    LevelQuery,
-    SectionQuery,
-    ModuleQuery,
+    CreateModuleDto
 } from "../schemas";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
@@ -84,22 +80,18 @@ export class ContentController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-            const query: CourseQuery = req.query as any;
-            const options = {
-                page: query.page ?? 1,
-                limit: query.limit ?? 20,
-                ...(query.sortBy && { sortBy: query.sortBy }),
-                sortOrder: query.sortOrder ?? "desc",
-                filters: {
-                    ...(query.source_language && {
-                        source_language: query.source_language,
-                    }),
-                    ...(query.target_language && {
-                        target_language: query.target_language,
-                    }),
-                    ...(query.is_public !== undefined && { is_public: query.is_public }),
-                },
+            // Use pagination middleware data if available, otherwise fallback to query params
+            const options = req.pagination || {
+                page: 1,
+                limit: 20,
+                sortOrder: "desc",
+                filters: {}
             };
+            
+            // Add search parameter if provided
+            if (req.query['search']) {
+                options.search = req.query['search'] as string;
+            }
 
             const result = await this.contentService.getCourses(options);
 
@@ -109,14 +101,9 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
-            res.set({
-                "X-Total-Count": result.pagination.total.toString(),
-                "X-Total-Pages": result.pagination.totalPages.toString(),
-                "X-Current-Page": result.pagination.page.toString(),
-                "X-Has-Next": result.pagination.hasNext.toString(),
-                "X-Has-Prev": result.pagination.hasPrev.toString(),
-            });
+            // Add pagination info to response headers using the enhanced helper
+            const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
+            addPaginationHeaders(res, result.pagination);
 
             res.status(HttpStatus.OK).json(response);
         } catch (error) {
@@ -300,13 +287,20 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const query: LevelQuery = req.query as any;
-            const options = {
-                page: query.page ?? 1,
-                limit: query.limit ?? 20,
-                ...(query.sortBy && { sortBy: query.sortBy }),
-                sortOrder: query.sortOrder ?? "asc",
+            
+            // Use pagination middleware data if available, otherwise fallback to query params
+            const options = req.pagination || {
+                page: 1,
+                limit: 20,
+                sortBy: "order",
+                sortOrder: "asc",
+                filters: {}
             };
+            
+            // Add search parameter if provided
+            if (req.query['search']) {
+                options.search = req.query['search'] as string;
+            }
 
             const result = await this.contentService.getLevelsByCourse(
                 courseId,
@@ -319,14 +313,9 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
-            res.set({
-                "X-Total-Count": result.pagination.total.toString(),
-                "X-Total-Pages": result.pagination.totalPages.toString(),
-                "X-Current-Page": result.pagination.page.toString(),
-                "X-Has-Next": result.pagination.hasNext.toString(),
-                "X-Has-Prev": result.pagination.hasPrev.toString(),
-            });
+            // Add pagination info to response headers using the enhanced helper
+            const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
+            addPaginationHeaders(res, result.pagination);
 
             res.status(HttpStatus.OK).json(response);
         } catch (error) {
@@ -463,13 +452,20 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const query: SectionQuery = req.query as any;
-            const options = {
-                page: query.page ?? 1,
-                limit: query.limit ?? 20,
-                ...(query.sortBy && { sortBy: query.sortBy }),
-                sortOrder: query.sortOrder ?? "asc",
+            
+            // Use pagination middleware data if available, otherwise fallback to query params
+            const options = req.pagination || {
+                page: 1,
+                limit: 20,
+                sortBy: "order",
+                sortOrder: "asc",
+                filters: {}
             };
+            
+            // Add search parameter if provided
+            if (req.query['search']) {
+                options.search = req.query['search'] as string;
+            }
 
             const result = await this.contentService.getSectionsByLevel(
                 levelId,
@@ -482,14 +478,9 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
-            res.set({
-                "X-Total-Count": result.pagination.total.toString(),
-                "X-Total-Pages": result.pagination.totalPages.toString(),
-                "X-Current-Page": result.pagination.page.toString(),
-                "X-Has-Next": result.pagination.hasNext.toString(),
-                "X-Has-Prev": result.pagination.hasPrev.toString(),
-            });
+            // Add pagination info to response headers using the enhanced helper
+            const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
+            addPaginationHeaders(res, result.pagination);
 
             res.status(HttpStatus.OK).json(response);
         } catch (error) {
@@ -629,16 +620,28 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const query: ModuleQuery = req.query as any;
-            const options = {
-                page: query.page ?? 1,
-                limit: query.limit ?? 20,
-                ...(query.sortBy && { sortBy: query.sortBy }),
-                sortOrder: query.sortOrder ?? "asc",
-                filters: {
-                    ...(query.module_type && { module_type: query.module_type }),
-                },
+            
+            // Use pagination middleware data if available, otherwise fallback to query params
+            const options = req.pagination || {
+                page: 1,
+                limit: 20,
+                sortBy: "order",
+                sortOrder: "asc",
+                filters: {}
             };
+            
+            // Add search parameter if provided
+            if (req.query['search']) {
+                options.search = req.query['search'] as string;
+            }
+            
+            // Add module_type filter if provided
+            if (req.query['module_type']) {
+                options.filters = {
+                    ...options.filters,
+                    module_type: req.query['module_type']
+                };
+            }
 
             const result = await this.contentService.getModulesBySection(
                 sectionId,
@@ -651,14 +654,9 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
-            res.set({
-                "X-Total-Count": result.pagination.total.toString(),
-                "X-Total-Pages": result.pagination.totalPages.toString(),
-                "X-Current-Page": result.pagination.page.toString(),
-                "X-Has-Next": result.pagination.hasNext.toString(),
-                "X-Has-Prev": result.pagination.hasPrev.toString(),
-            });
+            // Add pagination info to response headers using the enhanced helper
+            const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
+            addPaginationHeaders(res, result.pagination);
 
             res.status(HttpStatus.OK).json(response);
         } catch (error) {

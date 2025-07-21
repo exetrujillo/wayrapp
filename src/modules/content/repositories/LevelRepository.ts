@@ -1,6 +1,16 @@
 import { PrismaClient, Level as PrismaLevel } from '@prisma/client';
 import { Level, CreateLevelDto } from '../types';
 import { PaginatedResult, QueryOptions } from '../../../shared/types';
+import {
+  buildPrismaQueryParams,
+  buildTextSearchWhere,
+  combineWhereConditions,
+  createPaginationResult,
+  COMMON_FIELD_MAPPINGS,
+  SORT_FIELDS,
+  buildChildCountInclude,
+  mapChildCounts
+} from '../../../shared/utils/repositoryHelpers';
 
 export class LevelRepository {
   constructor(private prisma: PrismaClient) {}
@@ -38,88 +48,95 @@ export class LevelRepository {
   }
 
   async findByCourseId(courseId: string, options: QueryOptions = {}): Promise<PaginatedResult<Level>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'order',
-      sortOrder = 'asc'
-    } = options;
+    const { filters = {}, search } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.LEVEL,
+      'order',
+      COMMON_FIELD_MAPPINGS
+    );
+
+    // Build where conditions
+    const searchWhere = buildTextSearchWhere(search, ['name', 'code']);
+    const courseWhere = { courseId };
+    const codeWhere = filters['code'] ? { code: filters['code'] } : {};
+
+    const where = combineWhereConditions(
+      courseWhere,
+      searchWhere,
+      codeWhere
+    );
+
+    // Build include for child counts
+    const include = buildChildCountInclude(['sections']);
 
     const [levels, total] = await Promise.all([
       this.prisma.level.findMany({
-        where: { courseId },
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { sections: true }
-          }
-        }
+        ...queryParams,
+        where,
+        include,
       }),
-      this.prisma.level.count({ where: { courseId } })
+      this.prisma.level.count({ where })
     ]);
 
-    const mappedLevels = levels.map(level => ({
-      ...this.mapPrismaToModel(level),
-      sections_count: level._count.sections
-    }));
+    // Map results with child counts
+    const mappedLevels = levels.map((level) => {
+      const mapped = this.mapPrismaToModel(level);
+      return {
+        ...mapped,
+        ...mapChildCounts(level, { sections: 'sections_count' })
+      };
+    });
 
-    return {
-      data: mappedLevels,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
-    };
+    return createPaginationResult(mappedLevels, total, options.page || 1, options.limit || 20);
   }
 
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Level>> {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'desc'
-    } = options;
+    const { filters = {}, search } = options;
 
-    const skip = (page - 1) * limit;
+    // Build query parameters using standardized helpers
+    const queryParams = buildPrismaQueryParams(
+      options,
+      SORT_FIELDS.LEVEL,
+      'created_at',
+      COMMON_FIELD_MAPPINGS
+    );
+
+    // Build where conditions
+    const searchWhere = buildTextSearchWhere(search, ['name', 'code']);
+    const courseWhere = filters['course_id'] ? { courseId: filters['course_id'] } : {};
+    const codeWhere = filters['code'] ? { code: filters['code'] } : {};
+
+    const where = combineWhereConditions(
+      searchWhere,
+      courseWhere,
+      codeWhere
+    );
+
+    // Build include for child counts
+    const include = buildChildCountInclude(['sections']);
 
     const [levels, total] = await Promise.all([
       this.prisma.level.findMany({
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        include: {
-          _count: {
-            select: { sections: true }
-          }
-        }
+        ...queryParams,
+        where,
+        include,
       }),
-      this.prisma.level.count()
+      this.prisma.level.count({ where })
     ]);
 
-    const mappedLevels = levels.map(level => ({
-      ...this.mapPrismaToModel(level),
-      sections_count: level._count.sections
-    }));
+    // Map results with child counts
+    const mappedLevels = levels.map((level) => {
+      const mapped = this.mapPrismaToModel(level);
+      return {
+        ...mapped,
+        ...mapChildCounts(level, { sections: 'sections_count' })
+      };
+    });
 
-    return {
-      data: mappedLevels,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
-    };
+    return createPaginationResult(mappedLevels, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<Omit<CreateLevelDto, 'id' | 'course_id'>>): Promise<Level> {
