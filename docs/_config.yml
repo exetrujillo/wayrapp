@@ -33,6 +33,8 @@ nav:
     url: /PAGINATION_AND_FILTERING
   - title: Packaged Content
     url: /PACKAGED_CONTENT_API
+  - title: Performance Optimization
+    url: /PERFORMANCE_OPTIMIZATION
   - title: Security
     url: /SECURITY
   - title: Database Setup

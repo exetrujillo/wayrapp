@@ -9,9 +9,9 @@ Welcome to the official documentation for the WayrApp Backend API. This document
 
 ## Getting Started
 
-WayrApp is an open-source language learning platform that provides a comprehensive API for building language learning applications. The API is organized around REST principles and uses standard HTTP response codes, authentication, and verbs.
+WayrApp is a descentralized open-source language learning platform that provides a comprehensive API for building language learning applications. The API is organized around REST principles and uses standard HTTP response codes, authentication, and verbs.
 
-### API Base URL
+### API Base URL for example
 
 ```
 https://api.wayrapp.com/v1 (not real yet)
@@ -19,7 +19,7 @@ https://api.wayrapp.com/v1 (not real yet)
 
 ### Authentication
 
-Most API endpoints require authentication. WayrApp uses JWT (JSON Web Tokens) for authentication. See the [Authentication](/AUTHENTICATION) section for details on how to authenticate your requests.
+Most API endpoints require authentication. WayrApp uses JWT (JSON Web Tokens) for authentication. See the [Authentication](/wayrapp/AUTHENTICATION) section for details on how to authenticate your requests.
 
 ## Key Features
 
@@ -35,14 +35,14 @@ Browse through the documentation sections using the navigation menu to learn mor
 
 ## API Status
 
-You can check the current API status at our [status page](https://status.wayrapp.com).
+You can check the current API status at our [status page](https://status.wayrapp.com) (not available yet).
 
 ## Support
 
 If you need help or have questions about the API, please:
 
 1. Check the documentation thoroughly
-2. Look for answers in our [GitHub Issues](https://github.com/wayrapp/backend/issues)
+2. Look for answers in our [GitHub Issues](https://github.com/exetrujillo/wayrapp/issues)
 3. Create a new issue if you can't find an answer
 
 ## Contributing

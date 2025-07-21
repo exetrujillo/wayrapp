@@ -334,8 +334,8 @@ describe('Error Handling Integration Tests', () => {
       const rateLimitedResponses = responses.filter(r => r.status === 429);
       
       if (rateLimitedResponses.length > 0) {
-        expect(rateLimitedResponses[0].body.error.code).toBe('RATE_LIMIT_ERROR');
-        expect(rateLimitedResponses[0].body.error).toHaveProperty('timestamp');
+        expect(rateLimitedResponses[0]?.body?.error?.code).toBe('RATE_LIMIT_ERROR');
+        expect(rateLimitedResponses[0]?.body?.error).toHaveProperty('timestamp');
       }
     });
   });

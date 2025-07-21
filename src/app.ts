@@ -54,15 +54,13 @@ app.use(xssProtection);
 // Request logging
 app.use(requestLogger);
 
-// Health check endpoint
-app.get("/health", (_req, res) => {
-  res.status(200).json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env["NODE_ENV"] || "development",
-  });
-});
+// Performance monitoring middleware
+import { performanceMiddleware, performanceMonitor } from "@/shared/utils/performance";
+app.use(performanceMiddleware(performanceMonitor));
+
+// Health check and monitoring routes
+import healthRoutes from "@/shared/routes/healthRoutes";
+app.use(healthRoutes);
 
 // Import routes
 import authRoutes from "@/modules/users/routes/authRoutes";

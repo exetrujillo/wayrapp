@@ -497,7 +497,7 @@ describe('Cross-Module Integration Tests', () => {
 
       // Try to access content (should still work with access token until it expires)
       // In a real scenario, you might implement token blacklisting for access tokens too
-      const contentResponse = await request(app)
+      await request(app)
         .get(`${API_BASE}/courses/${testCourse.id}`)
         .set('Authorization', `Bearer ${accessToken}`);
 
