@@ -1,4 +1,4 @@
-# docs/_config.yml
+# WayrApp Backend Documentation Configuration
 
 title: WayrApp API Documentation
 description: >-
@@ -7,6 +7,15 @@ description: >-
 theme: jekyll-theme-minimal
 baseurl: "/wayrapp"
 
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+
+# Navigation structure
 nav:
   - title: API Overview
     url: /API_OVERVIEW
@@ -20,13 +29,21 @@ nav:
     url: /LESSONS_EXERCISES
   - title: Progress
     url: /PROGRESS
-  - title: Packaged Content
-    url: /PACKAGED_CONTENT_API
   - title: Pagination & Filtering
     url: /PAGINATION_AND_FILTERING
+  - title: Packaged Content
+    url: /PACKAGED_CONTENT_API
   - title: Database Setup
     url: /DATABASE_SETUP
 
+# SEO settings
+author: Exequiel Trujillo
+twitter:
+  username: wayrapp
+  card: summary_large_image
 
-plugins:
-  - jekyll-seo-tag
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/

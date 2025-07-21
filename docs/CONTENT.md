@@ -1,3 +1,8 @@
+---
+layout: default
+title: Content Management
+---
+
 # Content Management Endpoints
 
 ## Courses

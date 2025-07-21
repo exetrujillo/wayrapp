@@ -1,3 +1,8 @@
+---
+layout: default
+title: Lessons & Exercises
+---
+
 # Lessons & Exercises Management
 
 ## Lessons

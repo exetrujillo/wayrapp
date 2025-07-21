@@ -1,3 +1,8 @@
+---
+layout: default
+title: Authentication
+---
+
 # Authentication Endpoints
 
 ## Register a New User

@@ -1,195 +1,50 @@
 ---
 layout: default
-title: API Overview
+title: WayrApp API Documentation
 ---
 
-# WayrApp API Documentation
+# WayrApp Backend API Documentation
 
-## Table of Contents
+Welcome to the official documentation for the WayrApp Backend API. This documentation provides comprehensive information about the API endpoints, authentication, data models, and best practices for integrating with the WayrApp platform.
 
-- [Database Setup](DATABASE_SETUP.md) - Database configuration and migration guide
-- [Authentication](AUTHENTICATION.md) - Registration, Login, Token Management
-- [Users](USERS.md) - User Profile Management, Admin User Operations
-- [Content](CONTENT.md) - Courses, Levels, Sections, Modules Management
-- [Lessons & Exercises](LESSONS_EXERCISES.md) - Lesson Management and Exercise Assignment
-- [Progress](PROGRESS.md) - Progress Tracking and Analytics
-- [Pagination & Filtering](PAGINATION_AND_FILTERING.md) - Pagination and filtering capabilities of the WayrApp API
-- [Packaged Content API](PACKAGED_CONTENT_API.md) - Offline Support Implementation Guide
+## Getting Started
 
-## Base URL
-All API endpoints are prefixed with `/api`
+WayrApp is an open-source language learning platform that provides a comprehensive API for building language learning applications. The API is organized around REST principles and uses standard HTTP response codes, authentication, and verbs.
 
-## Consistent Response Format
-All API responses follow a consistent format:
-
-```json
-{
-  "success": true,
-  "timestamp": "2023-07-20T12:34:56.789Z",
-  "data": {
-    // Response data here
-  }
-}
-```
-
-For error responses:
-```json
-{
-  "success": false,
-  "timestamp": "2023-07-20T12:34:56.789Z",
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid input data",
-    "details": {
-      // Error details here
-    }
-  }
-}
-```
-
-## Pagination
-
-For paginated responses, pagination information is included in response headers:
-- `X-Total-Count`: Total number of items
-- `X-Total-Pages`: Total number of pages
-- `X-Current-Page`: Current page number
-- `X-Has-Next`: Whether there are more pages
-- `X-Has-Prev`: Whether there are previous pages
-
-Standard pagination query parameters:
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 20)
-- `sortBy` (optional): Field to sort by
-- `sortOrder` (optional): Sort order (asc/desc)
-
-## Authentication Security Features
-
-### Password Security
-- Passwords are hashed using bcrypt before storage
-- Password requirements enforced:
-  - Minimum 8 characters
-  - At least one uppercase letter
-  - At least one lowercase letter
-  - At least one number
-  - At least one special character
-
-### JWT Authentication
-- Access tokens expire after 15 minutes
-- Refresh tokens expire after 7 days
-- Refresh tokens can be revoked on logout
-- Blacklisted tokens are stored in the database
-
-### Role-Based Access Control
-- Three user roles: student, content_creator, admin
-- Granular permissions system for each role
-- Resource ownership validation for user-specific resources
-
-### Security Measures
-- Rate limiting on authentication endpoints
-- Input validation and sanitization
-- CORS protection
-- Secure HTTP headers
-
-## HTTP Status Codes
-
-The API uses standard HTTP status codes:
-
-- `200 OK` - Request successful
-- `201 Created` - Resource created successfully
-- `204 No Content` - Request successful, no content to return
-- `304 Not Modified` - Resource not modified (for conditional requests)
-- `400 Bad Request` - Invalid request data
-- `401 Unauthorized` - Authentication required
-- `403 Forbidden` - Insufficient permissions
-- `404 Not Found` - Resource not found
-- `409 Conflict` - Resource conflict (e.g., duplicate ID)
-- `422 Unprocessable Entity` - Validation error
-- `429 Too Many Requests` - Rate limit exceeded
-- `500 Internal Server Error` - Server error
-
-## Error Codes
-
-The API uses specific error codes for different types of errors:
-
-- `VALIDATION_ERROR` - Input validation failed
-- `AUTHENTICATION_ERROR` - Authentication failed
-- `AUTHORIZATION_ERROR` - Insufficient permissions
-- `NOT_FOUND` - Resource not found
-- `CONFLICT` - Resource conflict
-- `INTERNAL_ERROR` - Internal server error
-- `DATABASE_ERROR` - Database operation failed
-- `RATE_LIMIT_ERROR` - Rate limit exceeded
-
-## Rate Limiting
-
-API endpoints have different rate limits based on their usage patterns:
-
-- **Authentication endpoints**: 5 requests per minute per IP
-- **Content creation endpoints**: 10 requests per minute per user
-- **General read endpoints**: 100 requests per minute per user
-- **Progress tracking**: 50 requests per minute per user
-
-Rate limit information is included in response headers:
-- `X-RateLimit-Limit`: Request limit per window
-- `X-RateLimit-Remaining`: Remaining requests in current window
-- `X-RateLimit-Reset`: Time when the rate limit resets
-
-## Content Hierarchy
-
-The WayrApp content follows a hierarchical structure:
+### API Base URL
 
 ```
-Course
-├── Level (A1, A2, B1, etc.)
-│   └── Section (Topics within a level)
-│       └── Module (Learning units)
-│           └── Lesson (Individual lessons)
-│               └── Exercise (Practice activities)
+https://api.wayrapp.com/v1
 ```
 
-### Content Relationships
-- **Courses** contain multiple **Levels**
-- **Levels** contain multiple **Sections** 
-- **Sections** contain multiple **Modules**
-- **Modules** contain multiple **Lessons**
-- **Lessons** can have multiple **Exercises** (many-to-many relationship)
-- **Exercises** are reusable across different lessons
+### Authentication
 
-## Offline Support
+Most API endpoints require authentication. WayrApp uses JWT (JSON Web Tokens) for authentication. See the [Authentication](/AUTHENTICATION) section for details on how to authenticate your requests.
 
-The API provides comprehensive offline support through:
+## Key Features
 
-### Packaged Content API
-- **Complete course packages** with all nested content
-- **Versioning support** with last-modified timestamps
-- **Conditional requests** using If-Modified-Since headers
-- **HTTP caching** with appropriate cache headers
+- **User Management**: Create and manage user accounts, profiles, and authentication
+- **Content Management**: Create and retrieve language learning content
+- **Progress Tracking**: Track user progress and learning statistics
+- **Offline Support**: Package content for offline use with efficient synchronization
+- **Pagination & Filtering**: Advanced query capabilities for efficient data retrieval
 
-### Progress Synchronization
-- **Offline progress tracking** with local storage
-- **Batch synchronization** of multiple completions
-- **Conflict resolution** for duplicate entries
-- **Timestamp-based** precedence for data conflicts
+## Documentation Sections
 
-## Development Guidelines
+Browse through the documentation sections using the navigation menu to learn more about specific aspects of the API.
 
-### API Design Principles
-- **RESTful conventions** for endpoint design
-- **Consistent naming** across all endpoints
-- **Comprehensive validation** for all inputs
-- **Detailed error messages** for debugging
-- **Extensive documentation** with examples
+## API Status
 
-### Testing Requirements
-- **Unit tests** for all service methods
-- **Integration tests** for API endpoints
-- **Authentication tests** for protected routes
-- **Validation tests** for input schemas
-- **Error handling tests** for edge cases
+You can check the current API status at our [status page](https://status.wayrapp.com).
 
-### Security Best Practices
-- **Input sanitization** for all user data
-- **SQL injection prevention** through Prisma ORM
-- **XSS protection** with proper encoding
-- **CSRF protection** for state-changing operations
-- **Secure headers** for all responses
+## Support
+
+If you need help or have questions about the API, please:
+
+1. Check the documentation thoroughly
+2. Look for answers in our [GitHub Issues](https://github.com/wayrapp/backend/issues)
+3. Create a new issue if you can't find an answer
+
+## Contributing
+
+WayrApp is an open-source project. We welcome contributions to both the platform and its documentation. See our [Contributing Guide](https://github.com/wayrapp/backend/blob/main/CONTRIBUTING.md) for more information.

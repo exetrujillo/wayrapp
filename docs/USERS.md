@@ -1,3 +1,8 @@
+---
+layout: default
+title: User Management
+---
+
 # User Management Endpoints
 
 ## Get Current User Profile

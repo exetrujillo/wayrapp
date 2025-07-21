@@ -1,3 +1,8 @@
+---
+layout: default
+title: Pagination and Filtering Guide
+---
+
 # Pagination and Filtering Guide
 
 This document explains the pagination and filtering capabilities of the WayrApp API.

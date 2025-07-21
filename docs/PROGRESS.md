@@ -1,3 +1,8 @@
+---
+layout: default
+title: Progress Tracking
+---
+
 # Progress Tracking Endpoints
 
 The Progress Tracking system manages user learning progress, experience points, lesson completions, and gamification features like streaks and lives. All endpoints require authentication unless otherwise specified.

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Packaged Content API
+---
+
 # Packaged Content API for Offline Support
 
 This document describes the implementation of the Packaged Content API feature for WayrApp backend, which provides offline-first functionality with efficient caching and versioning support.

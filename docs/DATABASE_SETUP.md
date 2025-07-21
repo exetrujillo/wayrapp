@@ -1,3 +1,8 @@
+---
+layout: default
+title: Database Setup
+---
+
 # WayrApp Database Setup Instructions
 
 **Author:** Exequiel Trujillo
