@@ -1,0 +1,74 @@
+# GitHub Pages Configuration for WayrApp Backend Documentation
+
+title: WayrApp Backend API Documentation
+description: Comprehensive API documentation for WayrApp - Open-source language learning platform backend
+url: "https://wayrapp.github.io"
+baseurl: "/backend"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# SEO settings
+author: Exequiel Trujillo
+twitter:
+  username: wayrapp
+  card: summary_large_image
+
+social:
+  name: WayrApp
+  links:
+    - https://github.com/wayrapp/backend
+
+# Navigation
+header_pages:
+  - API_OVERVIEW.md
+  - AUTHENTICATION.md
+  - USERS.md
+  - CONTENT.md
+  - LESSONS_EXERCISES.md
+  - PROGRESS.md
+  - PACKAGED_CONTENT_API.md
+  - DATABASE_SETUP.md
+
+# Exclude files from processing
+exclude:
+  - node_modules/
+  - vendor/
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - package.json
+  - package-lock.json
+  - scripts/
+  - .github/
+
+# Include files
+include:
+  - _site/
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Default settings
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"

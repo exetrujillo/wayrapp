@@ -42,14 +42,57 @@ src/
 
 ## 📖 Documentation
 
+### 🌐 Live API Documentation
+- **[Interactive API Docs](https://wayrapp.github.io/backend/)** - GitHub Pages hosted documentation
+- **API Endpoints** (when server is running):
+  - `GET /api/docs` - OpenAPI 3.0 specification
+  - `GET /api/docs/overview` - Comprehensive API overview
+  - `GET /api/status` - API status and health check
+
+### 📚 Detailed Documentation
 - **[Database Setup](docs/DATABASE_SETUP.md)** - Database configuration and migration guide
-- **[API Documentation](docs/API_OVERVIEW.md)** - Complete API reference
-  - [Authentication](docs/AUTHENTICATION.md) - Auth endpoints and security
-  - [Users](docs/USERS.md) - User management
-  - [Content](docs/CONTENT.md) - Course and content management
-  - [Lessons & Exercises](docs/LESSONS_EXERCISES.md) - Learning content
-  - [Progress](docs/PROGRESS.md) - Progress tracking and gamification
-- **[Packaged Content API](docs/PACKAGED_CONTENT_API.md)** - Offline support implementation guide
+- **[API Overview](docs/API_OVERVIEW.md)** - Complete API reference and usage patterns
+- **Authentication & Security**
+  - [Authentication](docs/AUTHENTICATION.md) - Auth endpoints, JWT tokens, and security
+  - [Users](docs/USERS.md) - User management and profile operations
+- **Content Management**
+  - [Content](docs/CONTENT.md) - Course hierarchy and content management
+  - [Lessons & Exercises](docs/LESSONS_EXERCISES.md) - Learning content and exercise types
+- **Features & Functionality**
+  - [Progress](docs/PROGRESS.md) - Progress tracking, gamification, and analytics
+  - [Packaged Content API](docs/PACKAGED_CONTENT_API.md) - Offline support and caching
+
+### 🔧 API Documentation Endpoints
+
+When running the server locally, you can access comprehensive API documentation:
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/docs` | OpenAPI 3.0 specification (Swagger compatible) |
+| `/api/docs/overview` | API overview with usage patterns |
+| `/api/docs/authentication` | Authentication endpoints and security |
+| `/api/docs/users` | User management operations |
+| `/api/docs/content` | Content hierarchy management |
+| `/api/docs/lessons-exercises` | Lesson and exercise management |
+| `/api/docs/progress` | Progress tracking and gamification |
+| `/api/docs/packaged-content` | Offline support implementation |
+| `/api/docs/database-setup` | Database setup instructions |
+
+### 📱 API Usage Examples
+
+```bash
+# Get API information
+curl http://localhost:3000/api
+
+# Get comprehensive documentation
+curl http://localhost:3000/api/docs
+
+# Check API status
+curl http://localhost:3000/api/status
+
+# Health check
+curl http://localhost:3000/health
+```
 
 ## 🚀 Quick Start
 

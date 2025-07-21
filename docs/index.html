@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WayrApp Backend API Documentation</title>
+    <meta name="description" content="Comprehensive API documentation for WayrApp - Open-source language learning platform backend">
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/wayrapp/backend/main/docs/favicon.ico">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .code-block {
+            background: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .section-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">WayrApp API</h1>
+                    <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">v1.0.0</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#overview" class="nav-link px-3 py-2 rounded transition-colors">Overview</a>
+                    <a href="#endpoints" class="nav-link px-3 py-2 rounded transition-colors">Endpoints</a>
+                    <a href="#authentication" class="nav-link px-3 py-2 rounded transition-colors">Authentication</a>
+                    <a href="#examples" class="nav-link px-3 py-2 rounded transition-colors">Examples</a>
+                    <a href="https://github.com/wayrapp/backend" target="_blank" class="nav-link px-3 py-2 rounded transition-colors">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-5xl font-bold mb-6">WayrApp Backend API</h2>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">
+                Comprehensive language learning platform backend with robust content management, 
+                progress tracking, and offline support capabilities.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#quick-start" class="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Get Started
+                </a>
+                <a href="#api-reference" class="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors">
+                    API Reference
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-16">
+        <div class="container mx-auto px-6">
+            <h3 class="text-3xl font-bold text-center mb-12">API Overview</h3>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-blue-500 text-3xl mb-4">🔐</div>
+                    <h4 class="text-xl font-semibold mb-3">Authentication</h4>
+                    <p class="text-gray-600">JWT-based authentication with role-based access control and refresh token rotation.</p>
+                </div>
+                
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-green-500 text-3xl mb-4">📚</div>
+                    <h4 class="text-xl font-semibold mb-3">Content Management</h4>
+                    <p class="text-gray-600">Hierarchical course structure with courses, levels, sections, modules, and lessons.</p>
+                </div>
+                
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-purple-500 text-3xl mb-4">📊</div>
+                    <h4 class="text-xl font-semibold mb-3">Progress Tracking</h4>
+                    <p class="text-gray-600">Experience points, streaks, lives system, and comprehensive progress analytics.</p>
+                </div>
+                
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-orange-500 text-3xl mb-4">📱</div>
+                    <h4 class="text-xl font-semibold mb-3">Offline Support</h4>
+                    <p class="text-gray-600">Packaged content API with versioning, caching, and offline synchronization.</p>
+                </div>
+                
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-red-500 text-3xl mb-4">🎯</div>
+                    <h4 class="text-xl font-semibold mb-3">Exercise System</h4>
+                    <p class="text-gray-600">Multiple exercise types with reusable components and flexible assignment.</p>
+                </div>
+                
+                <div class="section-card bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-indigo-500 text-3xl mb-4">🛡️</div>
+                    <h4 class="text-xl font-semibold mb-3">Security</h4>
+                    <p class="text-gray-600">Input validation, rate limiting, CORS protection, and secure headers.</p>
+                </div>
+            </div>
+
+            <!-- Base URL and Response Format -->
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <h4 class="text-2xl font-semibold mb-6">Base URL & Response Format</h4>
+                
+                <div class="mb-6">
+                    <h5 class="text-lg font-medium mb-3">Base URL</h5>
+                    <div class="code-block">
+                        <code class="text-green-400">https://api.wayrapp.com/api/v1</code>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="text-lg font-medium mb-3">Success Response</h5>
+                        <pre class="code-block"><code class="language-json">{
+  "success": true,
+  "timestamp": "2024-01-20T12:34:56.789Z",
+  "data": {
+    // Response data here
+  }
+}</code></pre>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-lg font-medium mb-3">Error Response</h5>
+                        <pre class="code-block"><code class="language-json">{
+  "success": false,
+  "timestamp": "2024-01-20T12:34:56.789Z",
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error description",
+    "details": {},
+    "path": "/api/v1/endpoint"
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quick-start" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-6">
+            <h3 class="text-3xl font-bold text-center mb-12">Quick Start</h3>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <h4 class="text-2xl font-semibold mb-6">Authentication Flow</h4>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h5 class="text-lg font-medium mb-3">1. Register a new user</h5>
+                            <pre class="code-block"><code class="language-bash">curl -X POST https://api.wayrapp.com/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!",
+    "username": "learner123"
+  }'</code></pre>
+                        </div>
+                        
+                        <div>
+                            <h5 class="text-lg font-medium mb-3">2. Login to get tokens</h5>
+                            <pre class="code-block"><code class="language-bash">curl -X POST https://api.wayrapp.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!"
+  }'</code></pre>
+                        </div>
+                        
+                        <div>
+                            <h5 class="text-lg font-medium mb-3">3. Use access token for authenticated requests</h5>
+                            <pre class="code-block"><code class="language-bash">curl -X GET https://api.wayrapp.com/api/v1/users/profile \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Reference Section -->
+    <section id="api-reference" class="py-16">
+        <div class="container mx-auto px-6">
+            <h3 class="text-3xl font-bold text-center mb-12">API Reference</h3>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="./AUTHENTICATION.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-blue-500 text-2xl mb-3">🔐</div>
+                    <h4 class="text-xl font-semibold mb-2">Authentication</h4>
+                    <p class="text-gray-600 mb-4">User registration, login, token management, and security features.</p>
+                    <span class="text-blue-500 font-medium">View Documentation →</span>
+                </a>
+                
+                <a href="./USERS.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-green-500 text-2xl mb-3">👥</div>
+                    <h4 class="text-xl font-semibold mb-2">Users</h4>
+                    <p class="text-gray-600 mb-4">User profile management and administrative operations.</p>
+                    <span class="text-green-500 font-medium">View Documentation →</span>
+                </a>
+                
+                <a href="./CONTENT.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-purple-500 text-2xl mb-3">📚</div>
+                    <h4 class="text-xl font-semibold mb-2">Content</h4>
+                    <p class="text-gray-600 mb-4">Course hierarchy management and content operations.</p>
+                    <span class="text-purple-500 font-medium">View Documentation →</span>
+                </a>
+                
+                <a href="./LESSONS_EXERCISES.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-orange-500 text-2xl mb-3">🎯</div>
+                    <h4 class="text-xl font-semibold mb-2">Lessons & Exercises</h4>
+                    <p class="text-gray-600 mb-4">Lesson management and exercise assignment system.</p>
+                    <span class="text-orange-500 font-medium">View Documentation →</span>
+                </a>
+                
+                <a href="./PROGRESS.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-red-500 text-2xl mb-3">📊</div>
+                    <h4 class="text-xl font-semibold mb-2">Progress</h4>
+                    <p class="text-gray-600 mb-4">Progress tracking, gamification, and analytics.</p>
+                    <span class="text-red-500 font-medium">View Documentation →</span>
+                </a>
+                
+                <a href="./PACKAGED_CONTENT_API.html" class="section-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-indigo-500 text-2xl mb-3">📱</div>
+                    <h4 class="text-xl font-semibold mb-2">Offline Support</h4>
+                    <p class="text-gray-600 mb-4">Packaged content API and offline synchronization.</p>
+                    <span class="text-indigo-500 font-medium">View Documentation →</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live API Endpoints -->
+    <section id="endpoints" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-6">
+            <h3 class="text-3xl font-bold text-center mb-12">Live API Endpoints</h3>
+            
+            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+                <p class="text-gray-600 mb-6">When running the server locally, you can access these interactive documentation endpoints:</p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold">Endpoint</th>
+                                <th class="text-left py-3 px-4 font-semibold">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs</code></td>
+                                <td class="py-3 px-4">OpenAPI 3.0 specification (Swagger compatible)</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs/overview</code></td>
+                                <td class="py-3 px-4">API overview with usage patterns</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs/authentication</code></td>
+                                <td class="py-3 px-4">Authentication endpoints and security</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs/users</code></td>
+                                <td class="py-3 px-4">User management operations</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs/content</code></td>
+                                <td class="py-3 px-4">Content hierarchy management</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/docs/progress</code></td>
+                                <td class="py-3 px-4">Progress tracking and gamification</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4"><code class="bg-gray-100 px-2 py-1 rounded">/api/status</code></td>
+                                <td class="py-3 px-4">API status and health check</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">WayrApp Backend</h4>
+                    <p class="text-gray-300">Open-source language learning platform backend with comprehensive API documentation.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">Documentation</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="./API_OVERVIEW.html" class="hover:text-white transition-colors">API Overview</a></li>
+                        <li><a href="./AUTHENTICATION.html" class="hover:text-white transition-colors">Authentication</a></li>
+                        <li><a href="./DATABASE_SETUP.html" class="hover:text-white transition-colors">Database Setup</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-xl font-semibold mb-4">Links</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="https://github.com/wayrapp/backend" target="_blank" class="hover:text-white transition-colors">GitHub Repository</a></li>
+                        <li><a href="https://github.com/wayrapp/backend/issues" target="_blank" class="hover:text-white transition-colors">Report Issues</a></li>
+                        <li><a href="https://github.com/wayrapp/backend/blob/main/LICENSE" target="_blank" class="hover:text-white transition-colors">MIT License</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white border-opacity-20 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 WayrApp. Built with ❤️ by Exequiel Trujillo. Licensed under MIT.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Smooth scrolling script -->
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Mobile menu toggle (if needed)
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
