@@ -21,6 +21,7 @@ import {
   sanitizeInput,
   securityHeaders,
   requestSizeLimiter,
+  xssProtection,
 } from "@/shared/middleware";
 
 // Load environment variables
@@ -46,8 +47,9 @@ app.use(requestSizeLimiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Input sanitization
+// Input sanitization and XSS protection
 app.use(sanitizeInput);
+app.use(xssProtection);
 
 // Request logging
 app.use(requestLogger);

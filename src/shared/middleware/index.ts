@@ -24,6 +24,9 @@ export {
   requestSizeLimiter
 } from './security';
 
+// XSS Protection
+export { xssProtection } from './xssProtection';
+
 // Authentication and authorization
 export {
   authenticateToken,

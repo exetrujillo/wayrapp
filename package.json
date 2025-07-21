@@ -19,7 +19,9 @@
     "docs:generate": "node scripts/generate-docs.js",
     "docs:build": "npm run docs:generate",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "security:audit": "node scripts/security-audit.js",
+    "security:deps": "npm audit"
   },
   "keywords": [
     "language-learning",
@@ -42,6 +44,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "winston": "^3.11.0",
+    "xss": "^1.0.15",
     "zod": "^3.22.4"
   },
   "devDependencies": {

@@ -17,8 +17,6 @@ plugins:
 
 # Navigation structure
 nav:
-  - title: API Overview
-    url: /API_OVERVIEW
   - title: Authentication
     url: /AUTHENTICATION
   - title: Users
@@ -33,6 +31,8 @@ nav:
     url: /PAGINATION_AND_FILTERING
   - title: Packaged Content
     url: /PACKAGED_CONTENT_API
+  - title: Security
+    url: /SECURITY
   - title: Database Setup
     url: /DATABASE_SETUP
 
