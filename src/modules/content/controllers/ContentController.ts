@@ -196,7 +196,25 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const packagedCourse = await this.contentService.getPackagedCourse(id);
+
+            // Get If-Modified-Since header for conditional requests
+            const ifModifiedSince = req.headers['if-modified-since'] as string;
+            
+            const packagedCourse = await this.contentService.getPackagedCourse(id, ifModifiedSince);
+
+            // If packagedCourse is null, it means content hasn't been modified
+            if (packagedCourse === null) {
+                res.status(HttpStatus.NOT_MODIFIED).end();
+                return;
+            }
+
+            // Set caching headers
+            res.set({
+                'Last-Modified': new Date(packagedCourse.package_version).toUTCString(),
+                'Cache-Control': 'public, max-age=900', // Cache for 15 minutes
+                'ETag': `"${packagedCourse.package_version}"`,
+                'Content-Type': 'application/json'
+            });
 
             const response: ApiResponse = {
                 data: packagedCourse,
