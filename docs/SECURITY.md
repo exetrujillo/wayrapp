@@ -1,3 +1,8 @@
+---
+layout: default
+title: Security
+---
+
 # Security Implementation Guide
 
 This document outlines the security measures implemented in the WayrApp backend API to protect against common vulnerabilities and ensure data integrity.
