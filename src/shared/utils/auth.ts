@@ -162,6 +162,12 @@ export const getTokenExpiration = (token: string): Date | null => {
     if (parts.length !== 3) return null;
     
     const payload = JSON.parse(Buffer.from(parts[1]!, 'base64').toString());
+    
+    // Check if exp claim exists and is a valid number
+    if (!payload.exp || typeof payload.exp !== 'number') {
+      return null;
+    }
+    
     return new Date(payload.exp * 1000);
   } catch (error: any) {
     logger.debug('Token expiration extraction failed', { error: error.message });

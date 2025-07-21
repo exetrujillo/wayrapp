@@ -106,10 +106,10 @@ describe('ContentService', () => {
                     source_language: courseData.source_language,
                     target_language: courseData.target_language,
                     name: courseData.name,
-                    description: courseData.description || null,
+                    description: courseData.description || '',
                     is_public: courseData.is_public || false,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
                 };
 
                 mockCourseRepository.exists.mockResolvedValue(false);
@@ -140,7 +140,12 @@ describe('ContentService', () => {
             it('should return course when found', async () => {
                 const courseId = 'test-course-1';
                 const expectedCourse: Course = {
-                    ...CourseFactory.build({ id: courseId }),
+                    id: courseId,
+                    source_language: 'qu',
+                    target_language: 'es-ES',
+                    name: `Test Course ${courseId}`,
+                    description: 'A test course for unit testing',
+                    is_public: true,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
@@ -172,12 +177,14 @@ describe('ContentService', () => {
                 const expectedResult: PaginatedResult<Course> = {
                     data: [
                         {
-                            ...CourseFactory.build(),
+                            id: 'test-course-1',
+                            source_language: 'aym',
+                            target_language: 'es-ES',
+                            name: 'Test Course',
+                            description: 'A test course',
+                            is_public: true,
                             created_at: new Date(),
-                            updated_at: new Date(),
-                            source_language: '',
-                            target_language: '',
-                            is_public: false
+                            updated_at: new Date()
                         },
                     ],
                     pagination: {
@@ -225,12 +232,14 @@ describe('ContentService', () => {
                 const courseId = 'test-course-1';
                 const updateData = { name: 'Updated Course Name' };
                 const expectedCourse: Course = {
-                    ...CourseFactory.build({ id: courseId, name: updateData.name }),
+                    id: courseId,
+                    source_language: 'pt-BR',
+                    target_language: 'en',
+                    name: updateData.name,
+                    description: 'A test course',
+                    is_public: true,
                     created_at: new Date(),
-                    updated_at: new Date(),
-                    source_language: '',
-                    target_language: '',
-                    is_public: false
+                    updated_at: new Date()
                 };
 
                 mockCourseRepository.exists.mockResolvedValue(true);
@@ -306,9 +315,13 @@ describe('ContentService', () => {
         describe('createLevel', () => {
             it('should create level successfully', async () => {
                 const courseId = 'test-course-1';
-                const levelData: CreateLevelDto = LevelFactory.build(courseId);
+                const levelData: CreateLevelDto = LevelFactory.buildDto(courseId);
                 const expectedLevel: Level = {
-                    ...levelData,
+                    id: levelData.id,
+                    course_id: levelData.course_id,
+                    code: levelData.code,
+                    name: levelData.name,
+                    order: levelData.order,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
@@ -332,7 +345,7 @@ describe('ContentService', () => {
 
             it('should throw error when parent course not found', async () => {
                 const courseId = 'non-existent-course';
-                const levelData: CreateLevelDto = LevelFactory.build(courseId);
+                const levelData: CreateLevelDto = LevelFactory.buildDto(courseId);
 
                 mockCourseRepository.exists.mockResolvedValue(false);
 
@@ -346,7 +359,7 @@ describe('ContentService', () => {
 
             it('should throw error when level ID already exists', async () => {
                 const courseId = 'test-course-1';
-                const levelData: CreateLevelDto = LevelFactory.build(courseId);
+                const levelData: CreateLevelDto = LevelFactory.buildDto(courseId);
 
                 mockCourseRepository.exists.mockResolvedValue(true);
                 mockLevelRepository.exists.mockResolvedValue(true);
@@ -361,7 +374,7 @@ describe('ContentService', () => {
 
             it('should throw error when level code already exists in course', async () => {
                 const courseId = 'test-course-1';
-                const levelData: CreateLevelDto = LevelFactory.build(courseId);
+                const levelData: CreateLevelDto = LevelFactory.buildDto(courseId);
 
                 mockCourseRepository.exists.mockResolvedValue(true);
                 mockLevelRepository.exists.mockResolvedValue(false);
@@ -377,7 +390,7 @@ describe('ContentService', () => {
 
             it('should throw error when level order already exists in course', async () => {
                 const courseId = 'test-course-1';
-                const levelData: CreateLevelDto = LevelFactory.build(courseId);
+                const levelData: CreateLevelDto = LevelFactory.buildDto(courseId);
 
                 mockCourseRepository.exists.mockResolvedValue(true);
                 mockLevelRepository.exists.mockResolvedValue(false);
@@ -397,7 +410,11 @@ describe('ContentService', () => {
             it('should return level when found', async () => {
                 const levelId = 'test-level-1';
                 const expectedLevel: Level = {
-                    ...LevelFactory.build('test-course-1', { id: levelId }),
+                    id: levelId,
+                    course_id: 'test-course-1',
+                    code: 'L1',
+                    name: `Test Level ${levelId}`,
+                    order: 1,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
@@ -430,7 +447,11 @@ describe('ContentService', () => {
                 const expectedResult: PaginatedResult<Level> = {
                     data: [
                         {
-                            ...LevelFactory.build(courseId),
+                            id: 'test-level-1',
+                            course_id: courseId,
+                            code: 'L1',
+                            name: 'Test Level 1',
+                            order: 1,
                             created_at: new Date(),
                             updated_at: new Date(),
                         },
@@ -478,14 +499,18 @@ describe('ContentService', () => {
                 const sectionData: CreateSectionDto = SectionFactory.buildDto(levelId);
                 const expectedSection: Section = {
                     id: sectionData.id,
-                    levelId: sectionData.level_id,
+                    level_id: sectionData.level_id,
                     name: sectionData.name,
                     order: sectionData.order,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
                 const mockLevel: Level = {
-                    ...LevelFactory.build(courseId, { id: levelId }),
+                    id: levelId,
+                    course_id: courseId,
+                    code: 'L1',
+                    name: `Test Level ${levelId}`,
+                    order: 1,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
@@ -527,19 +552,30 @@ describe('ContentService', () => {
                 const sectionId = 'test-section-1';
                 const levelId = 'test-level-1';
                 const courseId = 'test-course-1';
-                const moduleData: CreateModuleDto = ModuleFactory.build(sectionId);
+                const moduleData: CreateModuleDto = ModuleFactory.buildDto(sectionId);
                 const expectedModule: Module = {
-                    ...moduleData,
+                    id: moduleData.id,
+                    section_id: moduleData.section_id,
+                    module_type: moduleData.module_type,
+                    name: moduleData.name,
+                    order: moduleData.order,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
                 const mockSection: Section = {
-                    ...SectionFactory.build(levelId, { id: sectionId }),
+                    id: sectionId,
+                    level_id: levelId,
+                    name: `Test Section ${sectionId}`,
+                    order: 1,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
                 const mockLevel: Level = {
-                    ...LevelFactory.build(courseId, { id: levelId }),
+                    id: levelId,
+                    course_id: courseId,
+                    code: 'L1',
+                    name: `Test Level ${levelId}`,
+                    order: 1,
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
@@ -563,7 +599,7 @@ describe('ContentService', () => {
 
             it('should throw error when parent section not found', async () => {
                 const sectionId = 'non-existent-section';
-                const moduleData: CreateModuleDto = ModuleFactory.build(sectionId);
+                const moduleData: CreateModuleDto = ModuleFactory.buildDto(sectionId);
 
                 mockSectionRepository.findById.mockResolvedValue(null);
 

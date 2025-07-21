@@ -121,11 +121,11 @@ describe('Validation Schemas', () => {
   describe('CourseSchema', () => {
     it('should validate valid course data', () => {
       const validData = {
-        id: 'es-en-beginner',
-        source_language: 'es',
-        target_language: 'en',
-        name: 'Spanish for Beginners',
-        description: 'Learn basic Spanish vocabulary and grammar',
+        id: 'qu-es-beginner',
+        source_language: 'qu',
+        target_language: 'es-ES',
+        name: 'Quechua for Spanish Speakers',
+        description: 'Learn basic Quechua vocabulary and grammar',
         is_public: true
       };
 
@@ -136,22 +136,22 @@ describe('Validation Schemas', () => {
     it('should reject invalid course data', () => {
       const invalidData = [
         { // Same source and target language
-          id: 'es-es-beginner',
-          source_language: 'es',
-          target_language: 'es',
-          name: 'Spanish for Beginners'
+          id: 'qu-qu-beginner',
+          source_language: 'qu',
+          target_language: 'qu',
+          name: 'Quechua for Quechua Speakers'
         },
         { // Invalid ID format
           id: 'Invalid ID with spaces',
-          source_language: 'es',
-          target_language: 'en',
-          name: 'Spanish for Beginners'
+          source_language: 'aym',
+          target_language: 'es-ES',
+          name: 'Aymara for Spanish Speakers'
         },
         { // Invalid language code
-          id: 'es-en-beginner',
-          source_language: 'esp', // Too long
-          target_language: 'en',
-          name: 'Spanish for Beginners'
+          id: 'qu-es-beginner',
+          source_language: 'quechua-invalid', // Too long
+          target_language: 'es-ES',
+          name: 'Quechua for Spanish Speakers'
         }
       ];
 

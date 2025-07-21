@@ -28,8 +28,8 @@ describe("Progress API Integration Tests", () => {
     const testCourse = await prisma.course.create({
       data: {
         id: "test-course-progress",
-        sourceLanguage: "en",
-        targetLanguage: "es",
+        sourceLanguage: "aym",
+        targetLanguage: "es-ES",
         name: "Test Course for Progress",
         description: "Test course for progress tracking",
       },

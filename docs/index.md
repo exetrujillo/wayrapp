@@ -14,7 +14,7 @@ WayrApp is an open-source language learning platform that provides a comprehensi
 ### API Base URL
 
 ```
-https://api.wayrapp.com/v1
+https://api.wayrapp.com/v1 (not real yet)
 ```
 
 ### Authentication

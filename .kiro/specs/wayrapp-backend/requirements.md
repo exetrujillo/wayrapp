@@ -12,7 +12,7 @@ WayrApp is an open-source, community-driven language learning platform that requ
 
 #### Acceptance Criteria
 
-1. WHEN creating a course THEN the system SHALL store course metadata including title, description, source and target languages using BCP 47 language tags (supporting ISO 639-2/3 codes like 'qu', 'aym', and regional variants like 'es-ES', 'pt-BR'), and difficulty level
+1. WHEN creating a course THEN the system SHALL store course metadata including title, description, source and target languages using BCP 47 language tags (supporting ISO 639-2/3 codes like 'qu' for Quechua, 'aym' for Aymara, and regional variants like 'es-ES' for European Spanish, 'pt-BR' for Brazilian Portuguese), and difficulty level
 2. WHEN creating a level within a course THEN the system SHALL establish a parent-child relationship between course and level
 3. WHEN creating a section within a level THEN the system SHALL maintain hierarchical integrity with proper foreign key relationships
 4. WHEN creating a module within a section THEN the system SHALL enforce the content hierarchy structure

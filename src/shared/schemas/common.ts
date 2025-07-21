@@ -28,8 +28,11 @@ export const UuidParamSchema = z.object({
   id: z.string().uuid('Invalid UUID format')
 });
 
-// Language code validation (ISO 639-1)
-export const LanguageCodeSchema = z.string().length(2, 'Language code must be 2 characters').regex(/^[a-z]{2}$/, 'Language code must be lowercase letters');
+// Language code validation (BCP 47 standard - supports ISO 639-1, ISO 639-2/3, and regional variants)
+export const LanguageCodeSchema = z.string()
+  .min(2, 'Language code must be at least 2 characters')
+  .max(20, 'Language code must not exceed 20 characters')
+  .regex(/^[a-z]{2,3}(-[A-Z]{2}|-[0-9]{3})?$/, 'Language code must follow BCP 47 format (e.g., "en", "qu", "es-ES", "es-419")');
 
 // Country code validation (ISO 3166-1 alpha-2)
 export const CountryCodeSchema = z.string().length(2, 'Country code must be 2 characters').regex(/^[A-Z]{2}$/, 'Country code must be uppercase letters');

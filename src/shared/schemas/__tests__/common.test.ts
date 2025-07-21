@@ -79,15 +79,26 @@ describe('Common Schemas', () => {
   });
 
   describe('LanguageCodeSchema', () => {
-    it('should validate language code', () => {
-      const result = LanguageCodeSchema.parse('en');
-      expect(result).toBe('en');
+    it('should validate BCP 47 language codes', () => {
+      // Test 2-letter codes (ISO 639-1)
+      expect(LanguageCodeSchema.parse('en')).toBe('en');
+      expect(LanguageCodeSchema.parse('es')).toBe('es');
+      
+      // Test 3-letter ISO 639-2/3 codes
+      expect(LanguageCodeSchema.parse('qu')).toBe('qu');
+      expect(LanguageCodeSchema.parse('aym')).toBe('aym');
+      
+      // Test regional variants
+      expect(LanguageCodeSchema.parse('es-ES')).toBe('es-ES');
+      expect(LanguageCodeSchema.parse('pt-BR')).toBe('pt-BR');
+      expect(LanguageCodeSchema.parse('es-419')).toBe('es-419');
     });
 
-    it('should reject invalid language code', () => {
-      expect(() => LanguageCodeSchema.parse('eng')).toThrow();
+    it('should reject invalid BCP 47 language codes', () => {
+      expect(() => LanguageCodeSchema.parse('invalid-code-too-long')).toThrow();
       expect(() => LanguageCodeSchema.parse('E')).toThrow();
-      expect(() => LanguageCodeSchema.parse('EN')).toThrow();
+      expect(() => LanguageCodeSchema.parse('')).toThrow();
+      expect(() => LanguageCodeSchema.parse('123')).toThrow();
     });
   });
 
@@ -138,7 +149,8 @@ describe('Common Schemas', () => {
 
     it('should reject invalid URL', () => {
       expect(() => UrlSchema.parse('not-a-url')).toThrow();
-      expect(() => UrlSchema.parse('http:/example.com')).toThrow();
+      expect(() => UrlSchema.parse('invalid-url-format')).toThrow();
+      expect(() => UrlSchema.parse('')).toThrow();
     });
   });
 

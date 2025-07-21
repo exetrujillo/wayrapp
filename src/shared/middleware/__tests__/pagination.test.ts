@@ -3,7 +3,7 @@ import { paginationMiddleware, addPaginationHeaders } from '../pagination';
 import { AppError } from '../errorHandler';
 
 describe('Pagination Middleware', () => {
-  let mockRequest: Partial<Request>;
+  let mockRequest: Partial<Request & { pagination?: any }>;
   let mockResponse: Partial<Response>;
   let nextFunction: jest.Mock;
 
@@ -82,8 +82,8 @@ describe('Pagination Middleware', () => {
 
   test('should parse allowed filters', () => {
     mockRequest.query = { 
-      source_language: 'en',
-      target_language: 'es',
+      source_language: 'qu',
+      target_language: 'es-ES',
       invalid_filter: 'value'
     };
     const middleware = paginationMiddleware({ 
@@ -92,8 +92,8 @@ describe('Pagination Middleware', () => {
     middleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(mockRequest.pagination?.filters).toEqual({
-      source_language: 'en',
-      target_language: 'es'
+      source_language: 'qu',
+      target_language: 'es-ES'
     });
     expect(mockRequest.pagination?.filters).not.toHaveProperty('invalid_filter');
   });

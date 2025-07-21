@@ -95,8 +95,8 @@ model LessonCompletion {
 
 model Course {
   id             String   @id @db.VarChar(20)
-  sourceLanguage String   @map("source_language") @db.VarChar(5)
-  targetLanguage String   @map("target_language") @db.VarChar(5)
+  sourceLanguage String   @map("source_language") @db.VarChar(20)
+  targetLanguage String   @map("target_language") @db.VarChar(20)
   name           String   @db.VarChar(100)
   description    String?
   isPublic       Boolean  @default(true) @map("is_public")

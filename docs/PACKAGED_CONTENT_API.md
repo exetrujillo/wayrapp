@@ -71,11 +71,11 @@ ETag: "2024-10-22T10:30:00.000Z"
 {
   "data": {
     "course": {
-      "id": "es-en-beginner",
-      "source_language": "es",
-      "target_language": "en",
-      "name": "Spanish for Beginners",
-      "description": "Learn basic Spanish vocabulary and grammar",
+      "id": "qu-es-beginner",
+      "source_language": "qu",
+      "target_language": "es-ES",
+      "name": "Quechua for Spanish Speakers",
+      "description": "Learn basic Quechua vocabulary and grammar",
       "is_public": true,
       "created_at": "2024-01-15T10:30:00Z",
       "updated_at": "2024-01-20T14:45:00Z"

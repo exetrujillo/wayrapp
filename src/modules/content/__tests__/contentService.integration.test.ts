@@ -34,10 +34,10 @@ describe("ContentService Integration Tests", () => {
       // Arrange
       const courseData = {
         id: "test-course-1",
-        source_language: "en",
-        target_language: "es",
-        name: "English to Spanish Course",
-        description: "Learn Spanish from English",
+        source_language: "qu",
+        target_language: "es-ES",
+        name: "Quechua to Spanish Course",
+        description: "Learn Spanish from Quechua",
         is_public: true,
       };
 
@@ -60,21 +60,21 @@ describe("ContentService Integration Tests", () => {
       // Arrange
       const course1 = {
         id: "course-1",
-        source_language: "en",
-        target_language: "es",
+        source_language: "aym",
+        target_language: "es-ES",
         name: "Course 1",
         is_public: true,
       };
       const course2 = {
         id: "course-2",
-        source_language: "en",
-        target_language: "fr",
+        source_language: "qu",
+        target_language: "pt-BR",
         name: "Course 2",
         is_public: true,
       };
       const course3 = {
         id: "course-3",
-        source_language: "en",
+        source_language: "es-419",
         target_language: "de",
         name: "Course 3",
         is_public: true,

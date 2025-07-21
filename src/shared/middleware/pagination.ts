@@ -47,14 +47,19 @@ export const paginationMiddleware = (options: PaginationOptions = {}) => {
     try {
       // Create dynamic schema based on options
       const schema = PaginationQuerySchema.extend({
-        limit: z.coerce.number().int().min(1).max(maxLimit).default(defaultLimit),
-        sortBy: allowedSortFields.length > 0 
-          ? z.enum(allowedSortFields as [string, ...string[]]).optional()
-          : z.string().optional(),
+        limit: z.coerce.number().int().min(1).default(defaultLimit).transform(val => Math.min(val, maxLimit)),
+        sortBy: z.string().optional(),
       });
 
       // Parse and validate pagination parameters
-      const paginationParams = schema.parse(req.query);
+      let paginationParams = schema.parse(req.query);
+      
+      // Validate sortBy field separately if allowedSortFields is provided
+      if (allowedSortFields.length > 0 && paginationParams.sortBy) {
+        if (!allowedSortFields.includes(paginationParams.sortBy)) {
+          paginationParams.sortBy = undefined; // Will fall back to default
+        }
+      }
 
       // Parse filters if allowed
       const filters: Record<string, any> = {};

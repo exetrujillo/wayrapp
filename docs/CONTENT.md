@@ -17,8 +17,8 @@ Get a paginated list of all courses.
 - `limit` (optional): Items per page (default: 20)
 - `sortBy` (optional): Field to sort by (default: created_at)
 - `sortOrder` (optional): Sort order (asc/desc, default: desc)
-- `source_language` (optional): Filter by source language (2-letter code)
-- `target_language` (optional): Filter by target language (2-letter code)
+- `source_language` (optional): Filter by source language (BCP 47 code, e.g., 'qu', 'es-ES')
+- `target_language` (optional): Filter by target language (BCP 47 code, e.g., 'aym', 'pt-BR')
 - `is_public` (optional): Filter by public status (true/false)
 
 **Response:**
@@ -28,11 +28,11 @@ Get a paginated list of all courses.
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": [
     {
-      "id": "en-es-basic",
-      "source_language": "en",
-      "target_language": "es",
-      "name": "English to Spanish - Basic",
-      "description": "Learn basic Spanish from English",
+      "id": "qu-es-basic",
+      "source_language": "qu",
+      "target_language": "es-ES",
+      "name": "Quechua to Spanish - Basic",
+      "description": "Learn basic Spanish from Quechua",
       "is_public": true,
       "levels_count": 5,
       "created_at": "2023-07-01T00:00:00.000Z",
@@ -52,11 +52,11 @@ Create a new course.
 **Request Body:**
 ```json
 {
-  "id": "en-fr-basic",
-  "source_language": "en",
-  "target_language": "fr",
-  "name": "English to French - Basic",
-  "description": "Learn basic French from English",
+  "id": "aym-pt-basic",
+  "source_language": "aym",
+  "target_language": "pt-BR",
+  "name": "Aymara to Brazilian Portuguese - Basic",
+  "description": "Learn basic Brazilian Portuguese from Aymara",
   "is_public": true
 }
 ```
@@ -67,11 +67,11 @@ Create a new course.
   "success": true,
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": {
-    "id": "en-fr-basic",
-    "source_language": "en",
-    "target_language": "fr",
-    "name": "English to French - Basic",
-    "description": "Learn basic French from English",
+    "id": "aym-pt-basic",
+    "source_language": "aym",
+    "target_language": "pt-BR",
+    "name": "Aymara to Brazilian Portuguese - Basic",
+    "description": "Learn basic Brazilian Portuguese from Aymara",
     "is_public": true,
     "created_at": "2023-07-20T12:34:56.789Z",
     "updated_at": "2023-07-20T12:34:56.789Z"
@@ -90,11 +90,11 @@ Get detailed information about a specific course.
   "success": true,
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": {
-    "id": "en-es-basic",
-    "source_language": "en",
-    "target_language": "es",
-    "name": "English to Spanish - Basic",
-    "description": "Learn basic Spanish from English",
+    "id": "es-qu-basic",
+    "source_language": "es-419",
+    "target_language": "qu",
+    "name": "Latin American Spanish to Quechua - Basic",
+    "description": "Learn basic Quechua from Latin American Spanish",
     "is_public": true,
     "levels_count": 5,
     "created_at": "2023-07-01T00:00:00.000Z",
@@ -125,10 +125,10 @@ Update an existing course.
   "success": true,
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": {
-    "id": "en-es-basic",
-    "source_language": "en",
-    "target_language": "es",
-    "name": "English to Spanish - Updated",
+    "id": "pt-aym-basic",
+    "source_language": "pt-BR",
+    "target_language": "aym",
+    "name": "Brazilian Portuguese to Aymara - Updated",
     "description": "Updated description",
     "is_public": false,
     "levels_count": 5,
@@ -166,11 +166,11 @@ Get a complete course package with all nested content for offline use.
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": {
     "course": {
-      "id": "en-es-basic",
-      "source_language": "en",
-      "target_language": "es",
-      "name": "English to Spanish - Basic",
-      "description": "Learn basic Spanish from English",
+      "id": "qu-es-basic",
+      "source_language": "qu",
+      "target_language": "es-ES",
+      "name": "Quechua to Spanish - Basic",
+      "description": "Learn basic Spanish from Quechua",
       "is_public": true,
       "created_at": "2023-07-01T00:00:00.000Z",
       "updated_at": "2023-07-15T00:00:00.000Z"

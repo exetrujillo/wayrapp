@@ -87,8 +87,8 @@ interface BaseContentEntity {
 // Hierarchical content interfaces aligned with production schema
 interface Course extends BaseContentEntity {
   id: string; // VARCHAR(20)
-  source_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu', 'aym')
-  target_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu', 'aym')
+  source_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu' for Quechua, 'aym' for Aymara)
+  target_language: string; // VARCHAR(20) - BCP 47 language tag (e.g., 'en', 'es-ES', 'qu' for Quechua, 'aym' for Aymara)
   name: string; // VARCHAR(100)
   description?: string;
   is_public: boolean;
@@ -309,8 +309,8 @@ CREATE TRIGGER set_timestamp_user_progress BEFORE UPDATE ON user_progress FOR EA
 
 CREATE TABLE courses (
     id VARCHAR(20) PRIMARY KEY,
-    source_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
-    target_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
+    source_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu' for Quechua, 'aym' for Aymara, regional variants like 'es-ES', 'pt-BR')
+    target_language VARCHAR(20) NOT NULL, -- BCP 47 language tag (supports ISO 639-2/3 codes like 'qu' for Quechua, 'aym' for Aymara, regional variants like 'es-ES', 'pt-BR')
     name VARCHAR(100) NOT NULL,
     description TEXT,
     is_public BOOLEAN DEFAULT true,
@@ -483,8 +483,8 @@ model LessonCompletion {
 
 model Course {
   id             String   @id @db.VarChar(20)
-  sourceLanguage String   @map("source_language") @db.VarChar(20) // BCP 47 language tag
-  targetLanguage String   @map("target_language") @db.VarChar(20) // BCP 47 language tag
+  sourceLanguage String   @map("source_language") @db.VarChar(20) // BCP 47 language tag (supports 'qu', 'aym', 'es-ES', 'pt-BR')
+  targetLanguage String   @map("target_language") @db.VarChar(20) // BCP 47 language tag (supports 'qu', 'aym', 'es-ES', 'pt-BR')
   name           String   @db.VarChar(100)
   description    String?
   isPublic       Boolean  @default(true) @map("is_public")
@@ -877,11 +877,11 @@ Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
-  "id": "es-en-beginner",
-  "source_language": "es",
-  "target_language": "en",
-  "name": "Spanish for Beginners",
-  "description": "Learn basic Spanish vocabulary and grammar",
+  "id": "qu-es-beginner",
+  "source_language": "qu",
+  "target_language": "es-ES",
+  "name": "Quechua for Spanish Speakers",
+  "description": "Learn basic Quechua vocabulary and grammar",
   "is_public": true
 }
 ```
@@ -892,11 +892,11 @@ Content-Type: application/json
 GET /api/courses/{id}
 
 {
-  "id": "es-en-beginner",
-  "source_language": "es",
-  "target_language": "en",
-  "name": "Spanish for Beginners",
-  "description": "Learn basic Spanish vocabulary and grammar",
+  "id": "aym-es-beginner",
+  "source_language": "aym",
+  "target_language": "es-ES",
+  "name": "Aymara for Spanish Speakers",
+  "description": "Learn basic Aymara vocabulary and grammar",
   "is_public": true,
   "levels_count": 5,
   "created_at": "2024-01-15T10:30:00Z",
@@ -911,33 +911,33 @@ GET /api/courses/{id}/package
 
 {
   "course": {
-    "id": "es-en-beginner",
-    "source_language": "es",
+    "id": "pt-br-en-intermediate",
+    "source_language": "pt-BR",
     "target_language": "en",
-    "name": "Spanish for Beginners",
+    "name": "Brazilian Portuguese for English Speakers",
     "is_public": true,
     "updated_at": "2024-01-20T14:45:00Z"
   },
   "levels": [
     {
-      "id": "es-en-beginner-level-1",
+      "id": "pt-br-en-intermediate-level-1",
       "code": "L1",
       "name": "Basic Greetings",
       "order": 1,
       "sections": [
         {
-          "id": "es-en-beginner-level-1-section-1",
+          "id": "pt-br-en-intermediate-level-1-section-1",
           "name": "Hello and Goodbye",
           "order": 1,
           "modules": [
             {
-              "id": "es-en-beginner-level-1-section-1-module-1",
+              "id": "pt-br-en-intermediate-level-1-section-1-module-1",
               "module_type": "basic_lesson",
               "name": "Common Greetings",
               "order": 1,
               "lessons": [
                 {
-                  "id": "es-en-beginner-level-1-section-1-module-1-lesson-1",
+                  "id": "pt-br-en-intermediate-level-1-section-1-module-1-lesson-1",
                   "experience_points": 10,
                   "order": 1,
                   "exercises": [
@@ -1130,8 +1130,8 @@ import { z } from 'zod';
 // Course validation schemas
 const CreateCourseSchema = z.object({
   id: z.string().max(20),
-  source_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
-  target_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu', 'aym', regional variants like 'es-ES')
+  source_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu' for Quechua, 'aym' for Aymara, regional variants like 'es-ES', 'pt-BR')
+  target_language: z.string().max(20), // BCP 47 language tag (supports ISO 639-2/3 codes like 'qu' for Quechua, 'aym' for Aymara, regional variants like 'es-ES', 'pt-BR')
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   is_public: z.boolean().default(true)

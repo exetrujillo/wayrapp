@@ -37,8 +37,8 @@ describe('Packaged Content Controller', () => {
     const mockPackagedCourse = {
       course: {
         id: 'test-course-001',
-        source_language: 'en',
-        target_language: 'es',
+        source_language: 'aym',
+        target_language: 'es-ES',
         name: 'Test Course',
         description: 'Test Description',
         is_public: true,
@@ -52,8 +52,8 @@ describe('Packaged Content Controller', () => {
     const expectedResponseData = {
       course: {
         id: 'test-course-001',
-        source_language: 'en',
-        target_language: 'es',
+        source_language: 'aym',
+        target_language: 'es-ES',
         name: 'Test Course',
         description: 'Test Description',
         is_public: true,

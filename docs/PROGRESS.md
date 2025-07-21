@@ -407,11 +407,22 @@ Get statistical information about a specific lesson's completion rates and perfo
 - `admin`: Full system access including user management
 
 ### Language Codes
-All language codes follow ISO 639-1 standard (2-letter codes):
+All language codes follow the **BCP 47 standard**, supporting both ISO 639-1 (2-letter) and ISO 639-2/3 (3-letter) codes, as well as regional variants:
+
+**2-letter codes (ISO 639-1):**
 - `en`: English
 - `es`: Spanish
 - `fr`: French
 - `de`: German
 - `it`: Italian
 - `pt`: Portuguese
+
+**3-letter codes (ISO 639-2/3) for indigenous languages:**
+- `qu`: Quechua
+- `aym`: Aymara
+
+**Regional variants:**
+- `es-ES`: European Spanish
+- `es-419`: Latin American Spanish
+- `pt-BR`: Brazilian Portuguese
 - And more...

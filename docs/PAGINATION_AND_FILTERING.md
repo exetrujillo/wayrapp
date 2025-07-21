@@ -109,7 +109,7 @@ Each endpoint supports specific filters:
 
 #### Courses
 ```
-GET /api/v1/courses?source_language=es&target_language=en&is_public=true
+GET /api/v1/courses?source_language=qu&target_language=es-ES&is_public=true
 ```
 
 #### Modules
@@ -145,7 +145,7 @@ The API includes several performance optimizations:
 
 ### List all Spanish courses with pagination
 ```
-GET /api/v1/courses?source_language=es&limit=10&page=1
+GET /api/v1/courses?source_language=aym&limit=10&page=1
 ```
 
 ### Get all beginner levels sorted by order

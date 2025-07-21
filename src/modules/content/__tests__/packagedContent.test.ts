@@ -38,8 +38,8 @@ describe('Packaged Content API', () => {
   describe('getPackagedCourse', () => {
     const mockCourseData = {
       id: 'test-course-001',
-      sourceLanguage: 'en',
-      targetLanguage: 'es',
+      sourceLanguage: 'pt-BR',
+      targetLanguage: 'en',
       name: 'Test Course',
       description: 'Test Description',
       isPublic: true,
@@ -150,8 +150,8 @@ describe('Packaged Content API', () => {
       expect(result).toBeDefined();
       if (result) {
         expect(result.course.id).toBe('test-course-001');
-        expect(result.course.source_language).toBe('en');
-        expect(result.course.target_language).toBe('es');
+        expect(result.course.source_language).toBe('pt-BR');
+        expect(result.course.target_language).toBe('en');
         expect(result.levels).toHaveLength(1);
         expect(result.levels[0]?.sections).toHaveLength(1);
         expect(result.levels[0]?.sections[0]?.modules).toHaveLength(1);

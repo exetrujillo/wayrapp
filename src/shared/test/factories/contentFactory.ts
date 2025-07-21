@@ -11,8 +11,8 @@ export class CourseFactory {
     
     const defaultCourse = {
       id: courseId,
-      sourceLanguage: 'en',
-      targetLanguage: 'es',
+      sourceLanguage: 'qu',
+      targetLanguage: 'es-ES',
       name: `Test Course ${courseId}`,
       description: 'A test course for unit testing',
       isPublic: true,
@@ -29,8 +29,8 @@ export class CourseFactory {
     
     const defaultCourse = {
       id: courseId,
-      source_language: 'en',
-      target_language: 'es',
+      source_language: 'aym',
+      target_language: 'es-ES',
       name: `Test Course ${courseId}`,
       description: 'A test course for unit testing',
       is_public: true,
