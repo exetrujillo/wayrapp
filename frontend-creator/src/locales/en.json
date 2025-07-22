@@ -1,0 +1,201 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "connect": "Connect",
+      "continue": "Continue",
+      "start": "Start",
+      "back": "Back",
+      "remove": "Remove"
+    },
+    "messages": {
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "success": "Success!",
+      "noData": "No data available",
+      "missingId": "ID is missing"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "lessons": "Lessons",
+      "exercises": "Exercises",
+      "profile": "Profile"
+    }
+  },
+  "creator": {
+    "auth": {
+      "title": "Creator Portal",
+      "signIn": "Sign In",
+      "signInPrompt": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "createNew": "Create New",
+      "totalCourses": "Total Courses",
+      "activeLearners": "Active Learners",
+      "completionRate": "Completion Rate"
+    },
+    "exercises": {
+      "createNew": "Create New Exercise"
+    },
+    "pages": {
+      "createExercise": {
+        "title": "Create Exercise"
+      },
+      "exerciseAssignment": {
+        "title": "Assign Exercises to Lesson",
+        "lessonName": "Lesson"
+      }
+    },
+    "components": {
+      "lessonCard": {
+        "moduleId": "Module",
+        "order": "Order",
+        "xp": "XP",
+        "id": "ID",
+        "manageExercises": "Manage Exercises"
+      }
+    },
+    "forms": {
+      "course": {
+        "title": "Create Course",
+        "name": "Course Name",
+        "sourceLanguage": "Source Language",
+        "targetLanguage": "Target Language",
+        "description": "Description",
+        "isPublic": "Make Public"
+      },
+      "exerciseAssignment": {
+        "title": "Assign Exercises to Lesson",
+        "currentAssignments": "Current Exercise Assignments",
+        "noAssignments": "No exercises assigned to this lesson yet.",
+        "order": "Order",
+        "exerciseId": "Exercise ID",
+        "type": "Type",
+        "actions": "Actions",
+        "addNew": "Add New Exercise",
+        "searchExercises": "Search Exercises",
+        "searchPlaceholder": "Search by ID or type...",
+        "selectExercise": "Select Exercise",
+        "selectPlaceholder": "Select an exercise...",
+        "submit": "Assign Exercise",
+        "successMessage": "Exercise assigned successfully!",
+        "reorderSuccess": "Exercise order updated successfully!",
+        "removeSuccess": "Exercise removed successfully!"
+      },
+      "lesson": {
+        "title": "Create Lesson",
+        "id": "Lesson ID",
+        "idPlaceholder": "e.g., intro-lesson-1",
+        "name": "Lesson Name",
+        "namePlaceholder": "e.g., Introduction to Greetings",
+        "experiencePoints": "Experience Points",
+        "order": "Order",
+        "module": "Module",
+        "selectModule": "Select a module",
+        "submit": "Create Lesson",
+        "successMessage": "Lesson created successfully!"
+      },
+      "exercise": {
+        "title": "Create Exercise",
+        "id": "Exercise ID",
+        "idPlaceholder": "e.g., translation-exercise-1",
+        "type": "Exercise Type",
+        "data": "Exercise Data",
+        "sourceText": "Source Text",
+        "sourceTextPlaceholder": "Enter text in source language",
+        "targetText": "Target Text (Correct Answer)",
+        "targetTextPlaceholder": "Enter expected translation",
+        "hint": "Hint",
+        "hintPlaceholder": "Enter optional hint for learners",
+        "fillText": "Text with Blanks",
+        "fillTextPlaceholder": "Enter text with ___ for blanks",
+        "fillTextHelp": "Use ___ (three underscores) to indicate blanks in the text",
+        "blanks": "Blanks",
+        "blank": "Blank",
+        "answer": "Correct Answer",
+        "answerPlaceholder": "Enter correct answer",
+        "options": "Options",
+        "optionPlaceholder": "Enter option",
+        "addOption": "Add Option",
+        "addBlank": "Add Blank",
+        "question": "Question",
+        "questionPlaceholder": "Enter the question",
+        "explanation": "Explanation",
+        "explanationPlaceholder": "Explain why the correct answer is right",
+        "matchingPairs": "Matching Pairs",
+        "pair": "Pair",
+        "leftItem": "Left Item",
+        "leftItemPlaceholder": "Left item",
+        "rightItem": "Right Item",
+        "rightItemPlaceholder": "Right item",
+        "addPair": "Add Pair",
+        "audioUrl": "Audio URL",
+        "audioUrlPlaceholder": "Enter URL to audio file",
+        "transcript": "Transcript",
+        "transcriptPlaceholder": "Enter transcript of the audio",
+        "prompt": "Speaking Prompt",
+        "promptPlaceholder": "Enter speaking prompt",
+        "sampleAnswer": "Sample Answer",
+        "sampleAnswerPlaceholder": "Enter a sample correct response",
+        "pronunciationGuide": "Pronunciation Guide",
+        "pronunciationGuidePlaceholder": "Enter pronunciation tips",
+        "showPreview": "Show Preview",
+        "hidePreview": "Hide Preview",
+        "preview": "Exercise Preview",
+        "rawData": "Raw JSON Data",
+        "translationExercise": "Translation Exercise",
+        "noSourceText": "No source text provided",
+        "yourTranslation": "Your Translation:",
+        "enterTranslation": "Enter your translation here",
+        "fillBlankExercise": "Fill in the Blank Exercise",
+        "noTextProvided": "No text with blanks provided",
+        "availableOptions": "Available options:",
+        "emptyOption": "Empty option",
+        "multipleChoiceExercise": "Multiple Choice Exercise",
+        "noQuestionProvided": "No question provided",
+        "matchingExercise": "Matching Exercise",
+        "leftItems": "Left Items",
+        "rightItems": "Right Items",
+        "emptyItem": "Empty item",
+        "noPairsProvided": "No matching pairs provided",
+        "listeningExercise": "Listening Exercise",
+        "playAudio": "Play Audio",
+        "noAudioUrl": "No audio URL provided",
+        "yourAnswer": "Your Answer:",
+        "enterAnswer": "Enter your answer here",
+        "noTranscript": "No transcript provided",
+        "speakingExercise": "Speaking Exercise",
+        "noPromptProvided": "No prompt provided",
+        "recordAnswer": "Record Answer",
+        "noSampleAnswer": "No sample answer provided",
+        "submit": "Create Exercise",
+        "successMessage": "Exercise created successfully!"
+      }
+    }
+  },
+  "pages": {
+    "lessons": {
+      "createButton": "Create Lesson",
+      "noLessons": "No lessons found. Create your first lesson!",
+      "deleteConfirm": "Are you sure you want to delete this lesson?"
+    },
+    "createLesson": {
+      "title": "Create New Lesson",
+      "description": "Create a new lesson and assign it to a module."
+    },
+    "createExercise": {
+      "title": "Create Exercise",
+      "description": "Create a new exercise with dynamic content based on type."
+    }
+  }
+}

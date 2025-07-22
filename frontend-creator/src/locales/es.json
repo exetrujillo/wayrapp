@@ -1,0 +1,67 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "create": "Crear",
+      "connect": "Conectar",
+      "continue": "Continuar",
+      "start": "Comenzar"
+    },
+    "messages": {
+      "loading": "Cargando...",
+      "error": "Ha ocurrido un error",
+      "success": "¡Éxito!",
+      "noData": "No hay datos disponibles"
+    },
+    "navigation": {
+      "dashboard": "Panel",
+      "courses": "Cursos",
+      "lessons": "Lecciones",
+      "exercises": "Ejercicios",
+      "profile": "Perfil"
+    }
+  },
+  "creator": {
+    "auth": {
+      "title": "Portal del Creador",
+      "signIn": "Iniciar Sesión",
+      "signInPrompt": "Inicia sesión en tu cuenta",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "rememberMe": "Recordarme",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
+    },
+    "dashboard": {
+      "title": "Panel",
+      "createNew": "Crear Nuevo",
+      "totalCourses": "Total de Cursos",
+      "activeLearners": "Estudiantes Activos",
+      "completionRate": "Tasa de Finalización"
+    },
+    "forms": {
+      "course": {
+        "title": "Crear Curso",
+        "name": "Nombre del Curso",
+        "sourceLanguage": "Idioma de Origen",
+        "targetLanguage": "Idioma Objetivo",
+        "description": "Descripción",
+        "isPublic": "Hacer Público"
+      },
+      "lesson": {
+        "title": "Crear Lección",
+        "name": "Nombre de la Lección",
+        "experiencePoints": "Puntos de Experiencia",
+        "order": "Orden",
+        "module": "Módulo"
+      },
+      "exercise": {
+        "title": "Crear Ejercicio",
+        "type": "Tipo de Ejercicio",
+        "data": "Datos del Ejercicio"
+      }
+    }
+  }
+}

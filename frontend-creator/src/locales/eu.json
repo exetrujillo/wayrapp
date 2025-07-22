@@ -1,0 +1,67 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Gorde",
+      "cancel": "Utzi",
+      "delete": "Ezabatu",
+      "edit": "Editatu",
+      "create": "Sortu",
+      "connect": "Konektatu",
+      "continue": "Jarraitu",
+      "start": "Hasi"
+    },
+    "messages": {
+      "loading": "Kargatzen...",
+      "error": "Errore bat gertatu da",
+      "success": "Arrakasta!",
+      "noData": "Ez dago daturik eskuragarri"
+    },
+    "navigation": {
+      "dashboard": "Arbela",
+      "courses": "Ikastaroak",
+      "lessons": "Ikasgaiak",
+      "exercises": "Ariketak",
+      "profile": "Profila"
+    }
+  },
+  "creator": {
+    "auth": {
+      "title": "Sortzailearen Ataria",
+      "signIn": "Hasi Saioa",
+      "signInPrompt": "Hasi saioa zure kontuan",
+      "email": "Helbide elektronikoa",
+      "password": "Pasahitza",
+      "rememberMe": "Gogoratu",
+      "forgotPassword": "Pasahitza ahaztu duzu?"
+    },
+    "dashboard": {
+      "title": "Arbela",
+      "createNew": "Sortu Berria",
+      "totalCourses": "Ikastaro Kopurua",
+      "activeLearners": "Ikasle Aktiboak",
+      "completionRate": "Bukatze Tasa"
+    },
+    "forms": {
+      "course": {
+        "title": "Sortu Ikastaroa",
+        "name": "Ikastaroaren Izena",
+        "sourceLanguage": "Jatorrizko Hizkuntza",
+        "targetLanguage": "Helburu Hizkuntza",
+        "description": "Deskribapena",
+        "isPublic": "Publikoa Egin"
+      },
+      "lesson": {
+        "title": "Sortu Ikasgaia",
+        "name": "Ikasgaiaren Izena",
+        "experiencePoints": "Esperientzia Puntuak",
+        "order": "Ordena",
+        "module": "Modulua"
+      },
+      "exercise": {
+        "title": "Sortu Ariketa",
+        "type": "Ariketa Mota",
+        "data": "Ariketaren Datuak"
+      }
+    }
+  }
+}

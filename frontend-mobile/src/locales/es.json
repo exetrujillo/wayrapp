@@ -1,0 +1,66 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "create": "Crear",
+      "connect": "Conectar",
+      "continue": "Continuar",
+      "start": "Comenzar"
+    },
+    "messages": {
+      "loading": "Cargando...",
+      "error": "Ha ocurrido un error",
+      "success": "¡Éxito!",
+      "noData": "No hay datos disponibles"
+    },
+    "navigation": {
+      "home": "Inicio",
+      "courses": "Cursos",
+      "progress": "Progreso",
+      "profile": "Perfil"
+    }
+  },
+  "serverDiscovery": {
+    "title": "Elige tu servidor de aprendizaje",
+    "searchPlaceholder": "Buscar servidores...",
+    "regions": {
+      "all": "Todos",
+      "europe": "Europa",
+      "americas": "América",
+      "asia": "Asia",
+      "africa": "África"
+    },
+    "requestServer": "¿No encuentras tu idioma? Solicita un servidor"
+  },
+  "auth": {
+    "welcome": "Bienvenido a {{serverName}}",
+    "signIn": "Iniciar sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "fullName": "Nombre completo",
+    "nativeLanguage": "Idioma nativo",
+    "createAccount": "Crear cuenta",
+    "noAccount": "¿No tienes cuenta? Regístrate",
+    "hasAccount": "¿Ya tienes cuenta? Inicia sesión"
+  },
+  "dashboard": {
+    "title": "Mis cursos",
+    "weeklyGoal": "Meta semanal",
+    "streak": "Racha diaria",
+    "xpEarned": "XP ganados"
+  },
+  "lesson": {
+    "checkAnswer": "Comprobar respuesta",
+    "skip": "Saltar",
+    "correct": "¡Correcto!",
+    "incorrect": "Inténtalo de nuevo",
+    "hint": "Pista",
+    "nextExercise": "Siguiente ejercicio",
+    "lessonComplete": "¡Lección completada!"
+  }
+}
