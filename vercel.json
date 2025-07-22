@@ -2,21 +2,34 @@
   "version": 2,
   "builds": [
     {
-      "src": "public/**/*",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/index.js",
+      "src": "src/server.ts",
       "use": "@vercel/node",
       "config": {
         "maxLambdaSize": "50mb"
       }
+    },
+    {
+      "src": "frontend-creator/package.json",
+      "use": "@vercel/static-build",
+      "config": { 
+        "distDir": "dist",
+        "buildCommand": "cd .. && npm run build --workspace=wayrapp-creator"
+      }
+    },
+    {
+      "src": "frontend-mobile/package.json",
+      "use": "@vercel/static-build",
+      "config": { 
+        "distDir": "web-build",
+        "buildCommand": "cd .. && npm run build --workspace=wayrapp-mobile"
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.js"
-    }
+    { "src": "/api/(.*)", "dest": "/src/server.ts" },
+    { "src": "/creator/(.*)", "dest": "/frontend-creator/dist/$1" },
+    { "src": "/mobile/(.*)", "dest": "/frontend-mobile/web-build/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/src/server.ts" }
   ]
 }

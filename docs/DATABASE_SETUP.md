@@ -25,7 +25,7 @@ cp .env.example .env
 
 Update your `.env` file with your Neon database URL:
 ```env
-DATABASE_URL="postgresql://username:password@ep-xxx-xxx.us-east-1.aws.neon.tech/wayrapp_db?sslmode=require"
+DATABASE_URL="postgresql://username:password@......?sslmode=require"
 JWT_SECRET="your-super-secure-jwt-secret-key-here"
 PORT=3000
 NODE_ENV="development"
@@ -34,8 +34,11 @@ NODE_ENV="development"
 ### 2. Install Dependencies
 
 ```bash
+# Install all dependencies for the monorepo
 npm install
 ```
+
+This will install dependencies for all workspaces (backend, frontend-creator, frontend-mobile, frontend-shared).
 
 ### 3. Generate Prisma Client
 

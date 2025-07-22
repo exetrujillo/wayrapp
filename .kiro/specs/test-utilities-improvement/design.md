@@ -2,7 +2,7 @@
 
 ## Overview
 
-Based on the test run results, we've identified several issues with the current testing approach. This design document outlines a comprehensive plan to improve the test utilities and establish consistent testing patterns across the codebase.
+Based on the test run results, we've identified several issues with the current testing approach in the WayrApp monorepo. This design document outlines a comprehensive plan to improve the test utilities and establish consistent testing patterns across the entire codebase, including backend API, frontend applications, and shared components.
 
 ## Architecture
 

@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Pagination and Filtering Guide
+title: Pagination & Filtering Guide
 ---
 
 # Pagination and Filtering Guide

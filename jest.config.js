@@ -1,3 +1,8 @@
+/**
+ * Root Jest Configuration for Monorepo
+ * This configuration serves as the base for all workspaces
+ */
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -7,7 +12,7 @@ module.exports = {
     '**/?(*.)+(spec|test).ts'
   ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
+    '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: 'tsconfig.test.json'
     }]
   },
@@ -30,5 +35,23 @@ module.exports = {
   },
   testTimeout: 10000,
   forceExit: true,
-  detectOpenHandles: true
+  detectOpenHandles: true,
+  
+  // Monorepo specific settings
+  projects: [
+    '<rootDir>',
+    '<rootDir>/frontend-creator',
+    '<rootDir>/frontend-mobile',
+    '<rootDir>/frontend-shared'
+  ],
+  
+  // Global settings for all projects
+  globals: {
+    'ts-jest': {
+      isolatedModules: true
+    }
+  },
+  
+  // Shared settings that can be extended by workspace configs
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
 };

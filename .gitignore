@@ -1,5 +1,7 @@
 # Dependencies
-node_modules/
+node_modules
+.pnp
+.pnp.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -14,9 +16,14 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
-
-# TypeScript
+web-build/
 *.tsbuildinfo
+
+# Testing
+coverage/
+.coverage
+*.lcov
+.nyc_output
 
 # Logs
 logs/
@@ -27,13 +34,6 @@ pids/
 *.pid
 *.seed
 *.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
 
 # Dependency directories
 jspm_packages/
@@ -50,34 +50,29 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# parcel-bundler cache (https://parceljs.org/)
+# Package managers
 .cache
 .parcel-cache
 
-# next.js build output
+# Framework build outputs
 .next
-
-# nuxt.js build output
 .nuxt
-
-# vuepress build output
 .vuepress/dist
-
-# Serverless directories
 .serverless
-
-# FuseBox cache
 .fusebox/
-
-# DynamoDB Local files
 .dynamodb/
-
-# TernJS port file
 .tern-port
 
 # IDE files
-.vscode/
-.idea/
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 *.swp
 *.swo
 *~
@@ -93,3 +88,12 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+
+# Expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*

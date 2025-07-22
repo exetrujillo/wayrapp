@@ -1,44 +1,73 @@
-# WayrApp Backend Documentation Configuration
+# WayrApp Platform Documentation Configuration
 
-title: WayrApp API Documentation
+title: WayrApp Platform Documentation
 description: >-
-  Comprehensive API documentation for the WayrApp open-source language learning platform.
-  Find everything you need to integrate with our backend.
+  Comprehensive documentation for the WayrApp open-source language learning platform.
+  Includes API documentation, platform architecture, and development guides for the complete monorepo ecosystem.
 theme: jekyll-theme-minimal
 baseurl: "/wayrapp"
 
 # Build settings
 markdown: kramdown
 highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
 
 # Plugins
 plugins:
   - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+
+# Feed settings
+feed:
+  categories:
+    - platform
+    - api
+    - development
 
 # Navigation structure
 nav:
+  # Platform Documentation
+  - title: Platform Overview
+    url: /
+  - title: Platform Architecture
+    url: /PLATFORM_ARCHITECTURE
+  - title: Monorepo Setup
+    url: /MONOREPO_SETUP
+  - title: Database Setup
+    url: /DATABASE_SETUP
+  
+  # API Documentation
   - title: Authentication
     url: /AUTHENTICATION
   - title: Users
     url: /USERS
   - title: Content
     url: /CONTENT
-  - title: Integration Tests
-    url: /INTEGRATION_TESTS
   - title: Lessons & Exercises
     url: /LESSONS_EXERCISES
   - title: Progress
     url: /PROGRESS
-  - title: Pagination & Filtering
-    url: /PAGINATION_AND_FILTERING
   - title: Packaged Content
     url: /PACKAGED_CONTENT_API
+  - title: Pagination & Filtering
+    url: /PAGINATION_AND_FILTERING
+  
+  # Development Documentation
+  - title: Integration Tests
+    url: /INTEGRATION_TESTS
   - title: Performance Optimization
     url: /PERFORMANCE_OPTIMIZATION
   - title: Security
     url: /SECURITY
-  - title: Database Setup
-    url: /DATABASE_SETUP
 
 # SEO settings
 author: Exequiel Trujillo
@@ -46,8 +75,67 @@ twitter:
   username: wayrapp
   card: summary_large_image
 
+# Site settings
+url: "https://wayrapp.github.io"
+repository: "wayrapp/wayrapp"
+
+# Additional metadata
+keywords: 
+  - language learning
+  - open source
+  - API
+  - React
+  - React Native
+  - Node.js
+  - TypeScript
+  - monorepo
+
+# Collections for better organization
+collections:
+  platform:
+    output: true
+    permalink: /:collection/:name/
+  api:
+    output: true
+    permalink: /:collection/:name/
+  development:
+    output: true
+    permalink: /:collection/:name/
+
+
+# Defaults for front matter
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+      author: "Exequiel Trujillo"
+  - scope:
+      path: "_platform"
+      type: "platform"
+    values:
+      layout: "default"
+      category: "platform"
+  - scope:
+      path: "_api"
+      type: "api"
+    values:
+      layout: "default"
+      category: "api"
+  - scope:
+      path: "_development"
+      type: "development"
+    values:
+      layout: "default"
+      category: "development"
+
 # Exclude files from processing
 exclude:
   - Gemfile
   - Gemfile.lock
   - vendor/
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - README.md

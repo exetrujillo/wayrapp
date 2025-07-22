@@ -8,7 +8,7 @@ interface UseFormProps<T> {
 }
 
 interface FormErrors<T> {
-  [K in keyof T]?: string;
+  [key: string]: string | undefined;
 }
 
 export function useForm<T extends Record<string, any>>({

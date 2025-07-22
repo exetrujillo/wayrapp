@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design outlines the approach for organizing and standardizing test files in the project. The goal is to eliminate duplication, ensure consistent naming conventions, and maintain a clear structure that reflects the application architecture.
+This design outlines the approach for organizing and standardizing test files in the WayrApp monorepo project. The goal is to eliminate duplication, ensure consistent naming conventions, and maintain a clear structure that reflects the application architecture across all workspaces (backend, frontend-creator, frontend-mobile, frontend-shared).
 
 ## Architecture
 

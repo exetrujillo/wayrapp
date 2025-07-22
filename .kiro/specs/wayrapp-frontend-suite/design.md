@@ -2,11 +2,12 @@
 
 ## Overview
 
-The WayrApp Frontend Suite consists of two complementary applications that together demonstrate the full decentralized content creation and consumption cycle. The design emphasizes a cohesive visual identity inspired by the WayrApp logo, ensuring users experience a seamless brand journey whether they're creating content or learning.
+The WayrApp Frontend Suite consists of two complementary applications within the WayrApp monorepo that together demonstrate the full decentralized content creation and consumption cycle. The design emphasizes a cohesive visual identity inspired by the WayrApp logo, ensuring users experience a seamless brand journey whether they're creating content or learning.
 
-### Applications
-- **Creator Tool**: React web application for content creators to build educational materials
-- **Mobile App**: React Native application for learners to discover and consume content from various WayrApp servers
+### Monorepo Applications
+- **Content Creator** (`frontend-creator/`): React web application for content creators to build educational materials
+- **Mobile App** (`frontend-mobile/`): React Native application for learners to discover and consume content from various WayrApp servers
+- **Shared Components** (`frontend-shared/`): Common utilities, types, and components shared between applications
 
 ## Design System Implementation
 

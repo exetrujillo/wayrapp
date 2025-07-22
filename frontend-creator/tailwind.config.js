@@ -1,55 +1,61 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}', './index.html'],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
+      fontSize: {
+        'h1': ['2.25rem', { lineHeight: '2.5rem' }],
+        'h2': ['1.875rem', { lineHeight: '2.25rem' }],
+        'h3': ['1.5rem', { lineHeight: '2rem' }],
+      },
       colors: {
         primary: {
-          50: '#E6F7F8',
-          100: '#B3E8EB',
-          500: '#50A8B1', // Main brand color
-          600: '#3A8086',
-          700: '#2D6469',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
         },
         secondary: {
-          50: '#FEFEFE',
-          100: '#F8F8F8', // Off-white
-          200: '#E8E8E8',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
         },
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
         neutral: {
-          100: '#E0E0E0',
-          300: '#B0B0B0',
-          500: '#707070',
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#737373',
+          600: '#525252',
           700: '#404040',
-          900: '#1A1A1A',
+          800: '#262626',
+          900: '#171717',
         },
-        success: '#4CAF50',
-        error: '#F44336',
-        warning: '#FF9800',
-      },
-      fontFamily: {
-        sans: ['Lato', 'Open Sans', 'Roboto', 'system-ui', 'sans-serif'],
-      },
-      fontSize: {
-        'h1': '2.5rem',
-        'h2': '2rem',
-        'h3': '1.5rem',
-        'body': '1rem',
-        'small': '0.875rem',
-        'xs': '0.75rem',
-      },
-      spacing: {
-        'xs': '0.25rem',  // 4px
-        'sm': '0.5rem',   // 8px
-        'md': '1rem',     // 16px
-        'lg': '1.5rem',   // 24px
-        'xl': '2rem',     // 32px
-        'xxl': '3rem',    // 48px
       },
       borderRadius: {
-        'component': '0.5rem', // 8px for components
-      }
-    }
+        'component': '0.375rem',
+      },
+    },
   },
   plugins: [],
 }

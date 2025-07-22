@@ -7,7 +7,7 @@ export class ApiClientError extends Error {
   status: number;
   code?: string;
   details?: Record<string, any>;
-  
+
   constructor(message: string, status: number, code?: string, details?: Record<string, any>) {
     super(message);
     this.name = 'ApiClientError';
@@ -48,7 +48,7 @@ class ApiClient {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        
+
         // Handle token expiration and refresh
         if (error.response?.status === 401 && !originalRequest._retry) {
           if (this.refreshTokenInProgress) {
@@ -60,27 +60,27 @@ class ApiClient {
               });
             });
           }
-          
+
           originalRequest._retry = true;
           this.refreshTokenInProgress = true;
-          
+
           try {
             // Try to refresh the token
             const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
             if (!refreshToken) {
               throw new Error('No refresh token available');
             }
-            
+
             const response = await this.client.post('/auth/refresh', { refreshToken });
             const { token } = response.data;
-            
+
             // Update the token in localStorage
             localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-            
+
             // Notify all subscribers that the token has been refreshed
             this.refreshSubscribers.forEach((callback) => callback(token));
             this.refreshSubscribers = [];
-            
+
             // Retry the original request
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return this.client(originalRequest);
@@ -95,7 +95,7 @@ class ApiClient {
             this.refreshTokenInProgress = false;
           }
         }
-        
+
         // Handle other errors
         return Promise.reject(this.handleAxiosError(error));
       }
@@ -113,12 +113,12 @@ class ApiClient {
       // that falls out of the range of 2xx
       const status = error.response.status;
       const data = error.response.data as any;
-      
+
       // Extract error details from response
       const message = data?.message || 'An error occurred with the API request';
       const code = data?.code;
       const details = data?.details;
-      
+
       return new ApiClientError(message, status, code, details);
     } else if (error.request) {
       // The request was made but no response was received
@@ -148,7 +148,7 @@ class ApiClient {
         details: error.details,
       };
     }
-    
+
     return {
       message: error.message || 'An unknown error occurred',
     };
@@ -247,8 +247,8 @@ class ApiClient {
    * @returns Promise with response data
    */
   async uploadFile<T>(
-    url: string, 
-    file: File, 
+    url: string,
+    file: File,
     fieldName: string = 'file',
     additionalData?: Record<string, any>,
     onProgress?: (percentage: number) => void
@@ -256,14 +256,14 @@ class ApiClient {
     try {
       const formData = new FormData();
       formData.append(fieldName, file);
-      
+
       // Add any additional data to the form
       if (additionalData) {
         Object.entries(additionalData).forEach(([key, value]) => {
           formData.append(key, value);
         });
       }
-      
+
       const response = await this.client.post<T>(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -275,7 +275,7 @@ class ApiClient {
           }
         },
       });
-      
+
       return response.data;
     } catch (error) {
       console.error(`File upload to ${url} failed:`, error);

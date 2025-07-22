@@ -2,7 +2,12 @@
 
 ## Overview
 
-The WayrApp backend is designed as a modular, TypeScript-based RESTful API using Node.js and Express. The system follows a feature-based modular architecture that separates Core Platform Data (users, progress) from Content Data (courses, lessons) to support future decentralization. The API connects to a PostgreSQL database hosted on Neon and implements JWT-based authentication with role-based access control.
+The WayrApp backend is designed as a modular, TypeScript-based RESTful API using Node.js and Express, serving as the core component of the WayrApp monorepo ecosystem. The system follows a feature-based modular architecture that separates Core Platform Data (users, progress) from Content Data (courses, lessons) to support future decentralization. The API connects to a PostgreSQL database hosted on Neon and implements JWT-based authentication with role-based access control.
+
+**Monorepo Context**: This backend API serves multiple frontend applications within the same repository:
+- Content Creator web application (React/Vite)
+- Mobile learning application (React Native/Expo)
+- Shared components and utilities library
 
 ### Key Design Principles
 
@@ -18,16 +23,16 @@ The WayrApp backend is designed as a modular, TypeScript-based RESTful API using
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Client Apps   │    │   Admin Panel   │    │  Content Tools  │
+│  Mobile App     │    │ Content Creator │    │  External Apps  │
+│ (React Native)  │    │   (React/Vite)  │    │   (Third-party) │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
                                  │
-                    ┌─────────────────┐
-                    │   Load Balancer │
-                    └─────────────────┘
-                                 │
-                    ┌─────────────────┐
+                    ┌──────────────────┐
+                    │   Backend API    │
+                    │ (Node.js/Express)│
+                    └──────────────────┘
                     │  Express API    │
                     │  (Node.js +     │
                     │   TypeScript)   │

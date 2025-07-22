@@ -1,10 +1,18 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "strict": true,
+    "target": "esnext",
+    "module": "ESNext",
+    "lib": ["es2019"],
+    "jsx": "react-native",
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"],
+      "wayrapp-shared": ["../frontend-shared/dist"]
     }
-  }
+  },
+  "include": ["src"]
 }
