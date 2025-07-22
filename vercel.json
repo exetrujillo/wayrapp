@@ -1,17 +1,13 @@
 {
-  "version": 2,
-  "name": "wayrapp-backend",
   "functions": {
-    "dist/server.js": {
+    "api/index.js": {
       "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/dist/server.js"
+      "destination": "/api"
     }
-  ],
-  "installCommand": "npm ci",
-  "buildCommand": "npm run vercel-build"
+  ]
 }
