@@ -21,7 +21,7 @@ The API is organized around REST principles and uses standard HTTP response code
 ### API Base URL for example
 
 ```
-https://api.wayrapp.com/v1 (not real yet)
+https://wayrapp.vercel.app/api/v1
 ```
 
 ### Authentication

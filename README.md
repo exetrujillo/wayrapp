@@ -121,24 +121,11 @@ Common utilities, types, and components shared between frontend applications.
 ## 📖 Documentation
 
 ### 🌐 Live API Documentation
-- **[Interactive API Docs](https://wayrapp.github.io/backend/)** - GitHub Pages hosted documentation
+- **[Interactive API Docs](https://exetrujillo.github.io/wayrapp/)** - GitHub Pages hosted documentation
 - **API Endpoints** (when server is running):
   - `GET /api/docs` - OpenAPI 3.0 specification
   - `GET /api/docs/overview` - Comprehensive API overview
   - `GET /api/status` - API status and health check
-
-### 📚 Detailed Documentation
-- **[Database Setup](docs/DATABASE_SETUP.md)** - Database configuration and migration guide
-- **[API Overview](docs/API_OVERVIEW.md)** - Complete API reference and usage patterns
-- **Authentication & Security**
-  - [Authentication](docs/AUTHENTICATION.md) - Auth endpoints, JWT tokens, and security
-  - [Users](docs/USERS.md) - User management and profile operations
-- **Content Management**
-  - [Content](docs/CONTENT.md) - Course hierarchy and content management
-  - [Lessons & Exercises](docs/LESSONS_EXERCISES.md) - Learning content and exercise types
-- **Features & Functionality**
-  - [Progress](docs/PROGRESS.md) - Progress tracking, gamification, and analytics
-  - [Packaged Content API](docs/PACKAGED_CONTENT_API.md) - Offline support and caching
 
 ### 🔧 API Documentation Endpoints
 
@@ -176,14 +163,14 @@ curl http://localhost:3000/health
 
 ### Prerequisites
 - Node.js 18+ 
-- PostgreSQL database (we recommend [Neon](https://neon.tech/))
+- PostgreSQL database for the example (we recommend [Neon](https://neon.tech/))
 - npm (NPM Workspaces support required)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/exetrujillo/wayrapp.git
    cd wayrapp
    ```
 
@@ -255,7 +242,7 @@ Create a `.env` file based on `.env.example`:
 
 ```env
 # Database
-DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
+DATABASE_URL="postgresql://username:password@...?sslmode=require"
 
 # JWT Configuration
 JWT_SECRET="your-super-secure-jwt-secret-key-here"
@@ -265,10 +252,7 @@ JWT_REFRESH_SECRET="your-super-secure-refresh-secret-key-here"
 PORT=3000
 NODE_ENV="development"
 
-# Optional: External Services
-# REDIS_URL="redis://localhost:6379"
-# SMTP_HOST="smtp.example.com"
-# SMTP_PORT=587
+
 ```
 
 ### Database Schema
