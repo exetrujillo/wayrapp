@@ -1,27 +1,20 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"],
-      "@/modules/*": ["modules/*"],
-      "@/shared/*": ["shared/*"]
-    }
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": [
-    "src/**/*",
-    "src/shared/types/*.d.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
     "src/shared/test"
-  ],
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  }
+  ]
 }
