@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "vercel-build": "npm run build",
     "build:shared": "npm run build --workspace=wayrapp-shared",
     "build:all": "npm run build && npm run build:shared",
     "start": "node dist/server.js",

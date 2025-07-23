@@ -79,33 +79,27 @@ This directory contains comprehensive integration tests for the WayrApp backend 
 ### Running Tests
 
 ```bash
-# Run all integration tests
+# Run ALL backend tests (unit and integration, sequentially)
+npm run test:backend
+
+# Run ONLY unit tests
+npm run test:unit
+
+# Run ONLY integration tests (sequentially)
 npm run test:integration
 
-# Run integration tests with coverage
-npm run test:integration:coverage
+# Run a specific integration test file
+npx jest --config jest.integration.config.js path/to/your/test/file.ts
 
-# Run integration tests in watch mode
-npm run test:integration:watch
-
-# Run specific test file
-npm run test:integration -- auth.integration.test.ts
-
-# Run tests with verbose output
-npm run test:integration -- --verbose
-
-# Run all tests (unit + integration)
-npm run test:all
+# Run a specific integration test by name
+npx jest --config jest.integration.config.js --testNamePattern="should register a new user"
 ```
 
 ### Test Configuration
 
-Integration tests use a separate Jest configuration (`jest.integration.config.js`) with:
-
-- **Longer timeouts** (30 seconds) for database operations
-- **Sequential execution** (maxWorkers: 1) to avoid database conflicts
-- **Global setup/teardown** for database schema management
-- **Separate coverage reporting** in `coverage/integration/`
+Integration tests use a separate Jest configuration (`jest.integration.config.js`) which is **critical** as it enforces:
+- **Sequential execution (`maxWorkers: 1`)** to prevent race conditions and data conflicts in the database.
+- A `testMatch` pattern that only finds files ending in `.integration.test.ts`.
 
 ## Test Data Management
 
