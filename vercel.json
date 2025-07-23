@@ -2,16 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["dist/**", "prisma/**"]
-      }
+      "src": "dist/server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
+      "dest": "dist/server.js"
+    },
+    {
+      "src": "/health",
       "dest": "dist/server.js"
     }
   ]
