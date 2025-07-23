@@ -11,12 +11,8 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "dist/server.js"
-    },
-    {
-      "src": "/health",
-      "dest": "dist/server.js"
+      "src": "/(.*)",
+      "dest": "package.json"
     }
   ]
 }
