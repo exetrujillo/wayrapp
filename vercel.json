@@ -1,17 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:all",
   "builds": [
     {
-      "src": "dist/server.js",
+      "src": "src/server.ts", 
       "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/dist/server.js" },
-    { "src": "/creator/(.*)", "dest": "/frontend-creator/dist/$1" },
-    { "src": "/mobile/(.*)", "dest": "/frontend-mobile/web-build/$1" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/dist/server.js" }
+    {
+      "src": "/(.*)",
+      "dest": "src/server.ts"
+    }
   ]
 }
