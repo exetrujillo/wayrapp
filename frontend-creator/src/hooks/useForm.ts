@@ -3,13 +3,12 @@ import { z } from 'zod';
 
 interface UseFormProps<T> {
   initialValues: T;
-  schema: z.ZodType<T>;
+  schema: z.ZodObject<any, any, any, T>; // Changed to ZodObject to access .shape
   onSubmit: (values: T) => void | Promise<void>;
 }
 
-interface FormErrors<T> {
-  [key: string]: string | undefined;
-}
+// Fixed the FormErrors interface
+type FormErrors<T> = Partial<Record<keyof T, string>>;
 
 export function useForm<T extends Record<string, any>>({
   initialValues,
@@ -25,12 +24,12 @@ export function useForm<T extends Record<string, any>>({
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
-    const newValue = type === 'checkbox' 
-      ? (e.target as HTMLInputElement).checked 
+    const newValue = type === 'checkbox'
+      ? (e.target as HTMLInputElement).checked
       : value;
-    
+
     setValues((prev) => ({ ...prev, [name]: newValue }));
-    
+
     // Validate field on change if it's been touched
     if (touched[name]) {
       validateField(name, newValue);
@@ -50,7 +49,7 @@ export function useForm<T extends Record<string, any>>({
       // Create a partial schema for just this field
       const fieldSchema = z.object({ [name]: schema.shape[name] });
       fieldSchema.parse({ [name]: value });
-      
+
       // Clear error if validation passes
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     } catch (error) {
@@ -84,17 +83,17 @@ export function useForm<T extends Record<string, any>>({
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Mark all fields as touched
     const allTouched = Object.keys(values).reduce(
       (acc, key) => ({ ...acc, [key]: true }),
       {}
     );
     setTouched(allTouched);
-    
+
     // Validate all fields
     const isValid = validateForm();
-    
+
     if (isValid) {
       setIsSubmitting(true);
       try {

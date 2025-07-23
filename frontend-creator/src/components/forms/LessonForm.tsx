@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { lessonSchema, LessonFormData } from '../../utils/validation';
+import { lessonSchema } from '../../utils/validation';
 import { moduleService } from '../../services/moduleService';
 import { lessonService } from '../../services/lessonService';
 import { Input } from '../ui/Input';
@@ -29,13 +29,14 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
     control,
     reset,
     formState: { errors },
-  } = useForm<LessonFormData>({
+  } = useForm({
     resolver: zodResolver(lessonSchema),
     defaultValues: {
       name: '',
       experience_points: 10,
       order: 0,
       moduleId: '',
+      id: '',
     },
   });
 
@@ -58,7 +59,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
     fetchModules();
   }, [t]);
 
-  const onSubmit = async (data: LessonFormData) => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     setFeedback(null);
     
@@ -68,6 +69,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
         experience_points: data.experience_points,
         order: data.order,
         moduleId: data.moduleId,
+        ...(data.id && { id: data.id }), // Only include id if it has a value
       });
       
       setFeedback({
@@ -118,7 +120,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
           label={t('creator.forms.lesson.id', 'Lesson ID')}
           placeholder={t('creator.forms.lesson.idPlaceholder', 'e.g., intro-lesson-1')}
           {...register('id')}
-          error={errors.id?.message}
+          error={errors.id?.message || ''}
           fullWidth
         />
         
@@ -128,7 +130,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
           label={t('creator.forms.lesson.name', 'Lesson Name')}
           placeholder={t('creator.forms.lesson.namePlaceholder', 'e.g., Introduction to Greetings')}
           {...register('name')}
-          error={errors.name?.message}
+          error={errors.name?.message || ''}
           isRequired
           fullWidth
         />
@@ -188,7 +190,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
           min={1}
           placeholder="10"
           {...register('experience_points', { valueAsNumber: true })}
-          error={errors.experience_points?.message}
+          error={errors.experience_points?.message || ''}
           fullWidth
         />
         
@@ -200,7 +202,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({ onSuccess, onCancel }) =
           min={0}
           placeholder="0"
           {...register('order', { valueAsNumber: true })}
-          error={errors.order?.message}
+          error={errors.order?.message || ''}
           isRequired
           fullWidth
         />

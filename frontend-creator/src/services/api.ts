@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { STORAGE_KEYS } from '../utils/constants';
 import { ApiError } from '../utils/types';
 
@@ -12,8 +12,12 @@ export class ApiClientError extends Error {
     super(message);
     this.name = 'ApiClientError';
     this.status = status;
-    this.code = code;
-    this.details = details;
+    if (code !== undefined) {
+      this.code = code;
+    }
+    if (details !== undefined) {
+      this.details = details;
+    }
   }
 }
 
@@ -90,7 +94,7 @@ class ApiClient {
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
             window.location.href = '/login';
-            return Promise.reject(this.handleAxiosError(refreshError));
+            return Promise.reject(this.handleAxiosError(refreshError as AxiosError));
           } finally {
             this.refreshTokenInProgress = false;
           }
@@ -142,11 +146,18 @@ class ApiClient {
    */
   private formatErrorResponse(error: any): ApiError {
     if (error instanceof ApiClientError) {
-      return {
+      const apiError: ApiError = {
         message: error.message,
-        code: error.code,
-        details: error.details,
       };
+      
+      if (error.code !== undefined) {
+        apiError.code = error.code;
+      }
+      if (error.details !== undefined) {
+        apiError.details = error.details;
+      }
+      
+      return apiError;
     }
 
     return {
@@ -284,7 +295,56 @@ class ApiClient {
   }
 }
 
+// Auth API methods
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface AuthResponse {
+  token: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+// Extended API client with auth methods
+class ExtendedApiClient extends ApiClient {
+  /**
+   * Login user
+   * @param credentials Login credentials
+   * @returns Promise with auth response
+   */
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    return this.post<AuthResponse>('/auth/login', credentials);
+  }
+
+  /**
+   * Refresh authentication token
+   * @param refreshToken Refresh token
+   * @returns Promise with new auth response
+   */
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    return this.post<AuthResponse>('/auth/refresh', { refreshToken });
+  }
+
+  /**
+   * Logout user
+   * @returns Promise
+   */
+  async logout(): Promise<void> {
+    return this.post<void>('/auth/logout');
+  }
+}
+
 // Create and export API client instance
-export const apiClient = new ApiClient('/api/v1');
+export const apiClient = new ExtendedApiClient('/api/v1');
 
 export default apiClient;

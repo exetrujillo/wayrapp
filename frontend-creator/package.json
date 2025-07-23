@@ -8,7 +8,11 @@
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ui": "jest --testPathPattern=components/ui",
+    "test:integration": "jest --testPathPattern=integration"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -25,5 +29,24 @@
     "react-router-dom": "^6.20.1",
     "wayrapp-shared": "0.1.0",
     "zod": "^3.22.4"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^14.2.1",
+    "@types/react": "^18.2.0",
+    "@types/react-beautiful-dnd": "^13.1.8",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "jest-environment-jsdom": "^30.0.5",
+    "msw": "^2.10.4",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "undici": "^6.21.3",
+    "vite": "^5.0.5",
+    "whatwg-fetch": "^3.6.20"
   }
 }

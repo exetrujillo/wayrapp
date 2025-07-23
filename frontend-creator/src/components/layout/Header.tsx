@@ -42,10 +42,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
     
     const nameParts = user.name.split(' ');
     if (nameParts.length === 1) {
-      return nameParts[0].charAt(0).toUpperCase();
+      return nameParts[0]?.charAt(0).toUpperCase() || 'U';
     }
     
-    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+    const firstInitial = nameParts[0]?.charAt(0) || '';
+    const lastInitial = nameParts[nameParts.length - 1]?.charAt(0) || '';
+    return (firstInitial + lastInitial).toUpperCase() || 'U';
   };
   
   return (

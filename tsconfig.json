@@ -25,13 +25,16 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node", "jest"],
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "references": [
-    { "path": "./frontend-creator" },
-    { "path": "./frontend-mobile" },
     { "path": "./frontend-shared" }
   ],
   "files": [],
+  "include": ["src", "src/types"],
   "exclude": ["node_modules"]
 }

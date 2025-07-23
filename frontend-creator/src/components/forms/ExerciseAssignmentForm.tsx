@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from 'react-beautiful-dnd';
 import { exerciseAssignmentSchema, ExerciseAssignmentFormData } from '../../utils/validation';
 import { lessonService } from '../../services/lessonService';
 import { exerciseService } from '../../services/exerciseService';
@@ -151,19 +152,20 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
         }
     };
 
-    const handleMoveExercise = async (assignmentId: string, direction: 'up' | 'down') => {
-        const currentIndex = assignedExercises.findIndex(a => a.id === assignmentId);
-        if (currentIndex === -1) return;
+    const handleDragEnd = async (result: DropResult) => {
+        if (!result.destination) return;
 
-        const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        const sourceIndex = result.source.index;
+        const destinationIndex = result.destination.index;
 
-        // Check if the new index is valid
-        if (newIndex < 0 || newIndex >= assignedExercises.length) return;
+        if (sourceIndex === destinationIndex) return;
 
         // Reorder the assignments
         const reorderedAssignments = Array.from(assignedExercises);
-        const [removed] = reorderedAssignments.splice(currentIndex, 1);
-        reorderedAssignments.splice(newIndex, 0, removed);
+        const [removed] = reorderedAssignments.splice(sourceIndex, 1);
+        if (removed) {
+            reorderedAssignments.splice(destinationIndex, 0, removed);
+        }
 
         // Update the UI immediately for better UX
         setAssignedExercises(reorderedAssignments);
@@ -223,17 +225,17 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
 
         switch (exercise.exercise_type) {
             case 'translation':
-                return exercise.data.source_text || '';
+                return exercise.data['source_text'] || '';
             case 'fill_in_the_blank':
-                return exercise.data.text || '';
+                return exercise.data['text'] || '';
             case 'multiple_choice':
-                return exercise.data.question || '';
+                return exercise.data['question'] || '';
             case 'matching':
-                return `${exercise.data.pairs?.length || 0} pairs`;
+                return `${exercise.data['pairs']?.length || 0} pairs`;
             case 'listening':
-                return exercise.data.transcript || '';
+                return exercise.data['transcript'] || '';
             case 'speaking':
-                return exercise.data.prompt || '';
+                return exercise.data['prompt'] || '';
             default:
                 return '';
         }
@@ -253,7 +255,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                 <Feedback
                     type={feedback.type}
                     message={feedback.message}
-                    onClose={() => setFeedback(null)}
+                    onDismiss={() => setFeedback(null)}
                 />
             )}
 
@@ -306,7 +308,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                             min={0}
                             {...register('order', { valueAsNumber: true })}
                             disabled={isSubmitting}
-                            error={errors.order?.message}
+                            {...(errors.order?.message && { error: errors.order.message })}
                         />
                     </div>
 
@@ -334,7 +336,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                 ) : (
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <Droppable droppableId="exercises">
-                            {(provided) => (
+                            {(provided: DroppableProvided) => (
                                 <div
                                     {...provided.droppableProps}
                                     ref={provided.innerRef}
@@ -345,7 +347,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
 
                                         return (
                                             <Draggable key={assignment.id} draggableId={assignment.id} index={index}>
-                                                {(provided) => (
+                                                {(provided: DraggableProvided) => (
                                                     <div
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}

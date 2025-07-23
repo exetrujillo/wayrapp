@@ -11,7 +11,7 @@ const isValidBCP47 = (code: string) => {
 // Login form schema
 export const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   rememberMe: z.boolean().optional(),
 });
 
@@ -26,7 +26,7 @@ export const courseSchema = z.object({
     message: 'Please enter a valid BCP 47 language code',
   }),
   description: z.string().optional(),
-  is_public: z.boolean().default(false),
+  is_public: z.boolean(),
 });
 
 // Lesson creation schema

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import apiClient, { LoginCredentials, AuthResponse } from '@services/api';
+import apiClient from '../services/api';
+import { LoginCredentials, AuthResponse } from '../utils/types';
 
 interface UseAuthReturn {
   user: AuthResponse['user'] | null;

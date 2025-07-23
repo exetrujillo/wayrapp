@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSW Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>MSW Browser Test</h1>
+    <p>This page tests if MSW is intercepting API requests in the browser.</p>
+    
+    <button onclick="testLogin()">Test Login API</button>
+    <button onclick="testCourses()">Test Courses API</button>
+    <button onclick="testDashboard()">Test Dashboard API</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(title, data, isError = false) {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <h3 class="${isError ? 'error' : 'success'}">${title}</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                const data = await response.json();
+                addResult('✅ Login API Test', data);
+            } catch (error) {
+                addResult('❌ Login API Test Failed', { error: error.message }, true);
+            }
+        }
+        
+        async function testCourses() {
+            try {
+                const response = await fetch('/api/v1/courses');
+                const data = await response.json();
+                addResult('✅ Courses API Test', data);
+            } catch (error) {
+                addResult('❌ Courses API Test Failed', { error: error.message }, true);
+            }
+        }
+        
+        async function testDashboard() {
+            try {
+                const response = await fetch('/api/v1/dashboard/statistics');
+                const data = await response.json();
+                addResult('✅ Dashboard API Test', data);
+            } catch (error) {
+                addResult('❌ Dashboard API Test Failed', { error: error.message }, true);
+            }
+        }
+        
+        // Test MSW status on page load
+        window.addEventListener('load', () => {
+            if (window.msw) {
+                addResult('✅ MSW Status', { status: 'MSW is loaded and active' });
+            } else {
+                addResult('ℹ️ MSW Status', { status: 'MSW status unknown - check console for MSW messages' });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@ import { lessonService } from '../services/lessonService';
 import { Feedback } from '../components/ui/Feedback';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Button } from '../components/ui/Button';
-import { Lesson, ExerciseAssignment } from '../utils/types';
+import { Lesson } from '../utils/types';
 
 const ExerciseAssignmentPage: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();

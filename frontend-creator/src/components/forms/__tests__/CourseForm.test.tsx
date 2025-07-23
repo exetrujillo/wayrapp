@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CourseForm } from '../CourseForm';
 import { courseService } from '../../../services/courseService';
@@ -6,7 +5,7 @@ import { courseService } from '../../../services/courseService';
 // Mock dependencies
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback: string) => fallback,
+    t: (_key: string, fallback: string) => fallback,
   }),
 }));
 
@@ -40,10 +39,17 @@ describe('CourseForm', () => {
     // Submit the form without filling required fields
     fireEvent.click(screen.getByRole('button', { name: /Create Course/i }));
     
-    // Check for validation errors
+    // Check for validation errors - be specific about which field has the error
     await waitFor(() => {
       expect(screen.getByText(/Course name must be at least 3 characters/i)).toBeInTheDocument();
-      expect(screen.getByText(/Please enter a valid BCP 47 language code/i)).toBeInTheDocument();
+      
+      // Find each language input field and check for associated error messages
+      const sourceLangInput = screen.getByLabelText(/source language/i);
+      const targetLangInput = screen.getByLabelText(/target language/i);
+      
+      // Check that error messages exist near each field
+      expect(sourceLangInput.closest('div')).toHaveTextContent(/Please enter a valid BCP 47 language code/i);
+      expect(targetLangInput.closest('div')).toHaveTextContent(/Please enter a valid BCP 47 language code/i);
     });
   });
 
@@ -62,7 +68,7 @@ describe('CourseForm', () => {
     
     render(<CourseForm onSuccess={mockOnSuccess} />);
     
-    // Fill in the form
+    // Fill in the form - including the Course ID field
     fireEvent.change(screen.getByLabelText(/Course ID/i), { target: { value: 'test-course' } });
     fireEvent.change(screen.getByLabelText(/Course Name/i), { target: { value: 'Test Course' } });
     fireEvent.change(screen.getByLabelText(/Source Language/i), { target: { value: 'en' } });

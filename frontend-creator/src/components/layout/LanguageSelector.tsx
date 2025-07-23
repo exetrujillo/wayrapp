@@ -37,7 +37,7 @@ const LanguageSelector: React.FC = () => {
         className="flex items-center text-sm rounded-md px-3 py-2 text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="mr-1">{currentLanguage.code.toUpperCase()}</span>
+        <span className="mr-1">{currentLanguage?.code.toUpperCase()}</span>
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

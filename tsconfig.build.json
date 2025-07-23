@@ -17,7 +17,9 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "src/shared/test"
   ],
   "ts-node": {
     "require": ["tsconfig-paths/register"]

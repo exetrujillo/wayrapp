@@ -12,8 +12,8 @@ import { LoginCredentials } from '../utils/types';
 // Define validation schema for login form
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export const LoginPage: React.FC = () => {
@@ -89,7 +89,7 @@ export const LoginPage: React.FC = () => {
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.email && errors.email ? errors.email : undefined}
+            error={touched['email'] && errors['email'] ? errors['email'] : ''}
           />
           
           <Input
@@ -103,7 +103,7 @@ export const LoginPage: React.FC = () => {
             value={values.password}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.password && errors.password ? errors.password : undefined}
+            error={touched['password'] && errors['password'] ? errors['password'] : ''}
           />
           
           <div className="flex items-center justify-between">

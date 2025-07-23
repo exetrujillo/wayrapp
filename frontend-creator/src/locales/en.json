@@ -10,7 +10,13 @@
       "continue": "Continue",
       "start": "Start",
       "back": "Back",
-      "remove": "Remove"
+      "remove": "Remove",
+      "view": "View",
+      "refresh": "Refresh",
+      "previous": "Previous",
+      "next": "Next",
+      "retry": "Retry",
+      "getStarted": "Get Started"
     },
     "messages": {
       "loading": "Loading...",
@@ -35,17 +41,65 @@
       "email": "Email",
       "password": "Password",
       "rememberMe": "Remember me",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "validation": {
+        "emailRequired": "Please enter a valid email address",
+        "passwordMinLength": "Password must be at least 8 characters"
+      }
     },
     "dashboard": {
-      "title": "Dashboard",
+      "title": "Creator Dashboard",
+      "welcome": "Welcome to WayrApp Creator",
+      "subtitle": "Create and manage language learning content",
       "createNew": "Create New",
       "totalCourses": "Total Courses",
+      "totalLessons": "Total Lessons",
+      "totalExercises": "Total Exercises",
+      "publicCourses": "Public Courses",
       "activeLearners": "Active Learners",
-      "completionRate": "Completion Rate"
+      "completionRate": "Completion Rate",
+      "activity": {
+        "courseCreated": "New course created",
+        "courseCreatedDesc": "Euskera Basics course was created",
+        "lessonAdded": "Lesson added",
+        "lessonAddedDesc": "Added \"Greetings\" lesson to Euskera Basics",
+        "exerciseCreated": "Exercise created",
+        "exerciseCreatedDesc": "Translation exercise for \"Hello\" created"
+      },
+      "actions": {
+        "createCourse": "Create Course",
+        "createCourseDesc": "Start a new language learning course",
+        "createLesson": "Create Lesson",
+        "createLessonDesc": "Add a new lesson to your course",
+        "createExercise": "Create Exercise",
+        "createExerciseDesc": "Build interactive learning exercises",
+        "manageCourses": "Manage Courses",
+        "manageCoursesDesc": "View and edit your existing courses",
+        "manageLessons": "Manage Lessons",
+        "manageLessonsDesc": "Organize and edit your lessons",
+        "manageExercises": "Manage Exercises",
+        "manageExercisesDesc": "Review and update your exercises"
+      }
     },
     "exercises": {
       "createNew": "Create New Exercise"
+    },
+    "pages": {
+      "courses": {
+        "searchPlaceholder": "Search courses...",
+        "noCourses": "No courses found. Create your first course!",
+        "publish": "Publish",
+        "unpublish": "Unpublish"
+      },
+      "lessons": {
+        "createButton": "Create Lesson",
+        "noLessons": "No lessons found. Create your first lesson!",
+        "deleteConfirm": "Are you sure you want to delete this lesson?"
+      },
+      "exercises": {
+        "searchPlaceholder": "Search exercises...",
+        "noExercises": "No exercises found. Create your first exercise!"
+      }
     },
     "pages": {
       "createExercise": {
@@ -63,6 +117,53 @@
         "xp": "XP",
         "id": "ID",
         "manageExercises": "Manage Exercises"
+      },
+      "courseCard": {
+        "public": "Public",
+        "private": "Private",
+        "id": "ID",
+        "created": "Created",
+        "manageModules": "Manage Modules",
+        "deleteConfirm": "Are you sure you want to delete this course?"
+      },
+      "exerciseCard": {
+        "id": "ID",
+        "created": "Created",
+        "updated": "Updated",
+        "preview": "Preview",
+        "deleteConfirm": "Are you sure you want to delete this exercise?",
+        "noPreview": "No preview available",
+        "audioExercise": "Audio exercise",
+        "speakingExercise": "Speaking exercise",
+        "sourceText": "Source Text",
+        "targetText": "Target Text",
+        "question": "Question",
+        "options": "Options",
+        "sentence": "Sentence",
+        "answers": "Correct Answers",
+        "rawData": "Raw Data"
+      },
+      "contentList": {
+        "searchPlaceholder": "Search...",
+        "bulkActionConfirm": "Are you sure you want to {{action}} {{count}} items?",
+        "selectedCount": "{{count}} items selected",
+        "showing": "Showing {{start}} to {{end}} of {{total}} results",
+        "noItems": "No items found",
+        "selectAll": "Select all"
+      },
+      "contentDashboard": {
+        "quickActions": "Quick Actions",
+        "recentActivity": "Recent Activity",
+        "justNow": "Just now",
+        "hoursAgo": "{{hours}}h ago"
+      },
+      "contentDetailView": {
+        "errorTitle": "Error Loading Content",
+        "notFound": "Content Not Found",
+        "notFoundMessage": "The requested content could not be found.",
+        "deleteConfirmTitle": "Confirm Delete",
+        "deleteConfirmMessage": "This action cannot be undone. Are you sure you want to delete this item?",
+        "actionConfirm": "Are you sure you want to {{action}}?"
       }
     },
     "forms": {

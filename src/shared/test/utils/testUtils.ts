@@ -120,7 +120,7 @@ export function ensureJestMock(mockFn: any) {
   if (!jest.isMockFunction(mockFn)) {
     throw new Error('Provided function is not a Jest mock');
   }
-  
+
   // Ensure common Jest mock methods are available
   if (!mockFn.mockResolvedValueOnce) {
     mockFn.mockResolvedValueOnce = jest.fn().mockReturnValue(mockFn);
@@ -131,7 +131,7 @@ export function ensureJestMock(mockFn: any) {
   if (!mockFn.mockRejectedValue) {
     mockFn.mockRejectedValue = jest.fn().mockReturnValue(mockFn);
   }
-  
+
   return mockFn;
 }
 
@@ -274,7 +274,7 @@ export function mockDate(date: Date = new Date("2025-01-01T00:00:00Z")) {
     mockTimezone: (timezoneOffset: number) => {
       const originalGetTimezoneOffset = Date.prototype.getTimezoneOffset;
       Date.prototype.getTimezoneOffset = jest.fn().mockReturnValue(timezoneOffset);
-      
+
       return {
         restore: () => {
           Date.prototype.getTimezoneOffset = originalGetTimezoneOffset;
@@ -471,7 +471,7 @@ export function mockDate(date: Date = new Date("2025-01-01T00:00:00Z")) {
  */
 export function mockJwt() {
   const originalJwt = jest.requireActual('jsonwebtoken');
-  
+
   // Default mock implementations
   const mockSign = jest.fn();
   const mockVerify = jest.fn();
@@ -731,7 +731,7 @@ export function mockJwt() {
       createExpiredToken: (role: UserRole = 'student', expiredMinutesAgo: number = 60) => {
         const now = Math.floor(Date.now() / 1000);
         const expiredTime = now - (expiredMinutesAgo * 60);
-        
+
         const payload: JWTPayload = {
           sub: `${role}-user-id`,
           email: `${role}@example.com`,
@@ -751,7 +751,7 @@ export function mockJwt() {
       createExpiringToken: (role: UserRole = 'student', expiresInMinutes: number = 5) => {
         const now = Math.floor(Date.now() / 1000);
         const expirationTime = now + (expiresInMinutes * 60);
-        
+
         const payload: JWTPayload = {
           sub: `${role}-user-id`,
           email: `${role}@example.com`,
@@ -965,7 +965,7 @@ export function mockLogger() {
       ) => {
         const mockFn = mockLoggerInstance[level];
         expect(mockFn).toHaveBeenCalled();
-        
+
         if (meta !== undefined) {
           expect(mockFn).toHaveBeenCalledWith(message, meta);
         } else {
@@ -1061,8 +1061,8 @@ export function mockLogger() {
           ...mockSilly.mock.calls,
         ];
 
-        const foundCall = allCalls.some(call => 
-          call.some((arg: any) => 
+        const foundCall = allCalls.some(call =>
+          call.some((arg: any) =>
             typeof arg === 'string' && arg.includes(text)
           )
         );
@@ -1077,20 +1077,20 @@ export function mockLogger() {
        */
       expectErrorWithException: (errorMessage?: string, errorType?: new (...args: any[]) => Error) => {
         expect(mockError).toHaveBeenCalled();
-        
-        const errorCall = mockError.mock.calls.find(call => 
+
+        const errorCall = mockError.mock.calls.find(call =>
           call.some((arg: any) => arg instanceof Error)
         );
-        
+
         expect(errorCall).toBeDefined();
-        
+
         if (errorMessage || errorType) {
           const errorArg = errorCall?.find((arg: any) => arg instanceof Error);
-          
+
           if (errorMessage) {
             expect(errorArg?.message).toContain(errorMessage);
           }
-          
+
           if (errorType) {
             expect(errorArg).toBeInstanceOf(errorType);
           }
@@ -1169,7 +1169,7 @@ export function mockLogger() {
           const actualCall = allCallsWithLevel[index];
           expect(actualCall).toBeDefined();
           expect(actualCall!.level).toBe(expectedCall.level);
-          
+
           if (expectedCall.meta !== undefined) {
             expect(actualCall!.args).toEqual([expectedCall.message, expectedCall.meta]);
           } else {

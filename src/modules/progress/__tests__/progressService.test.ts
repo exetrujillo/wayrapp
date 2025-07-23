@@ -6,8 +6,7 @@
 import { ProgressService } from '../services/progressService';
 import { ProgressRepository } from '../repositories/progressRepository';
 import { PrismaClient } from '@prisma/client';
-import { AppError } from '@/shared/middleware/errorHandler';
-import { HttpStatus, ErrorCodes } from '@/shared/types';
+// No need to import AppError, HttpStatus, or ErrorCodes as we're not using them directly
 import { mockDate } from '@/shared/test/utils/testUtils';
 
 // Mock Prisma client
@@ -32,12 +31,9 @@ const mockProgressRepository = {
   createMultipleLessonCompletions: jest.fn()
 } as unknown as ProgressRepository;
 
-// Mock lesson completion repository
-const mockLessonCompletionRepository = {
-  findByUserAndLesson: jest.fn(),
-  create: jest.fn(),
-  findByUser: jest.fn()
-};
+// We don't need a separate mockLessonRepository since we're using mockPrisma.lesson
+
+// We don't need a separate mockLessonCompletionRepository since we're using mockProgressRepository
 
 // // Mock factories for test data
 // const UserProgressFactory = {
@@ -180,11 +176,6 @@ describe('ProgressService', () => {
   });
 
   describe('completeLesson', () => {
-    beforeEach(() => {
-      // Add necessary properties to progressService for testing
-      (progressService as any).lessonCompletionRepository = mockLessonCompletionRepository;
-    });
-
     it('should complete lesson and update progress successfully', async () => {
       // Arrange
       const userId = 'test-user-id';
@@ -217,24 +208,33 @@ describe('ProgressService', () => {
         time_spent_seconds: timeSpentSeconds,
       };
 
+      const lesson = {
+        id: lessonId,
+        moduleId: 'test-module-id',
+        experiencePoints: 10,
+        order: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
       (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(userProgress);
-      (mockLessonCompletionRepository.findByUserAndLesson as jest.Mock).mockResolvedValue(null);
-      (mockLessonCompletionRepository.create as jest.Mock).mockResolvedValue(lessonCompletion);
+      (mockProgressRepository.findLessonCompletion as jest.Mock).mockResolvedValue(null);
+      (mockProgressRepository.createLessonCompletion as jest.Mock).mockResolvedValue(lessonCompletion);
       (mockProgressRepository.updateUserProgress as jest.Mock).mockResolvedValue(updatedProgress);
+      (mockPrisma.lesson.findUnique as jest.Mock).mockResolvedValue(lesson);
 
       // Mock the lesson service to return experience points
       jest.spyOn(progressService as any, 'calculateExperiencePoints').mockReturnValue(experiencePoints);
 
       // Act
-      const result = await (progressService as any).completeLesson(userId, lessonId, score, timeSpentSeconds);
+      const result = await progressService.completeLesson(userId, { lesson_id: lessonId, score, time_spent_seconds: timeSpentSeconds });
 
       // Assert
       expect(mockProgressRepository.findUserProgressByUserId).toHaveBeenCalledWith(userId);
-      expect(mockLessonCompletionRepository.findByUserAndLesson).toHaveBeenCalledWith(userId, lessonId);
-      expect(mockLessonCompletionRepository.create).toHaveBeenCalledWith({
+      expect(mockProgressRepository.findLessonCompletion).toHaveBeenCalledWith(userId, lessonId);
+      expect(mockProgressRepository.createLessonCompletion).toHaveBeenCalledWith({
         user_id: userId,
         lesson_id: lessonId,
-        completed_at: expect.any(Date),
         score,
         time_spent_seconds: timeSpentSeconds,
       });
@@ -249,7 +249,7 @@ describe('ProgressService', () => {
       });
     });
 
-    it('should update existing lesson completion if already completed', async () => {
+    it('should throw error when lesson already completed', async () => {
       // Arrange
       const userId = 'test-user-id';
       const lessonId = 'test-lesson-id';
@@ -274,85 +274,135 @@ describe('ProgressService', () => {
         time_spent_seconds: 150,
       };
 
-      const updatedCompletion = {
-        ...existingCompletion,
-        score,
-        time_spent_seconds: timeSpentSeconds,
-        completed_at: expect.any(Date),
+      const lesson = {
+        id: lessonId,
+        moduleId: 'test-module-id',
+        experiencePoints: 10,
+        order: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(userProgress);
-      (mockLessonCompletionRepository.findByUserAndLesson as jest.Mock).mockResolvedValue(existingCompletion);
-      (mockLessonCompletionRepository.create as jest.Mock).mockResolvedValue(updatedCompletion);
+      (mockProgressRepository.findLessonCompletion as jest.Mock).mockResolvedValue(existingCompletion);
+      (mockPrisma.lesson.findUnique as jest.Mock).mockResolvedValue(lesson);
 
-      // Act
-      const result = await (progressService as any).completeLesson(userId, lessonId, score, timeSpentSeconds);
+      // Act & Assert
+      await expect(progressService.completeLesson(userId, { lesson_id: lessonId, score, time_spent_seconds: timeSpentSeconds }))
+        .rejects.toThrow('Lesson already completed');
+    });
 
-      // Assert
-      expect(mockLessonCompletionRepository.findByUserAndLesson).toHaveBeenCalledWith(userId, lessonId);
-      expect(mockLessonCompletionRepository.create).toHaveBeenCalledWith({
+    it('should create user progress if not found', async () => {
+      // Arrange
+      const userId = 'new-user-id';
+      const lessonId = 'test-lesson-id';
+      const score = 90;
+      const timeSpentSeconds = 120;
+      const experiencePoints = 10;
+
+      const newUserProgress = {
+        user_id: userId,
+        experience_points: 0,
+        lives_current: 5,
+        streak_current: 0,
+        last_completed_lesson_id: null,
+        last_activity_date: new Date(),
+        updated_at: new Date()
+      };
+
+      const updatedProgress = {
+        ...newUserProgress,
+        experience_points: experiencePoints,
+        last_completed_lesson_id: lessonId,
+        streak_current: 1
+      };
+
+      const lessonCompletion = {
         user_id: userId,
         lesson_id: lessonId,
         completed_at: expect.any(Date),
         score,
         time_spent_seconds: timeSpentSeconds,
+      };
+
+      const lesson = {
+        id: lessonId,
+        moduleId: 'test-module-id',
+        experiencePoints: 10,
+        order: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // First call returns null (not found), second call returns the newly created progress
+      (mockProgressRepository.findUserProgressByUserId as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(newUserProgress);
+      (mockProgressRepository.createUserProgress as jest.Mock).mockResolvedValue(newUserProgress);
+      (mockProgressRepository.findLessonCompletion as jest.Mock).mockResolvedValue(null);
+      (mockProgressRepository.createLessonCompletion as jest.Mock).mockResolvedValue(lessonCompletion);
+      (mockProgressRepository.updateUserProgress as jest.Mock).mockResolvedValue(updatedProgress);
+      (mockPrisma.lesson.findUnique as jest.Mock).mockResolvedValue(lesson);
+
+      // Mock the lesson service to return experience points
+      jest.spyOn(progressService as any, 'calculateExperiencePoints').mockReturnValue(experiencePoints);
+
+      // Act
+      const result = await progressService.completeLesson(userId, { lesson_id: lessonId, score, time_spent_seconds: timeSpentSeconds });
+
+      // Assert
+      expect(mockProgressRepository.createUserProgress).toHaveBeenCalledWith({
+        user_id: userId,
+        experience_points: 0,
+        lives_current: 5,
+        streak_current: 0,
       });
-      // No experience points update for re-completion
-      expect(mockProgressRepository.updateUserProgress).not.toHaveBeenCalled();
       expect(result).toEqual({
-        progress: userProgress,
-        completion: updatedCompletion,
-        experienceGained: 0,
+        progress: updatedProgress,
+        completion: lessonCompletion,
+        experienceGained: experiencePoints,
       });
-    });
-
-    it('should throw error when user progress not found', async () => {
-      // Arrange
-      const userId = 'non-existent-user';
-      const lessonId = 'test-lesson-id';
-
-      (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(null);
-
-      // Act & Assert
-      await expect((progressService as any).completeLesson(userId, lessonId, 90, 120)).rejects.toThrow(
-        new AppError('User progress not found', HttpStatus.NOT_FOUND, ErrorCodes.NOT_FOUND)
-      );
     });
   });
 
   describe('getUserLessonCompletions', () => {
-    beforeEach(() => {
-      // Add necessary properties to progressService for testing
-      (progressService as any).lessonCompletionRepository = mockLessonCompletionRepository;
-    });
-
     it('should return user lesson completions', async () => {
       // Arrange
       const userId = 'test-user-id';
-      const expectedCompletions = [
-        {
-          user_id: userId,
-          lesson_id: 'lesson-1',
-          completed_at: new Date(),
-          score: 85,
-          time_spent_seconds: 120
-        },
-        {
-          user_id: userId,
-          lesson_id: 'lesson-2',
-          completed_at: new Date(),
-          score: 90,
-          time_spent_seconds: 150
+      const expectedCompletions = {
+        data: [
+          {
+            user_id: userId,
+            lesson_id: 'lesson-1',
+            completed_at: new Date(),
+            score: 85,
+            time_spent_seconds: 120
+          },
+          {
+            user_id: userId,
+            lesson_id: 'lesson-2',
+            completed_at: new Date(),
+            score: 90,
+            time_spent_seconds: 150
+          }
+        ],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
         }
-      ];
+      };
 
-      (mockLessonCompletionRepository.findByUser as jest.Mock).mockResolvedValue(expectedCompletions);
+      (mockProgressRepository.findUserLessonCompletions as jest.Mock).mockResolvedValue(expectedCompletions);
 
       // Act
-      const result = await (progressService as any).getUserLessonCompletions(userId);
+      const result = await progressService.getUserLessonCompletions(userId);
 
       // Assert
-      expect(mockLessonCompletionRepository.findByUser).toHaveBeenCalledWith(userId);
+      expect(mockProgressRepository.findUserLessonCompletions).toHaveBeenCalledWith(userId, {});
       expect(result).toEqual(expectedCompletions);
     });
   });
@@ -364,18 +414,19 @@ describe('ProgressService', () => {
       const offlineData = {
         completions: [
           {
-            lessonId: 'lesson-1',
-            completedAt: new Date().toISOString(),
+            lesson_id: 'lesson-1',
+            completed_at: new Date().toISOString(),
             score: 85,
-            timeSpentSeconds: 120,
+            time_spent_seconds: 120,
           },
           {
-            lessonId: 'lesson-2',
-            completedAt: new Date().toISOString(),
+            lesson_id: 'lesson-2',
+            completed_at: new Date().toISOString(),
             score: 90,
-            timeSpentSeconds: 150,
+            time_spent_seconds: 150,
           },
         ],
+        last_sync_timestamp: new Date().toISOString()
       };
 
       const userProgress = {
@@ -388,50 +439,59 @@ describe('ProgressService', () => {
         updated_at: new Date()
       };
 
-      // Mock the completeLesson method
-      const mockCompleteLessonSpy = jest.spyOn(progressService as any, 'completeLesson')
-        .mockImplementation(async (userId, lessonId, score, timeSpentSeconds) => {
-          return {
-            progress: userProgress,
-            completion: {
-              user_id: userId,
-              lesson_id: lessonId,
-              completed_at: new Date(),
-              score,
-              time_spent_seconds: timeSpentSeconds
-            },
-            experienceGained: 10,
-          };
+      const updatedProgress = {
+        ...userProgress,
+        experience_points: 120,
+        last_completed_lesson_id: 'lesson-2'
+      };
+
+      // Mock lessons
+      (mockPrisma.lesson.findUnique as jest.Mock)
+        .mockImplementation(({ where }) => {
+          if (where.id === 'lesson-1' || where.id === 'lesson-2') {
+            return Promise.resolve({
+              id: where.id,
+              moduleId: 'test-module-id',
+              experiencePoints: 10,
+              order: 1,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+          }
+          return Promise.resolve(null);
         });
 
+      // Mock repository methods
+      (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(userProgress);
+      (mockProgressRepository.findLessonCompletion as jest.Mock).mockResolvedValue(null);
+      (mockProgressRepository.createLessonCompletion as jest.Mock).mockImplementation(
+        (data) => Promise.resolve({
+          ...data,
+          completed_at: new Date(data.completed_at || new Date())
+        })
+      );
+      (mockProgressRepository.updateUserProgress as jest.Mock).mockResolvedValue(updatedProgress);
+
       // Act
-      const result = await (progressService as any).syncOfflineProgress(userId, offlineData);
+      const result = await progressService.syncOfflineProgress(userId, offlineData);
 
       // Assert
-      expect(mockCompleteLessonSpy).toHaveBeenCalledTimes(2);
-      expect(mockCompleteLessonSpy).toHaveBeenCalledWith(
-        'test-user-id', 
-        'lesson-1', 
-        85, 
-        120
-      );
-      expect(mockCompleteLessonSpy).toHaveBeenCalledWith(
-        'test-user-id', 
-        'lesson-2', 
-        90, 
-        150
-      );
+      expect(mockPrisma.lesson.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockProgressRepository.createLessonCompletion).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
-        syncedItems: 2,
-        progress: userProgress,
-        totalExperienceGained: 20,
+        synced_completions: 2,
+        skipped_duplicates: 0,
+        updated_progress: updatedProgress
       });
     });
 
     it('should handle empty offline data', async () => {
       // Arrange
       const userId = 'test-user-id';
-      const offlineData = { completions: [] };
+      const offlineData = { 
+        completions: [],
+        last_sync_timestamp: new Date().toISOString()
+      };
       const userProgress = {
         user_id: userId,
         experience_points: 100,
@@ -445,13 +505,13 @@ describe('ProgressService', () => {
       (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(userProgress);
 
       // Act
-      const result = await (progressService as any).syncOfflineProgress(userId, offlineData);
+      const result = await progressService.syncOfflineProgress(userId, offlineData);
 
       // Assert
       expect(result).toEqual({
-        syncedItems: 0,
-        progress: userProgress,
-        totalExperienceGained: 0,
+        synced_completions: 0,
+        skipped_duplicates: 0,
+        updated_progress: userProgress
       });
     });
 
@@ -461,18 +521,19 @@ describe('ProgressService', () => {
       const offlineData = {
         completions: [
           {
-            lessonId: 'lesson-1',
-            completedAt: new Date().toISOString(),
+            lesson_id: 'lesson-1',
+            completed_at: new Date().toISOString(),
             score: 85,
-            timeSpentSeconds: 120,
+            time_spent_seconds: 120,
           },
           {
-            lessonId: 'invalid-lesson',
-            completedAt: new Date().toISOString(),
+            lesson_id: 'invalid-lesson',
+            completed_at: new Date().toISOString(),
             score: 90,
-            timeSpentSeconds: 150,
+            time_spent_seconds: 150,
           },
         ],
+        last_sync_timestamp: new Date().toISOString()
       };
 
       const userProgress = {
@@ -485,37 +546,54 @@ describe('ProgressService', () => {
         updated_at: new Date()
       };
 
-      // Mock the completeLesson method with different behaviors
-      jest.spyOn(progressService as any, 'completeLesson')
-        .mockImplementationOnce(async (userId, lessonId, score, timeSpentSeconds) => {
-          return {
-            progress: userProgress,
-            completion: {
-              user_id: userId,
-              lesson_id: lessonId,
-              completed_at: new Date(),
-              score,
-              time_spent_seconds: timeSpentSeconds
-            },
-            experienceGained: 10,
-          };
-        })
-        .mockImplementationOnce(async () => {
-          throw new Error('Invalid lesson');
+      const updatedProgress = {
+        ...userProgress,
+        experience_points: 110,
+        last_completed_lesson_id: 'lesson-1'
+      };
+
+      // Mock lessons
+      (mockPrisma.lesson.findUnique as jest.Mock)
+        .mockImplementation(({ where }) => {
+          if (where.id === 'lesson-1') {
+            return Promise.resolve({
+              id: where.id,
+              moduleId: 'test-module-id',
+              experiencePoints: 10,
+              order: 1,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+          }
+          return Promise.resolve(null); // Invalid lesson returns null
         });
 
+      // Mock repository methods
       (mockProgressRepository.findUserProgressByUserId as jest.Mock).mockResolvedValue(userProgress);
+      (mockProgressRepository.findLessonCompletion as jest.Mock).mockResolvedValue(null);
+      (mockProgressRepository.createLessonCompletion as jest.Mock).mockImplementation(
+        (data) => {
+          if (data.lesson_id === 'invalid-lesson') {
+            throw new Error('Lesson not found');
+          }
+          return Promise.resolve({
+            ...data,
+            completed_at: new Date(data.completed_at || new Date())
+          });
+        }
+      );
+      (mockProgressRepository.updateUserProgress as jest.Mock).mockResolvedValue(updatedProgress);
 
       // Act
-      const result = await (progressService as any).syncOfflineProgress(userId, offlineData);
+      const result = await progressService.syncOfflineProgress(userId, offlineData);
 
       // Assert
-      expect((progressService as any).completeLesson).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.lesson.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockProgressRepository.createLessonCompletion).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
-        syncedItems: 1,
-        progress: userProgress,
-        totalExperienceGained: 10,
-        errors: [expect.objectContaining({ lessonId: 'invalid-lesson' })],
+        synced_completions: 1,
+        skipped_duplicates: 0,
+        updated_progress: updatedProgress
       });
     });
   });

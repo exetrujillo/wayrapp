@@ -40,6 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ${rightIcon ? 'pr-10' : ''}
       ${getValidationStateClasses()}
       ${fullWidth ? 'w-full' : ''}
+      ${isFocused ? 'ring-2 ring-opacity-20' : ''}
       ${className}
     `;
 
@@ -47,6 +48,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ${fullWidth ? 'w-full' : ''}
       ${props.disabled ? 'opacity-70' : ''}
       mb-4
+    `;
+
+    const labelClasses = `
+      block text-sm font-medium mb-1 transition-colors duration-200
+      ${isFocused && !error ? 'text-primary-600' : 'text-neutral-700'}
+      ${error ? 'text-error' : ''}
     `;
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -62,14 +69,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={containerClasses}>
         {label && (
-          <label htmlFor={props.id} className="block text-sm font-medium text-neutral-700 mb-1">
+          <label htmlFor={props.id} className={labelClasses}>
             {label}
             {isRequired && <span className="text-error ml-1">*</span>}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
+            <div className={`absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none transition-colors duration-200 ${
+              isFocused && !error ? 'text-primary-500' : 'text-neutral-500'
+            }`}>
               {leftIcon}
             </div>
           )}
@@ -84,7 +93,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
           {rightIcon && (
             <div 
-              className={`absolute inset-y-0 right-0 flex items-center pr-3 ${interactiveRightIcon ? 'cursor-pointer' : 'pointer-events-none'} text-neutral-500`}
+              className={`absolute inset-y-0 right-0 flex items-center pr-3 ${
+                interactiveRightIcon ? 'cursor-pointer' : 'pointer-events-none'
+              } transition-colors duration-200 ${
+                isFocused && !error ? 'text-primary-500' : 'text-neutral-500'
+              }`}
             >
               {rightIcon}
             </div>

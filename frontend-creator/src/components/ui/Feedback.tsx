@@ -100,6 +100,7 @@ export const Toast: React.FC<ToastProps> = ({
       }, duration);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [duration, onDismiss]);
 
   const positionClasses = {
@@ -114,7 +115,7 @@ export const Toast: React.FC<ToastProps> = ({
       <Feedback
         type={type}
         message={message}
-        onDismiss={onDismiss}
+        {...(onDismiss && { onDismiss })}
         showIcon={showIcon}
       />
     </div>

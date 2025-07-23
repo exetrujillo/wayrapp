@@ -1,8 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import { AuthProvider } from '../../contexts/AuthContext';
 
 // Mock the auth context
 jest.mock('../../contexts/AuthContext', () => {

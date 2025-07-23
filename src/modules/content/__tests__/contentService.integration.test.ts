@@ -3,37 +3,82 @@
  * Tests the ContentService with actual database operations
  */
 import { ContentService } from "../services/ContentService";
-import { getTestDb, cleanupTestDb } from "@/shared/test/testDb";
+import { prisma } from "../../../shared/database/connection";
 
 describe("ContentService Integration Tests", () => {
   let contentService: ContentService;
-  let testDb: any;
-
-  beforeAll(async () => {
-    // Set up test database
-    testDb = await getTestDb();
-    contentService = new ContentService(testDb.getClient());
-  });
-
-  afterAll(async () => {
-    // Clean up test database
-    await cleanupTestDb();
-  });
+  let testCourse: any;
+  let testLevel: any;
+  let testSection: any;
 
   beforeEach(async () => {
-    // Clean up data before each test
-    const prisma = testDb.getClient();
+    // Create the full data hierarchy IN ORDER for content service tests
+    contentService = new ContentService(prisma);
+
+    // 1. Create Course
+    testCourse = await prisma.course.create({
+      data: {
+        id: "test-course-content",
+        sourceLanguage: "en",
+        targetLanguage: "es",
+        name: "Test Course",
+        description: "Test course for content service",
+        isPublic: true,
+      },
+    });
+
+    // 2. Create Level
+    testLevel = await prisma.level.create({
+      data: {
+        id: "test-level-content",
+        courseId: testCourse.id,
+        code: "A1",
+        name: "Beginner Level",
+        order: 1,
+      },
+    });
+
+    // 3. Create Section
+    testSection = await prisma.section.create({
+      data: {
+        id: "test-section-content",
+        levelId: testLevel.id,
+        name: "Test Section",
+        order: 1,
+      },
+    });
+
+    // 4. Create Module
+    await prisma.module.create({
+      data: {
+        id: "test-module-content",
+        sectionId: testSection.id,
+        moduleType: "basic_lesson",
+        name: "Test Module",
+        order: 1,
+      },
+    });
+  });
+
+  afterEach(async () => {
+    // Clean up the database IN REVERSE ORDER of creation
+    await prisma.lesson.deleteMany();
     await prisma.module.deleteMany();
     await prisma.section.deleteMany();
     await prisma.level.deleteMany();
     await prisma.course.deleteMany();
   });
 
+  afterAll(async () => {
+    // Close the test database connection
+    await prisma.$disconnect();
+  });
+
   describe("Course Management", () => {
     it("should create and retrieve a course", async () => {
-      // Arrange
+      // Arrange: create additional course for this specific test
       const courseData = {
-        id: "test-course-1",
+        id: "test-course-new",
         source_language: "qu",
         target_language: "es-ES",
         name: "Quechua to Spanish Course",
@@ -57,7 +102,7 @@ describe("ContentService Integration Tests", () => {
     });
 
     it("should list all courses with pagination", async () => {
-      // Arrange
+      // Arrange: create additional courses for this specific test
       const course1 = {
         id: "course-1",
         source_language: "aym",
@@ -72,19 +117,11 @@ describe("ContentService Integration Tests", () => {
         name: "Course 2",
         is_public: true,
       };
-      const course3 = {
-        id: "course-3",
-        source_language: "es-419",
-        target_language: "de",
-        name: "Course 3",
-        is_public: true,
-      };
 
       await contentService.createCourse(course1);
       await contentService.createCourse(course2);
-      await contentService.createCourse(course3);
 
-      // Act
+      // Act - we now have 3 courses total (testCourse + 2 new ones)
       const result = await contentService.getCourses({ page: 1, limit: 2 });
 
       // Assert
@@ -98,7 +135,7 @@ describe("ContentService Integration Tests", () => {
 
   describe("Course Structure", () => {
     it("should create a complete course structure", async () => {
-      // Arrange
+      // Arrange: create additional course for this specific test
       const courseData = {
         id: "course-struct",
         source_language: "en",
@@ -147,52 +184,14 @@ describe("ContentService Integration Tests", () => {
     });
 
     it("should retrieve course with packaged structure", async () => {
-      // Arrange
-      const courseData = {
-        id: "packaged-course",
-        source_language: "en",
-        target_language: "es",
-        name: "Test Packaged Course",
-        is_public: true,
-      };
-      const course = await contentService.createCourse(courseData);
-
-      const levelData = {
-        id: "level-2",
-        course_id: course.id,
-        code: "A1",
-        name: "Beginner Level",
-        order: 1,
-      };
-      const level = await contentService.createLevel(levelData);
-
-      const sectionData = {
-        id: "section-2",
-        level_id: level.id,
-        name: "Introduction",
-        order: 1,
-      };
-      const section = await contentService.createSection(sectionData);
-
-      const moduleData = {
-        id: "module-2",
-        section_id: section.id,
-        name: "Basic Greetings",
-        module_type: "basic_lesson" as const,
-        order: 1,
-      };
-      await contentService.createModule(moduleData);
-
-      // Act
-      const packagedCourse = await contentService.getPackagedCourse(course.id);
+      // Act: use the existing testCourse and create additional structure
+      const packagedCourse = await contentService.getPackagedCourse(testCourse.id);
 
       // Assert
       expect(packagedCourse).toBeDefined();
       expect(packagedCourse?.levels).toHaveLength(1);
       expect(packagedCourse?.levels?.[0]?.sections).toHaveLength(1);
-      expect(packagedCourse?.levels?.[0]?.sections?.[0]?.modules).toHaveLength(
-        1,
-      );
+      expect(packagedCourse?.levels?.[0]?.sections?.[0]?.modules).toHaveLength(1);
     });
   });
 
@@ -205,19 +204,18 @@ describe("ContentService Integration Tests", () => {
     });
 
     it("should handle duplicate course creation", async () => {
-      // Arrange
+      // Arrange: try to create a course with the same ID as testCourse
       const courseData = {
-        id: "duplicate-course",
+        id: testCourse.id, // Use existing course ID to trigger duplicate error
         source_language: "en",
         target_language: "es",
         name: "Duplicate Course",
         is_public: true,
       };
-      await contentService.createCourse(courseData);
 
       // Act & Assert
       await expect(contentService.createCourse(courseData)).rejects.toThrow(
-        "Course with ID 'duplicate-course' already exists",
+        `Course with ID '${testCourse.id}' already exists`,
       );
     });
   });

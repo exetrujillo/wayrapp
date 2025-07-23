@@ -11,7 +11,15 @@ export default defineConfig({
     sourcemap: false,
   },
   server: {
-    port: 3000,
+    port: 5173,
+    // Ensure MSW service worker is served correctly
+    fs: {
+      allow: ['..']
+    },
+    // Configure headers for service worker
+    headers: {
+      'Service-Worker-Allowed': '/'
+    }
   },
   resolve: {
     alias: {
@@ -20,5 +28,12 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './src/services'),
       'wayrapp-shared': path.resolve(__dirname, '../frontend-shared/dist')
     }
+  },
+  // Ensure service worker is copied to dist during build
+  publicDir: 'public',
+  // Define environment variables for MSW
+  define: {
+    // Ensure MSW can detect development mode
+    __DEV__: JSON.stringify(true)
   }
 });

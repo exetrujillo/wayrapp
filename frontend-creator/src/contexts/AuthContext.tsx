@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
 import { User, LoginCredentials } from '../utils/types';
-import { STORAGE_KEYS } from '../utils/constants';
 
 interface AuthContextType {
   user: User | null;

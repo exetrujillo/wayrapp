@@ -37,8 +37,10 @@ app.use(securityHeaders);
 // CORS configuration
 app.use(cors(corsOptions));
 
-// Rate limiting
-app.use(defaultRateLimiter);
+// Rate limiting (disabled in test environment)
+if (process.env['NODE_ENV'] !== 'test') {
+  app.use(defaultRateLimiter);
+}
 
 // Request size limiting
 app.use(requestSizeLimiter);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { courseSchema, CourseFormData } from '../../utils/validation';
 import { LANGUAGES } from '../../utils/constants';
@@ -8,6 +8,7 @@ import { courseService } from '../../services/courseService';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Feedback } from '../ui/Feedback';
+import { CreateCourseRequest } from '@/utils/types';
 
 interface CourseFormProps {
   onSuccess?: (course: any) => void;
@@ -31,17 +32,27 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
       name: '',
       source_language: '',
       target_language: '',
-      description: '',
+      description: undefined,
       is_public: false,
     },
   });
 
-  const onSubmit = async (data: CourseFormData) => {
+  const onSubmit: SubmitHandler<CourseFormData> = async (data) => {
     setIsSubmitting(true);
     setFeedback(null);
-    
+
     try {
-      const response = await courseService.createCourse(data);
+      // Transform form data to match API expectations
+      const courseData: CreateCourseRequest = {
+        name: data.name,
+        source_language: data.source_language,
+        target_language: data.target_language,
+        is_public: data.is_public,
+        ...(data.id && { id: data.id }),
+        ...(data.description && { description: data.description }),
+      };
+
+      const response = await courseService.createCourse(courseData);
       setFeedback({
         type: 'success',
         message: t('creator.forms.course.successMessage', 'Course created successfully!'),
@@ -70,7 +81,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-6">{t('creator.forms.course.title', 'Create Course')}</h2>
-      
+
       {feedback && (
         <div className="mb-6">
           <Feedback
@@ -80,7 +91,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
           />
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Course ID */}
         <Input
@@ -88,22 +99,22 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
           label={t('creator.forms.course.id', 'Course ID')}
           placeholder={t('creator.forms.course.idPlaceholder', 'e.g., basic-spanish')}
           {...register('id')}
-          error={errors.id?.message}
+          {...(errors.id?.message && { error: errors.id.message })}
           isRequired
           fullWidth
         />
-        
+
         {/* Course Name */}
         <Input
           id="name"
           label={t('creator.forms.course.name', 'Course Name')}
           placeholder={t('creator.forms.course.namePlaceholder', 'e.g., Basic Spanish')}
           {...register('name')}
-          error={errors.name?.message}
+          {...(errors.name?.message && { error: errors.name.message })}
           isRequired
           fullWidth
         />
-        
+
         {/* Source Language */}
         <div className="mb-4">
           <label htmlFor="source_language" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -138,7 +149,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
             )}
           />
         </div>
-        
+
         {/* Target Language */}
         <div className="mb-4">
           <label htmlFor="target_language" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -173,7 +184,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
             )}
           />
         </div>
-        
+
         {/* Description */}
         <div className="mb-4">
           <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -191,7 +202,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
             </p>
           )}
         </div>
-        
+
         {/* Is Public */}
         <div className="mb-4 flex items-center">
           <input
@@ -204,7 +215,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
             {t('creator.forms.course.isPublic', 'Make this course public')}
           </label>
         </div>
-        
+
         {/* Form Actions */}
         <div className="flex justify-end space-x-3 pt-4">
           <Button
