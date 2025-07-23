@@ -7,6 +7,12 @@ import { prisma } from "../../../shared/database/connection";
 
 describe("ContentService Integration Tests", () => {
   let contentService: ContentService;
+
+  beforeAll(() => {
+    contentService = new ContentService(prisma);
+  });
+
+  
   let testCourse: any;
   let testLevel: any;
   let testSection: any;

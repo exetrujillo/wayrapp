@@ -33,10 +33,7 @@ The WayrApp backend is designed as a modular, TypeScript-based RESTful API using
                     │   Backend API    │
                     │ (Node.js/Express)│
                     └──────────────────┘
-                    │  Express API    │
-                    │  (Node.js +     │
-                    │   TypeScript)   │
-                    └─────────────────┘
+
                                  │
                     ┌─────────────────┐
                     │   PostgreSQL    │
@@ -392,8 +389,9 @@ CREATE TABLE lesson_exercises (
 ### Prisma Schema Configuration
 
 ```prisma
-// This is the Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// WayrApp Database Schema
+// Author: Exequiel Trujillo
+// Production-ready schema for language learning platform
 
 generator client {
   provider = "prisma-client-js"
@@ -429,8 +427,8 @@ model User {
   @@index([role, isActive], map: "idx_users_role_active")
   @@index([registrationDate(sort: Desc)], map: "idx_users_registration_date")
   @@index([lastLoginDate(sort: Desc)], map: "idx_users_last_login")
-  @@index([email], map: "idx_users_active_email", where: "is_active = true")
-  @@index([username], map: "idx_users_active_username", where: "is_active = true AND username IS NOT NULL")
+  @@index([email], map: "idx_users_active_email")
+  @@index([username], map: "idx_users_active_username")
   @@map("users")
 }
 
@@ -488,8 +486,8 @@ model LessonCompletion {
 
 model Course {
   id             String   @id @db.VarChar(20)
-  sourceLanguage String   @map("source_language") @db.VarChar(20) // BCP 47 language tag (supports 'qu', 'aym', 'es-ES', 'pt-BR')
-  targetLanguage String   @map("target_language") @db.VarChar(20) // BCP 47 language tag (supports 'qu', 'aym', 'es-ES', 'pt-BR')
+  sourceLanguage String   @map("source_language") @db.VarChar(20)
+  targetLanguage String   @map("target_language") @db.VarChar(20)
   name           String   @db.VarChar(100)
   description    String?
   isPublic       Boolean  @default(true) @map("is_public")
@@ -511,8 +509,8 @@ model Course {
   // Performance optimization indexes
   @@index([sourceLanguage, targetLanguage, isPublic], map: "idx_courses_source_target_public")
   @@index([isPublic, createdAt(sort: Desc)], map: "idx_courses_public_created")
-  @@index([name], map: "idx_courses_public_name", where: "is_public = true")
-  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages", where: "is_public = true")
+  @@index([name], map: "idx_courses_public_name")
+  @@index([sourceLanguage, targetLanguage], map: "idx_courses_public_languages")
   @@map("courses")
 }
 

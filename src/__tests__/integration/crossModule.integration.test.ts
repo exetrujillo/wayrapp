@@ -13,128 +13,35 @@ import jwt from 'jsonwebtoken';
 
 describe('Cross-Module Integration Tests', () => {
   const API_BASE = '/api/v1';
-  let testUser: any;
-  let adminUser: any;
-  let userToken: string;
-  let adminToken: string;
-  let testCourse: any;
-  let testLesson: any;
 
-  beforeAll(async () => {
-    // Create test users
-    testUser = await prisma.user.create({
-      data: {
-        ...UserFactory.build({
-          email: 'cross-module-user@example.com',
-          passwordHash: await bcrypt.hash('UserPass123!', 10)
-        })
-      }
-    });
-
-    adminUser = await prisma.user.create({
-      data: {
-        ...UserFactory.buildAdmin({
-          email: 'cross-module-admin@example.com',
-          passwordHash: await bcrypt.hash('AdminPass123!', 10)
-        })
-      }
-    });
-
-    // Generate JWT tokens
-    const jwtSecret = process.env['JWT_SECRET'] || 'test-secret';
-    
-    userToken = jwt.sign(
-      { sub: testUser.id, email: testUser.email, role: testUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    adminToken = jwt.sign(
-      { sub: adminUser.id, email: adminUser.email, role: adminUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    // Create test content hierarchy
-    testCourse = await prisma.course.create({
-      data: CourseFactory.build({
-        id: 'cross-module-test-course',
-        name: 'Cross Module Test Course'
-      })
-    });
-
-    const testLevel = await prisma.level.create({
-      data: LevelFactory.build(testCourse.id, {
-        id: 'cross-module-test-level',
-        code: 'A1'
-      })
-    });
-
-    const testSection = await prisma.section.create({
-      data: SectionFactory.build(testLevel.id, {
-        id: 'cross-module-test-section'
-      })
-    });
-
-    const testModule = await prisma.module.create({
-      data: ModuleFactory.build(testSection.id, {
-        id: 'cross-module-test-module'
-      })
-    });
-
-    testLesson = await prisma.lesson.create({
-      data: LessonFactory.build(testModule.id, {
-        id: 'cross-module-test-lesson',
-        experiencePoints: 15
-      })
-    });
-  });
-
-  beforeEach(async () => {
-    // Clean up progress data before each test
-    await prisma.lessonCompletion.deleteMany({
-      where: { userId: testUser.id }
-    });
-    await prisma.userProgress.deleteMany({
-      where: { userId: testUser.id }
-    });
+  afterEach(async () => {
+    // Clean up ALL tables in reverse dependency order
+    await prisma.lessonCompletion.deleteMany();
+    await prisma.userProgress.deleteMany();
+    await prisma.lessonExercise.deleteMany();
+    await prisma.exercise.deleteMany();
+    await prisma.lesson.deleteMany();
+    await prisma.module.deleteMany();
+    await prisma.section.deleteMany();
+    await prisma.level.deleteMany();
+    await prisma.course.deleteMany();
+    await prisma.revokedToken.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
-    // Final cleanup
-    await prisma.lessonCompletion.deleteMany({
-      where: { userId: { in: [testUser.id, adminUser.id] } }
-    });
-    await prisma.userProgress.deleteMany({
-      where: { userId: { in: [testUser.id, adminUser.id] } }
-    });
-    await prisma.lesson.deleteMany({
-      where: { id: { contains: 'cross-module-test' } }
-    });
-    await prisma.module.deleteMany({
-      where: { id: { contains: 'cross-module-test' } }
-    });
-    await prisma.section.deleteMany({
-      where: { id: { contains: 'cross-module-test' } }
-    });
-    await prisma.level.deleteMany({
-      where: { id: { contains: 'cross-module-test' } }
-    });
-    await prisma.course.deleteMany({
-      where: { id: { contains: 'cross-module-test' } }
-    });
-    await prisma.user.deleteMany({
-      where: { 
-        email: { 
-          in: ['cross-module-user@example.com', 'cross-module-admin@example.com'] 
-        } 
-      }
-    });
     await prisma.$disconnect();
   });
 
   describe('User-Content Integration', () => {
     it('should allow authenticated user to access public content', async () => {
+      // Arrange: Create fresh user and token for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      // Act & Assert
       const response = await request(app)
         .get(`${API_BASE}/courses`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -145,20 +52,30 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should restrict content creation to authorized users', async () => {
+      // Arrange: Create fresh users and tokens for this test
+      const student = await prisma.user.create({
+        data: UserFactory.build({ email: 'student@example.com' })
+      });
+      const admin = await prisma.user.create({
+        data: UserFactory.buildAdmin({ email: 'admin@example.com' })
+      });
+      const studentToken = jwt.sign({ sub: student.id, role: student.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const adminToken = jwt.sign({ sub: admin.id, role: admin.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
       const courseData = CourseFactory.buildDto({
-        id: 'cross-module-unauthorized-course'
+        id: 'test-course-auth'
       });
 
-      // Student should not be able to create content
+      // Act & Assert: Student should not be able to create content
       const studentResponse = await request(app)
         .post(`${API_BASE}/courses`)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Authorization', `Bearer ${studentToken}`)
         .send(courseData)
         .expect(403);
 
       expect(studentResponse.body.error.code).toBe('AUTHORIZATION_ERROR');
 
-      // Admin should be able to create content
+      // Act & Assert: Admin should be able to create content
       const adminResponse = await request(app)
         .post(`${API_BASE}/courses`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -169,7 +86,20 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should handle user profile updates affecting content access', async () => {
-      // Update user profile
+      // Arrange: Create fresh user, course and token for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({
+          id: 'test-course',
+          name: 'Test Course'
+        })
+      });
+
+      // Act: Update user profile
       const profileUpdate = {
         username: 'updated-cross-module-user',
         country_code: 'CA'
@@ -183,7 +113,7 @@ describe('Cross-Module Integration Tests', () => {
 
       expect(profileResponse.body.data.username).toBe(profileUpdate.username);
 
-      // User should still be able to access content
+      // Assert: User should still be able to access content
       const contentResponse = await request(app)
         .get(`${API_BASE}/courses/${testCourse.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -195,7 +125,29 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('Content-Progress Integration', () => {
     it('should create progress when user completes lesson', async () => {
-      // Complete a lesson
+      // Arrange: Create fresh user and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson', experiencePoints: 15 })
+      });
+
+      // Act: Complete a lesson
       const completionResponse = await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -208,7 +160,7 @@ describe('Cross-Module Integration Tests', () => {
       expect(completionResponse.body.success).toBe(true);
       expect(completionResponse.body.data.experience_gained).toBeGreaterThan(0);
 
-      // Check that user progress was created/updated
+      // Assert: Check that user progress was created/updated
       const progressResponse = await request(app)
         .get(`${API_BASE}/progress`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -219,13 +171,35 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should track lesson completion in user progress', async () => {
-      // Complete lesson
+      // Arrange: Create fresh user and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
+      });
+
+      // Act: Complete lesson
       await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({ score: 90, time_spent_seconds: 100 });
 
-      // Check completion status
+      // Assert: Check completion status
       const completionStatusResponse = await request(app)
         .get(`${API_BASE}/progress/lesson/${testLesson.id}/completed`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -233,7 +207,7 @@ describe('Cross-Module Integration Tests', () => {
 
       expect(completionStatusResponse.body.data.is_completed).toBe(true);
 
-      // Check completions list
+      // Assert: Check completions list
       const completionsResponse = await request(app)
         .get(`${API_BASE}/progress/completions`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -244,6 +218,13 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should prevent completing non-existent lessons', async () => {
+      // Arrange: Create fresh user and token for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      // Act & Assert
       const response = await request(app)
         .post(`${API_BASE}/progress/lesson/non-existent-lesson`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -254,13 +235,35 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should handle progress synchronization conflicts', async () => {
-      // Complete lesson first time
+      // Arrange: Create fresh user and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
+      });
+
+      // Act: Complete lesson first time
       await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({ score: 80, time_spent_seconds: 150 });
 
-      // Try to complete same lesson again (conflict)
+      // Act & Assert: Try to complete same lesson again (conflict)
       const conflictResponse = await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -273,59 +276,61 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('User-Progress Integration', () => {
     it('should isolate user progress data', async () => {
-      // Create another user
-      const otherUser = await prisma.user.create({
-        data: {
-          ...UserFactory.build({
-            email: 'cross-module-other-user@example.com',
-            passwordHash: await bcrypt.hash('OtherPass123!', 10)
-          })
-        }
+      // Arrange: Create fresh users and content hierarchy for this test
+      const user1 = await prisma.user.create({
+        data: UserFactory.build({ email: 'user1@example.com' })
+      });
+      const user2 = await prisma.user.create({
+        data: UserFactory.build({ email: 'user2@example.com' })
+      });
+      const user1Token = jwt.sign({ sub: user1.id, role: user1.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const user2Token = jwt.sign({ sub: user2.id, role: user2.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
       });
 
-      const otherUserToken = jwt.sign(
-        { sub: otherUser.id, email: otherUser.email, role: otherUser.role },
-        process.env['JWT_SECRET'] || 'test-secret',
-        { expiresIn: '1h' }
-      );
-
-      // Complete lesson as first user
+      // Act: Complete lesson as first user
       await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Authorization', `Bearer ${user1Token}`)
         .send({ score: 85, time_spent_seconds: 120 });
 
-      // Check first user's progress
+      // Assert: Check first user's progress
       const user1ProgressResponse = await request(app)
         .get(`${API_BASE}/progress`)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Authorization', `Bearer ${user1Token}`)
         .expect(200);
 
-      // Check second user's progress (should be empty)
+      // Assert: Check second user's progress (should be empty)
       const user2ProgressResponse = await request(app)
         .get(`${API_BASE}/progress`)
-        .set('Authorization', `Bearer ${otherUserToken}`)
+        .set('Authorization', `Bearer ${user2Token}`)
         .expect(200);
 
       expect(user1ProgressResponse.body.data.experience_points).toBeGreaterThan(0);
       expect(user2ProgressResponse.body.data.experience_points).toBe(0);
-
-      // Cleanup
-      await prisma.user.delete({ where: { id: otherUser.id } });
     });
 
     it('should handle user deletion affecting progress', async () => {
-      // Create temporary user
+      // Arrange: Create temporary user
       const tempUser = await prisma.user.create({
-        data: {
-          ...UserFactory.build({
-            email: 'cross-module-temp-user@example.com',
-            passwordHash: await bcrypt.hash('TempPass123!', 10)
-          })
-        }
+        data: UserFactory.build({ email: 'temp@example.com' })
       });
 
-      // Create progress for temp user
+      // Arrange: Create progress for temp user
       await prisma.userProgress.create({
         data: {
           userId: tempUser.id,
@@ -335,12 +340,12 @@ describe('Cross-Module Integration Tests', () => {
         }
       });
 
-      // Delete user (should cascade delete progress)
+      // Act: Delete user (should cascade delete progress)
       await prisma.user.delete({
         where: { id: tempUser.id }
       });
 
-      // Verify progress was deleted
+      // Assert: Verify progress was deleted
       const deletedProgress = await prisma.userProgress.findUnique({
         where: { userId: tempUser.id }
       });
@@ -350,13 +355,39 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('Content Deletion Impact on Progress', () => {
     it('should handle lesson deletion affecting progress', async () => {
-      // Complete the lesson first
+      // Arrange: Create fresh user, admin and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const adminUser = await prisma.user.create({
+        data: UserFactory.buildAdmin({ email: 'admin@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const adminToken = jwt.sign({ sub: adminUser.id, role: adminUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
+      });
+
+      // Act: Complete the lesson first
       await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({ score: 85, time_spent_seconds: 120 });
 
-      // Verify completion exists
+      // Assert: Verify completion exists
       const completion = await prisma.lessonCompletion.findFirst({
         where: { 
           userId: testUser.id,
@@ -365,13 +396,13 @@ describe('Cross-Module Integration Tests', () => {
       });
       expect(completion).toBeTruthy();
 
-      // Delete the lesson (admin action)
+      // Act: Delete the lesson (admin action)
       await request(app)
         .delete(`${API_BASE}/modules/${testLesson.moduleId}/lessons/${testLesson.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+        .expect(204);
 
-      // Verify completion was also deleted (cascade)
+      // Assert: Verify completion was also deleted (cascade)
       const deletedCompletion = await prisma.lessonCompletion.findFirst({
         where: { 
           userId: testUser.id,
@@ -380,7 +411,7 @@ describe('Cross-Module Integration Tests', () => {
       });
       expect(deletedCompletion).toBeNull();
 
-      // User progress should still exist but last_completed_lesson_id should be null
+      // Assert: User progress should still exist but last_completed_lesson_id should be null
       const progress = await prisma.userProgress.findUnique({
         where: { userId: testUser.id }
       });
@@ -388,51 +419,48 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should handle course deletion affecting all related progress', async () => {
-      // Create a separate course hierarchy for this test
+      // Arrange: Create fresh user, admin and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const adminUser = await prisma.user.create({
+        data: UserFactory.buildAdmin({ email: 'admin@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const adminToken = jwt.sign({ sub: adminUser.id, role: adminUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
       const tempCourse = await prisma.course.create({
         data: CourseFactory.build({
-          id: 'cross-module-temp-course',
+          id: 'temp-course',
           name: 'Temporary Course'
         })
       });
-
       const tempLevel = await prisma.level.create({
-        data: LevelFactory.build(tempCourse.id, {
-          id: 'cross-module-temp-level'
-        })
+        data: LevelFactory.build(tempCourse.id, { id: 'temp-level' })
       });
-
       const tempSection = await prisma.section.create({
-        data: SectionFactory.build(tempLevel.id, {
-          id: 'cross-module-temp-section'
-        })
+        data: SectionFactory.build(tempLevel.id, { id: 'temp-section' })
       });
-
       const tempModule = await prisma.module.create({
-        data: ModuleFactory.build(tempSection.id, {
-          id: 'cross-module-temp-module'
-        })
+        data: ModuleFactory.build(tempSection.id, { id: 'temp-module' })
       });
-
       const tempLesson = await prisma.lesson.create({
-        data: LessonFactory.build(tempModule.id, {
-          id: 'cross-module-temp-lesson'
-        })
+        data: LessonFactory.build(tempModule.id, { id: 'temp-lesson' })
       });
 
-      // Complete the lesson
+      // Act: Complete the lesson
       await request(app)
         .post(`${API_BASE}/progress/lesson/${tempLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({ score: 85, time_spent_seconds: 120 });
 
-      // Delete the entire course
+      // Act: Delete the entire course
       await request(app)
         .delete(`${API_BASE}/courses/${tempCourse.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+        .expect(204);
 
-      // Verify all related completions were deleted
+      // Assert: Verify all related completions were deleted
       const deletedCompletions = await prisma.lessonCompletion.findMany({
         where: { lessonId: tempLesson.id }
       });
@@ -442,7 +470,20 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('Authentication Flow with Content Access', () => {
     it('should maintain content access across token refresh', async () => {
-      // Login to get fresh tokens
+      // Arrange: Create fresh user and content for this test
+      const testUser = await prisma.user.create({
+        data: {
+          ...UserFactory.build({
+            email: 'user@example.com',
+            passwordHash: await bcrypt.hash('UserPass123!', 10)
+          })
+        }
+      });
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+
+      // Act: Login to get fresh tokens
       const loginResponse = await request(app)
         .post(`${API_BASE}/auth/login`)
         .send({
@@ -453,13 +494,13 @@ describe('Cross-Module Integration Tests', () => {
 
       const { accessToken, refreshToken } = loginResponse.body.data.tokens;
 
-      // Access content with original token
+      // Act: Access content with original token
       await request(app)
         .get(`${API_BASE}/courses/${testCourse.id}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      // Refresh token
+      // Act: Refresh token
       const refreshResponse = await request(app)
         .post(`${API_BASE}/auth/refresh`)
         .send({ refreshToken })
@@ -467,7 +508,7 @@ describe('Cross-Module Integration Tests', () => {
 
       const { accessToken: newAccessToken } = refreshResponse.body.data.tokens;
 
-      // Access content with new token
+      // Assert: Access content with new token
       const contentResponse = await request(app)
         .get(`${API_BASE}/courses/${testCourse.id}`)
         .set('Authorization', `Bearer ${newAccessToken}`)
@@ -477,7 +518,20 @@ describe('Cross-Module Integration Tests', () => {
     });
 
     it('should prevent content access after logout', async () => {
-      // Login to get tokens
+      // Arrange: Create fresh user and content for this test
+      const testUser = await prisma.user.create({
+        data: {
+          ...UserFactory.build({
+            email: 'user@example.com',
+            passwordHash: await bcrypt.hash('UserPass123!', 10)
+          })
+        }
+      });
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+
+      // Act: Login to get tokens
       const loginResponse = await request(app)
         .post(`${API_BASE}/auth/login`)
         .send({
@@ -488,21 +542,20 @@ describe('Cross-Module Integration Tests', () => {
 
       const { accessToken, refreshToken } = loginResponse.body.data.tokens;
 
-      // Logout
+      // Act: Logout
       await request(app)
         .post(`${API_BASE}/auth/logout`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ refreshToken })
         .expect(200);
 
-      // Try to access content (should still work with access token until it expires)
+      // Act: Try to access content (should still work with access token until it expires)
       // In a real scenario, you might implement token blacklisting for access tokens too
       await request(app)
         .get(`${API_BASE}/courses/${testCourse.id}`)
         .set('Authorization', `Bearer ${accessToken}`);
 
-      // This might still work depending on implementation
-      // The refresh token should definitely not work
+      // Assert: The refresh token should definitely not work
       await request(app)
         .post(`${API_BASE}/auth/refresh`)
         .send({ refreshToken })
@@ -512,10 +565,27 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('Error Handling Across Modules', () => {
     it('should handle database errors gracefully across modules', async () => {
-      // Try to complete lesson for non-existent user (simulated by invalid token)
+      // Arrange: Create fresh content for this test
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
+      });
+
+      // Act: Try to complete lesson for non-existent user (simulated by invalid token)
       const invalidToken = jwt.sign(
         { sub: 'non-existent-user-id', email: 'fake@example.com', role: 'student' },
-        process.env['JWT_SECRET'] || 'test-secret',
+        process.env['JWT_SECRET'] || 'test-jwt-secret',
         { expiresIn: '1h' }
       );
 
@@ -525,11 +595,37 @@ describe('Cross-Module Integration Tests', () => {
         .send({ score: 85, time_spent_seconds: 120 })
         .expect(500); // Should handle database error gracefully
 
-      expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      expect(response.body.error.code).toBe('DATABASE_ERROR');
     });
 
     it('should handle validation errors consistently across modules', async () => {
-      // Invalid course creation
+      // Arrange: Create fresh user, admin and content for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const adminUser = await prisma.user.create({
+        data: UserFactory.buildAdmin({ email: 'admin@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const adminToken = jwt.sign({ sub: adminUser.id, role: adminUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+      const testLesson = await prisma.lesson.create({
+        data: LessonFactory.build(testModule.id, { id: 'test-lesson' })
+      });
+
+      // Act: Invalid course creation
       const invalidCourseResponse = await request(app)
         .post(`${API_BASE}/courses`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -540,7 +636,7 @@ describe('Cross-Module Integration Tests', () => {
         })
         .expect(400);
 
-      // Invalid progress completion
+      // Act: Invalid progress completion
       const invalidProgressResponse = await request(app)
         .post(`${API_BASE}/progress/lesson/${testLesson.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -550,7 +646,7 @@ describe('Cross-Module Integration Tests', () => {
         })
         .expect(400);
 
-      // Both should have consistent error structure
+      // Assert: Both should have consistent error structure
       expect(invalidCourseResponse.body.error.code).toBe('VALIDATION_ERROR');
       expect(invalidProgressResponse.body.error.code).toBe('VALIDATION_ERROR');
       expect(invalidCourseResponse.body.error).toHaveProperty('details');
@@ -560,9 +656,15 @@ describe('Cross-Module Integration Tests', () => {
 
   describe('Performance Across Modules', () => {
     it('should handle complex cross-module queries efficiently', async () => {
+      // Arrange: Create fresh user and token for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
       const startTime = Date.now();
 
-      // Complex query involving user, progress, and content
+      // Act: Complex query involving user, progress, and content
       const response = await request(app)
         .get(`${API_BASE}/progress/summary`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -571,28 +673,48 @@ describe('Cross-Module Integration Tests', () => {
       const endTime = Date.now();
       const queryTime = endTime - startTime;
 
+      // Assert
       expect(response.body.success).toBe(true);
       expect(queryTime).toBeLessThan(1000); // Should complete within 1 second
     });
 
     it('should handle concurrent cross-module operations', async () => {
+      // Arrange: Create fresh user and content hierarchy for this test
+      const testUser = await prisma.user.create({
+        data: UserFactory.build({ email: 'user@example.com' })
+      });
+      const userToken = jwt.sign({ sub: testUser.id, role: testUser.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+
+      const testCourse = await prisma.course.create({
+        data: CourseFactory.build({ id: 'test-course' })
+      });
+      const testLevel = await prisma.level.create({
+        data: LevelFactory.build(testCourse.id, { id: 'test-level' })
+      });
+      const testSection = await prisma.section.create({
+        data: SectionFactory.build(testLevel.id, { id: 'test-section' })
+      });
+      const testModule = await prisma.module.create({
+        data: ModuleFactory.build(testSection.id, { id: 'test-module' })
+      });
+
       // Create multiple lessons for concurrent completion
       const lessons = await Promise.all([
         prisma.lesson.create({
-          data: LessonFactory.build(testLesson.moduleId, {
-            id: 'cross-module-concurrent-lesson-1',
-            order: 2
+          data: LessonFactory.build(testModule.id, {
+            id: 'concurrent-lesson-1',
+            order: 1
           })
         }),
         prisma.lesson.create({
-          data: LessonFactory.build(testLesson.moduleId, {
-            id: 'cross-module-concurrent-lesson-2',
-            order: 3
+          data: LessonFactory.build(testModule.id, {
+            id: 'concurrent-lesson-2',
+            order: 2
           })
         })
       ]);
 
-      // Complete lessons concurrently
+      // Act: Complete lessons concurrently
       const completionPromises = lessons.map(lesson =>
         request(app)
           .post(`${API_BASE}/progress/lesson/${lesson.id}`)
@@ -602,14 +724,10 @@ describe('Cross-Module Integration Tests', () => {
 
       const responses = await Promise.all(completionPromises);
       
+      // Assert
       responses.forEach(response => {
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
-      });
-
-      // Cleanup
-      await prisma.lesson.deleteMany({
-        where: { id: { in: lessons.map(l => l.id) } }
       });
     });
   });

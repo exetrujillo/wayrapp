@@ -139,7 +139,7 @@ describe('ContentService', () => {
         describe('getCourse', () => {
             it('should return course when found', async () => {
                 const courseId = 'test-course-1';
-                const expectedCourse: Course = {
+                const expectedCourse: Course & { levels_count: number } = {
                     id: courseId,
                     source_language: 'qu',
                     target_language: 'es-ES',
@@ -148,6 +148,7 @@ describe('ContentService', () => {
                     is_public: true,
                     created_at: new Date(),
                     updated_at: new Date(),
+                    levels_count: 0,
                 };
 
                 mockCourseRepository.findById.mockResolvedValue(expectedCourse);
@@ -174,7 +175,7 @@ describe('ContentService', () => {
         describe('getCourses', () => {
             it('should return paginated courses', async () => {
                 const options: QueryOptions = { page: 1, limit: 10 };
-                const expectedResult: PaginatedResult<Course> = {
+                const expectedResult: PaginatedResult<Course & { levels_count: number }> = {
                     data: [
                         {
                             id: 'test-course-1',
@@ -184,7 +185,8 @@ describe('ContentService', () => {
                             description: 'A test course',
                             is_public: true,
                             created_at: new Date(),
-                            updated_at: new Date()
+                            updated_at: new Date(),
+                            levels_count: 0,
                         },
                     ],
                     pagination: {
@@ -206,7 +208,7 @@ describe('ContentService', () => {
             });
 
             it('should use default options when none provided', async () => {
-                const expectedResult: PaginatedResult<Course> = {
+                const expectedResult: PaginatedResult<Course & { levels_count: number }> = {
                     data: [],
                     pagination: {
                         page: 1,
@@ -231,7 +233,7 @@ describe('ContentService', () => {
             it('should update course successfully', async () => {
                 const courseId = 'test-course-1';
                 const updateData = { name: 'Updated Course Name' };
-                const expectedCourse: Course = {
+                const expectedCourse: Course & { levels_count: number } = {
                     id: courseId,
                     source_language: 'pt-BR',
                     target_language: 'en',
@@ -239,7 +241,8 @@ describe('ContentService', () => {
                     description: 'A test course',
                     is_public: true,
                     created_at: new Date(),
-                    updated_at: new Date()
+                    updated_at: new Date(),
+                    levels_count: 0,
                 };
 
                 mockCourseRepository.exists.mockResolvedValue(true);

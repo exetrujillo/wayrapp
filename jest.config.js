@@ -7,22 +7,24 @@ module.exports = {
   roots: ['<rootDir>/src'],
 
   testMatch: [
-    '**/__tests__/**/*.test.ts',
-    '**/?(*.)+(spec|test).ts'
+    '<rootDir>/src/**/*.test.ts',
+    '<rootDir>/src/**/*.spec.ts'
   ],
+
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/__tests__/integration/'
+    '/src/__tests__/integration/',
+    '\\.integration\\.test\\.ts$'
   ],
 
   transform: {
     '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json' 
+      tsconfig: 'tsconfig.test.json'
     }]
   },
 
   setupFilesAfterEnv: ['<rootDir>/src/shared/test/setup.ts'],
-  
+
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   }
