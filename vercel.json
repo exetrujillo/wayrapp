@@ -3,20 +3,13 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "dist/**",
-          "prisma/**",
-          "node_modules/@prisma/client/**"
-        ]
-      }
+      "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "dist/server.js"
+      "source": "/(.*)",
+      "destination": "/api"
     }
   ]
 }
