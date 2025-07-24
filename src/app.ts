@@ -1203,6 +1203,11 @@ app.use("/api/v:version", (req, res) => {
   });
 });
 
+// Root endpoint - redirect to API info
+app.get("/", (_req, res) => {
+  res.redirect(301, "/api");
+});
+
 // 404 handler for all other routes
 app.use("*", (req, res) => {
   res.status(404).json({

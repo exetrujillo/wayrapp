@@ -1,10 +1,11 @@
 /**
  * Server Entry Point
- * Starts the Express server with performance optimizations
+ * Serverless-compatible entry point for Vercel
  */
 
 import app from './app';
 
+// Export the Express app for Vercel's serverless runtime
 export default app;
 
 // import app from "./app-simple";
