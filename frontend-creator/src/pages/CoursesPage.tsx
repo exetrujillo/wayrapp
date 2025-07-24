@@ -81,12 +81,12 @@ const CoursesPage: React.FC = () => {
         fetchCourses(); // Refresh the list
       } else if (action === 'publish') {
         await Promise.all(selectedCourses.map(course => 
-          courseService.updateCourse(course.id, { is_public: true })
+          courseService.updateCourse(course.id, { isPublic: true })
         ));
         fetchCourses(); // Refresh the list
       } else if (action === 'unpublish') {
         await Promise.all(selectedCourses.map(course => 
-          courseService.updateCourse(course.id, { is_public: false })
+          courseService.updateCourse(course.id, { isPublic: false })
         ));
         fetchCourses(); // Refresh the list
       }

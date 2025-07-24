@@ -39,7 +39,7 @@ export const useAuth = (): UseAuthReturn => {
     
     try {
       const response = await apiClient.login(credentials);
-      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('auth_token', response.accessToken);
       localStorage.setItem('auth_user', JSON.stringify(response.user));
       setUser(response.user);
     } catch (e: any) {

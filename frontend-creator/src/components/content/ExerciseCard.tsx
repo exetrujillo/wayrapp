@@ -88,7 +88,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   const getPreviewContent = () => {
     const { data } = exercise;
     
-    switch (exercise.exercise_type) {
+    switch (exercise.exerciseType) {
       case 'translation':
         return data['source_text'] || data['text'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
       case 'multiple_choice':
@@ -162,11 +162,11 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0 p-2 bg-primary-100 rounded-lg text-primary-600">
-                {getExerciseTypeIcon(exercise.exercise_type)}
+                {getExerciseTypeIcon(exercise.exerciseType)}
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  {getExerciseTypeLabel(exercise.exercise_type)}
+                  {getExerciseTypeLabel(exercise.exerciseType)}
                 </h3>
                 <p className="text-sm text-neutral-500">
                   {t('creator.components.exerciseCard.id', 'ID')}: {exercise.id}

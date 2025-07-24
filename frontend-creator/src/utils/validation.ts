@@ -19,14 +19,14 @@ export const loginSchema = z.object({
 export const courseSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, 'Course name must be at least 3 characters'),
-  source_language: z.string().refine(isValidBCP47, {
+  sourceLanguage: z.string().refine(isValidBCP47, {
     message: 'Please enter a valid BCP 47 language code',
   }),
-  target_language: z.string().refine(isValidBCP47, {
+  targetLanguage: z.string().refine(isValidBCP47, {
     message: 'Please enter a valid BCP 47 language code',
   }),
   description: z.string().optional(),
-  is_public: z.boolean(),
+  isPublic: z.boolean(),
 });
 
 // Lesson creation schema
@@ -41,13 +41,13 @@ export const lessonSchema = z.object({
 // Exercise creation schema
 export const exerciseSchema = z.object({
   id: z.string().optional(),
-  exercise_type: z.enum([
-    'translation', 
-    'fill_in_the_blank', 
-    'multiple_choice', 
-    'matching', 
-    'listening', 
-    'speaking'
+  exerciseType: z.enum([
+    'translation',
+    'fill-in-the-blank',
+    'vof',
+    'pairs',
+    'informative',
+    'ordering'
   ]),
   data: z.record(z.unknown()),
 });

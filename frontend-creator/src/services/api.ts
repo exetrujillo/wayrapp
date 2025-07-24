@@ -38,7 +38,7 @@ class ApiClient {
     // Request interceptor for auth token
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -76,21 +76,21 @@ class ApiClient {
             }
 
             const response = await this.client.post('/auth/refresh', { refreshToken });
-            const { token } = response.data;
+            const { accessToken } = response.data;
 
             // Update the token in localStorage
-            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
 
             // Notify all subscribers that the token has been refreshed
-            this.refreshSubscribers.forEach((callback) => callback(token));
+            this.refreshSubscribers.forEach((callback) => callback(accessToken));
             this.refreshSubscribers = [];
 
             // Retry the original request
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return this.client(originalRequest);
           } catch (refreshError) {
             // If refresh fails, clear auth data and redirect to login
-            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
             window.location.href = '/login';
@@ -303,13 +303,18 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
   user: {
     id: string;
     email: string;
-    name: string;
-    role: string;
+    username?: string;
+    countryCode?: string;
+    registrationDate: string;
+    lastLoginDate?: string;
+    profilePictureUrl?: string;
+    isActive: boolean;
+    role: 'student' | 'content_creator' | 'admin';
     createdAt: string;
     updatedAt: string;
   };

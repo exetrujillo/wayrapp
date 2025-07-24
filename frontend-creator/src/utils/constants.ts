@@ -54,16 +54,16 @@ export const API_ENDPOINTS = {
 // Exercise types
 export const EXERCISE_TYPES = [
   { value: 'translation', label: 'Translation' },
-  { value: 'fill_in_the_blank', label: 'Fill in the Blank' },
-  { value: 'multiple_choice', label: 'Multiple Choice' },
-  { value: 'matching', label: 'Matching' },
-  { value: 'listening', label: 'Listening' },
-  { value: 'speaking', label: 'Speaking' },
+  { value: 'fill-in-the-blank', label: 'Fill in the Blank' },
+  { value: 'vof', label: 'Verify or False' },
+  { value: 'pairs', label: 'Pairs' },
+  { value: 'informative', label: 'Informative' },
+  { value: 'ordering', label: 'Ordering' },
 ];
 
 // Local storage keys
 export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'auth_token',
+  ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   AUTH_USER: 'auth_user',
   LANGUAGE: 'user_language',

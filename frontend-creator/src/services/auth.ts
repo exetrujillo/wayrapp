@@ -85,7 +85,7 @@ class AuthService {
    * @returns Boolean indicating if user is authenticated
    */
   isAuthenticated(): boolean {
-    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     const expiry = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY);
     
     if (!token) {
@@ -127,7 +127,7 @@ class AuthService {
    * @param authResponse Authentication response from API
    */
   private setSession(authResponse: AuthResponse): void {
-    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, authResponse.token);
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResponse.accessToken);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refreshToken);
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authResponse.user));
   }
@@ -136,7 +136,7 @@ class AuthService {
    * Clear authentication session data
    */
   private clearSession(): void {
-    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY);

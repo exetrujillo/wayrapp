@@ -37,13 +37,13 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   } = useForm<ExerciseFormData>({
     resolver: zodResolver(exerciseSchema),
     defaultValues: {
-      exercise_type: "translation",
+      exerciseType: "translation",
       data: {},
     },
   });
 
   // Watch the exercise type to render the appropriate form fields
-  const exerciseType = watch("exercise_type");
+  const exerciseType = watch("exerciseType");
   const exerciseData = watch("data") || ({} as Record<string, any>);
 
   // Handle JSON data input changes
@@ -154,7 +154,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
     try {
       // Convert form data to API request format
       const requestData: CreateExerciseRequest = {
-        exercise_type: data.exercise_type,
+        exerciseType: data.exerciseType,
         data: data.data,
       };
 
@@ -1259,21 +1259,21 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
         {/* Exercise Type */}
         <div className="mb-4">
           <label
-            htmlFor="exercise_type"
+            htmlFor="exerciseType"
             className="block text-sm font-medium text-neutral-700 mb-1"
           >
             {t("creator.forms.exercise.type", "Exercise Type")}
             <span className="text-error ml-1">*</span>
           </label>
           <Controller
-            name="exercise_type"
+            name="exerciseType"
             control={control}
             render={({ field }: { field: any }) => (
               <div className="relative">
                 <select
-                  id="exercise_type"
+                  id="exerciseType"
                   className={`input w-full ${
-                    errors.exercise_type
+                    errors.exerciseType
                       ? "border-error focus:border-error focus:ring-error"
                       : "border-neutral-300 focus:border-primary-500 focus:ring-primary-500"
                   }`}
@@ -1285,9 +1285,9 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
                     </option>
                   ))}
                 </select>
-                {errors.exercise_type && (
+                {errors.exerciseType && (
                   <p className="mt-1 text-sm text-error">
-                    {errors.exercise_type.message}
+                    {errors.exerciseType.message}
                   </p>
                 )}
               </div>

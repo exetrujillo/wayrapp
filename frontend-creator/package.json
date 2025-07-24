@@ -17,6 +17,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@hookform/resolvers": "^5.1.1",
+    "@tanstack/react-query": "^5.17.0",
     "axios": "^1.6.2",
     "i18next": "^23.7.7",
     "i18next-browser-languagedetector": "^7.2.0",
@@ -27,7 +28,7 @@
     "react-hook-form": "^7.60.0",
     "react-i18next": "^13.5.0",
     "react-router-dom": "^6.20.1",
-    "wayrapp-shared": "0.1.0",
+    "wayrapp-shared": "file:../frontend-shared",
     "zod": "^3.22.4"
   },
   "msw": {

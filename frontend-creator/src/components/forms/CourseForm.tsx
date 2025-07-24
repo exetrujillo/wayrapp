@@ -30,10 +30,10 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
     resolver: zodResolver(courseSchema),
     defaultValues: {
       name: '',
-      source_language: '',
-      target_language: '',
+      sourceLanguage: '',
+      targetLanguage: '',
       description: undefined,
-      is_public: false,
+      isPublic: false,
     },
   });
 
@@ -45,9 +45,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
       // Transform form data to match API expectations
       const courseData: CreateCourseRequest = {
         name: data.name,
-        source_language: data.source_language,
-        target_language: data.target_language,
-        is_public: data.is_public,
+        sourceLanguage: data.sourceLanguage,
+        targetLanguage: data.targetLanguage,
+        isPublic: data.isPublic,
         ...(data.id && { id: data.id }),
         ...(data.description && { description: data.description }),
       };
@@ -117,19 +117,19 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
 
         {/* Source Language */}
         <div className="mb-4">
-          <label htmlFor="source_language" className="block text-sm font-medium text-neutral-700 mb-1">
+          <label htmlFor="sourceLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
             {t('creator.forms.course.sourceLanguage', 'Source Language')}
             <span className="text-error ml-1">*</span>
           </label>
           <Controller
-            name="source_language"
+            name="sourceLanguage"
             control={control}
             render={({ field }) => (
               <div className="relative">
                 <input
-                  id="source_language"
+                  id="sourceLanguage"
                   list="source_languages"
-                  className={`input w-full ${errors.source_language ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
+                  className={`input w-full ${errors.sourceLanguage ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
                   placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
                   {...field}
                 />
@@ -140,9 +140,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
                     </option>
                   ))}
                 </datalist>
-                {errors.source_language && (
+                {errors.sourceLanguage && (
                   <p className="mt-1 text-sm text-error">
-                    {errors.source_language.message}
+                    {errors.sourceLanguage.message}
                   </p>
                 )}
               </div>
@@ -152,19 +152,19 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
 
         {/* Target Language */}
         <div className="mb-4">
-          <label htmlFor="target_language" className="block text-sm font-medium text-neutral-700 mb-1">
+          <label htmlFor="targetLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
             {t('creator.forms.course.targetLanguage', 'Target Language')}
             <span className="text-error ml-1">*</span>
           </label>
           <Controller
-            name="target_language"
+            name="targetLanguage"
             control={control}
             render={({ field }) => (
               <div className="relative">
                 <input
-                  id="target_language"
+                  id="targetLanguage"
                   list="target_languages"
-                  className={`input w-full ${errors.target_language ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
+                  className={`input w-full ${errors.targetLanguage ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
                   placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
                   {...field}
                 />
@@ -175,9 +175,9 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
                     </option>
                   ))}
                 </datalist>
-                {errors.target_language && (
+                {errors.targetLanguage && (
                   <p className="mt-1 text-sm text-error">
-                    {errors.target_language.message}
+                    {errors.targetLanguage.message}
                   </p>
                 )}
               </div>
@@ -207,11 +207,11 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
         <div className="mb-4 flex items-center">
           <input
             type="checkbox"
-            id="is_public"
+            id="isPublic"
             className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-neutral-300 rounded"
-            {...register('is_public')}
+            {...register('isPublic')}
           />
-          <label htmlFor="is_public" className="ml-2 block text-sm text-neutral-700">
+          <label htmlFor="isPublic" className="ml-2 block text-sm text-neutral-700">
             {t('creator.forms.course.isPublic', 'Make this course public')}
           </label>
         </div>

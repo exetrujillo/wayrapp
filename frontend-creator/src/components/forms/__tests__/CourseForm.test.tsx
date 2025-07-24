@@ -58,10 +58,10 @@ describe('CourseForm', () => {
     const mockCourse = {
       id: 'test-course',
       name: 'Test Course',
-      source_language: 'en',
-      target_language: 'es',
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
       description: 'Test description',
-      is_public: true,
+      isPublic: true,
     };
     
     (courseService.createCourse as jest.Mock).mockResolvedValue(mockCourse);
@@ -84,10 +84,10 @@ describe('CourseForm', () => {
       expect(courseService.createCourse).toHaveBeenCalledWith({
         id: 'test-course',
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
         description: 'Test description',
-        is_public: true,
+        isPublic: true,
       });
       expect(mockOnSuccess).toHaveBeenCalledWith(mockCourse);
     });

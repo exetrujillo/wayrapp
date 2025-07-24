@@ -35,14 +35,19 @@ export interface LoginCredentials {
 export interface User {
   id: string;
   email: string;
-  name: string;
-  role: string;
+  username?: string;
+  countryCode?: string;
+  registrationDate: string;
+  lastLoginDate?: string;
+  profilePictureUrl?: string;
+  isActive: boolean;
+  role: 'student' | 'content_creator' | 'admin';
   createdAt: string;
   updatedAt: string;
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
   user: User;
 }
@@ -55,49 +60,70 @@ export interface RefreshTokenRequest {
 export interface Course {
   id: string;
   name: string;
-  source_language: string;
-  target_language: string;
+  sourceLanguage: string;
+  targetLanguage: string;
   description?: string;
-  is_public: boolean;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateCourseRequest {
   name: string;
-  source_language: string;
-  target_language: string;
+  sourceLanguage: string;
+  targetLanguage: string;
   description?: string;
-  is_public: boolean;
+  isPublic: boolean;
 }
 
 export interface UpdateCourseRequest {
   name?: string;
   description?: string;
-  is_public?: boolean;
+  isPublic?: boolean;
+}
+
+// Level Types
+export interface Level {
+  id: string;
+  courseId: string;
+  code: string;
+  name: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Section Types
+export interface Section {
+  id: string;
+  levelId: string;
+  name: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Module Types
 export interface Module {
   id: string;
-  name: string;
-  description?: string;
-  order: number;
   sectionId: string;
+  moduleType: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
+  name: string;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateModuleRequest {
-  name: string;
-  description?: string;
-  order: number;
   sectionId: string;
+  moduleType: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
+  name: string;
+  order: number;
 }
 
 export interface UpdateModuleRequest {
+  moduleType?: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
   name?: string;
-  description?: string;
   order?: number;
 }
 
@@ -128,27 +154,27 @@ export interface UpdateLessonRequest {
 // Exercise Types
 export type ExerciseType = 
   | 'translation'
-  | 'fill_in_the_blank'
-  | 'multiple_choice'
-  | 'matching'
-  | 'listening'
-  | 'speaking';
+  | 'fill-in-the-blank'
+  | 'vof'
+  | 'pairs'
+  | 'informative'
+  | 'ordering';
 
 export interface Exercise {
   id: string;
-  exercise_type: ExerciseType;
+  exerciseType: ExerciseType;
   data: Record<string, any>;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateExerciseRequest {
-  exercise_type: ExerciseType;
+  exerciseType: ExerciseType;
   data: Record<string, any>;
 }
 
 export interface UpdateExerciseRequest {
-  exercise_type?: ExerciseType;
+  exerciseType?: ExerciseType;
   data?: Record<string, any>;
 }
 

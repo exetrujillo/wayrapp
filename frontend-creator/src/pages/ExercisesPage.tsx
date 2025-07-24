@@ -95,7 +95,7 @@ const ExercisesPage: React.FC = () => {
   const renderExercisePreview = (exercise: Exercise) => {
     const { data } = exercise;
     
-    switch (exercise.exercise_type) {
+    switch (exercise.exerciseType) {
       case 'translation':
         return (
           <div>
@@ -211,7 +211,7 @@ const ExercisesPage: React.FC = () => {
           <Modal
             isOpen={!!previewExercise}
             onClose={() => setPreviewExercise(null)}
-            title={`${t('creator.components.exerciseCard.preview', 'Preview')}: ${previewExercise.exercise_type}`}
+            title={`${t('creator.components.exerciseCard.preview', 'Preview')}: ${previewExercise.exerciseType}`}
             size="lg"
           >
             <div className="space-y-4">

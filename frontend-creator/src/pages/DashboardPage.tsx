@@ -168,7 +168,7 @@ export const DashboardPage: React.FC = () => {
 
         // Count public courses
         const publicCoursesResponse = await courseService.getCourses({ limit: 1000 });
-        const publicCount = publicCoursesResponse.data.filter(course => course.is_public).length;
+        const publicCount = publicCoursesResponse.data.filter(course => course.isPublic).length;
 
         setStats(prevStats => [
           {

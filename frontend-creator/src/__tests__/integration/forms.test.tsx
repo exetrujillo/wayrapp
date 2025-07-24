@@ -30,10 +30,10 @@ describe('Form Integration Tests', () => {
       const mockCourse = {
         id: '1',
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
         description: 'A test course',
-        is_public: true,
+        isPublic: true,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
       };
@@ -69,10 +69,10 @@ describe('Form Integration Tests', () => {
       await waitFor(() => {
         expect(mockCourseService.createCourse).toHaveBeenCalledWith({
           name: 'Test Course',
-          source_language: 'en',
-          target_language: 'es',
+          sourceLanguage: 'en',
+          targetLanguage: 'es',
           description: 'A test course',
-          is_public: true,
+          isPublic: true,
         });
       });
 
@@ -139,9 +139,9 @@ describe('Form Integration Tests', () => {
         () => new Promise(resolve => setTimeout(() => resolve({
           id: '1',
           name: 'Test Course',
-          source_language: 'en',
-          target_language: 'es',
-          is_public: false,
+          sourceLanguage: 'en',
+          targetLanguage: 'es',
+          isPublic: false,
           createdAt: '2023-01-01T00:00:00Z',
           updatedAt: '2023-01-01T00:00:00Z',
         }), 100))
@@ -180,9 +180,9 @@ describe('Form Integration Tests', () => {
       const mockCourse = {
         id: '1',
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
-        is_public: false,
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        isPublic: false,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
       };

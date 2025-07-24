@@ -127,10 +127,10 @@ describe('API Integration Tests', () => {
       const mockCourse = {
         id: '1',
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
         description: 'A test course',
-        is_public: true,
+        isPublic: true,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
       };
@@ -139,10 +139,10 @@ describe('API Integration Tests', () => {
 
       const courseData: CreateCourseRequest = {
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
         description: 'A test course',
-        is_public: true,
+        isPublic: true,
       };
 
       const result = await courseService.createCourse(courseData);
@@ -158,9 +158,9 @@ describe('API Integration Tests', () => {
             {
               id: '1',
               name: 'Course 1',
-              source_language: 'en',
-              target_language: 'es',
-              is_public: true,
+              sourceLanguage: 'en',
+              targetLanguage: 'es',
+              isPublic: true,
               createdAt: '2023-01-01T00:00:00Z',
               updatedAt: '2023-01-01T00:00:00Z',
             },
@@ -197,9 +197,9 @@ describe('API Integration Tests', () => {
 
       const courseData: CreateCourseRequest = {
         name: 'Existing Course',
-        source_language: 'en',
-        target_language: 'es',
-        is_public: false,
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        isPublic: false,
       };
 
       await expect(courseService.createCourse(courseData)).rejects.toThrow('Course name already exists');
@@ -209,9 +209,9 @@ describe('API Integration Tests', () => {
       const mockCourse = {
         id: '1',
         name: 'Test Course',
-        source_language: 'en',
-        target_language: 'es',
-        is_public: true,
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        isPublic: true,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
       };

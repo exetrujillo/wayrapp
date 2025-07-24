@@ -209,11 +209,11 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
     const getExerciseTypeName = (type: string) => {
         const typeMap: Record<string, string> = {
             translation: t('creator.exerciseTypes.translation', 'Translation'),
-            fill_in_the_blank: t('creator.exerciseTypes.fillInTheBlank', 'Fill in the Blank'),
-            multiple_choice: t('creator.exerciseTypes.multipleChoice', 'Multiple Choice'),
-            matching: t('creator.exerciseTypes.matching', 'Matching'),
-            listening: t('creator.exerciseTypes.listening', 'Listening'),
-            speaking: t('creator.exerciseTypes.speaking', 'Speaking'),
+            'fill-in-the-blank': t('creator.exerciseTypes.fillInTheBlank', 'Fill in the Blank'),
+            vof: t('creator.exerciseTypes.vof', 'Verify or False'),
+            pairs: t('creator.exerciseTypes.pairs', 'Pairs'),
+            informative: t('creator.exerciseTypes.informative', 'Informative'),
+            ordering: t('creator.exerciseTypes.ordering', 'Ordering'),
         };
 
         return typeMap[type] || type;
@@ -223,7 +223,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
     const getExercisePreview = (exercise: Exercise) => {
         if (!exercise || !exercise.data) return '';
 
-        switch (exercise.exercise_type) {
+        switch (exercise.exerciseType) {
             case 'translation':
                 return exercise.data['source_text'] || '';
             case 'fill_in_the_blank':
@@ -285,7 +285,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                                     </option>
                                     {exercises.map(exercise => (
                                         <option key={exercise.id} value={exercise.id}>
-                                            {getExerciseTypeName(exercise.exercise_type)} - {getExercisePreview(exercise).substring(0, 50)}
+                                            {getExerciseTypeName(exercise.exerciseType)} - {getExercisePreview(exercise).substring(0, 50)}
                                             {getExercisePreview(exercise).length > 50 ? '...' : ''}
                                         </option>
                                     ))}
@@ -362,7 +362,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                                                                 {exercise ? (
                                                                     <>
                                                                         <p className="font-medium">
-                                                                            {getExerciseTypeName(exercise.exercise_type)}
+                                                                            {getExerciseTypeName(exercise.exerciseType)}
                                                                         </p>
                                                                         <p className="text-sm text-neutral-600 truncate max-w-md">
                                                                             {getExercisePreview(exercise)}
