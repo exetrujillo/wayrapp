@@ -24,13 +24,31 @@ interface EnvironmentConfig {
  * Validates and parses environment variables into a typed configuration object
  */
 function createEnvironmentConfig(): EnvironmentConfig {
-    // Get environment variables with fallbacks
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://wayrapp.vercel.app/api/v1';
-    const appName = import.meta.env.VITE_APP_NAME || 'WayrApp Creator Tool';
-    const enableMSW = import.meta.env.VITE_ENABLE_MSW === 'true';
-    const logLevel = import.meta.env.VITE_LOG_LEVEL || 'info';
-    const isDevelopment = import.meta.env.DEV;
-    const isProduction = import.meta.env.PROD;
+    // Handle Jest environment where import.meta might not be available
+    let apiUrl: string;
+    let appName: string;
+    let enableMSW: boolean;
+    let logLevel: string;
+    let isDevelopment: boolean;
+    let isProduction: boolean;
+
+    try {
+        // Try to use Vite's import.meta.env
+        apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+        appName = import.meta.env.VITE_APP_NAME || 'WayrApp Creator Tool';
+        enableMSW = import.meta.env.VITE_ENABLE_MSW === 'true';
+        logLevel = import.meta.env.VITE_LOG_LEVEL || 'info';
+        isDevelopment = import.meta.env.DEV;
+        isProduction = import.meta.env.PROD;
+    } catch {
+        // Fallback to process.env for Jest environment
+        apiUrl = process.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+        appName = process.env.VITE_APP_NAME || 'WayrApp Creator Tool';
+        enableMSW = process.env.VITE_ENABLE_MSW === 'true';
+        logLevel = process.env.VITE_LOG_LEVEL || 'info';
+        isDevelopment = process.env.NODE_ENV === 'development';
+        isProduction = process.env.NODE_ENV === 'production';
+    }
 
     // Validate required environment variables
     if (!apiUrl) {

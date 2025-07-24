@@ -6,7 +6,9 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { I18nextProvider } from 'react-i18next';
 import { AuthProvider } from '../../contexts/AuthContext';
+import i18n from '../i18n'; // Import the test i18n instance
 
 // Custom render function with providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -22,17 +24,13 @@ const AllTheProviders = ({
   initialEntries?: string[];
   authContextValue?: any;
 }) => {
-  // If AuthProvider does not accept a value prop, use a context override or custom provider
-  // Example: <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>
-  // Otherwise, just render children
   return (
     <MemoryRouter initialEntries={initialEntries}>
-      {/* Replace with your actual context provider if needed */}
-      {/* <AuthContext.Provider value={authContextValue}> */}
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-      {/* </AuthContext.Provider> */}
+      <I18nextProvider i18n={i18n}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </I18nextProvider>
     </MemoryRouter>
   );
 };

@@ -294,19 +294,27 @@
   - Ensure proper cleanup of authentication state on session expiry
   - _Requirements: 6.4, 6.5_
 
-- [ ] 8. Data Fetching Service Updates
+- [x] 8. Data Fetching Service Updates
+
+
+
+
   - Update service layer methods to work with production API
   - Implement TanStack Query hooks for data fetching
   - Add proper loading and error states
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 8.1 Create TanStack Query hooks for courses
+- [x] 8.1 Create TanStack Query hooks for courses
+
+
   - Create `frontend-creator/src/hooks/useCourses.ts` with useCoursesQuery hook
   - Implement query hook that calls courseService.getCourses with proper typing
   - Add loading, error, and success states handling
   - _Requirements: 7.1, 7.3, 7.4_
 
-- [ ] 8.2 Update course service for production API
+- [x] 8.2 Update course service for production API
+
+
   - Modify `frontend-creator/src/services/courseService.ts` to work with production endpoints
   - Ensure proper data transformation if needed between frontend and backend formats
   - Add error handling for API failures

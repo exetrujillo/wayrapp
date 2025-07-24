@@ -7,6 +7,7 @@ module.exports = {
   testEnvironment: 'jsdom',
 
   // Load our setup file before each test
+  setupFiles: ['<rootDir>/src/__tests__/jest-setup.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
 
   // Transform TypeScript and JSX files
@@ -23,14 +24,23 @@ module.exports = {
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
+    '^\\.\\./config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
+    '^\\.\\./\\.\\./config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
+    '^\\.\\./\\.\\./\\.\\./config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
+    '^\\.\\./config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
+    '^\\.\\./\\.\\./mocks/handlers$': '<rootDir>/src/__tests__/mocks/handlers.mock.ts',
+    '^\\.\\./\\.\\./\\.\\./mocks/handlers$': '<rootDir>/src/__tests__/mocks/handlers.mock.ts',
+    '^\\./config/environment$': '<rootDir>/src/__tests__/mocks/environment.mock.ts',
   },
 
   // File extensions to consider
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 
-  // Test match patterns
+  // Test match patterns - only match actual test files
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(ts|tsx|js)',
+    '<rootDir>/src/**/__tests__/**/*.test.(ts|tsx|js)',
+    '<rootDir>/src/**/__tests__/**/*.spec.(ts|tsx|js)',
     '<rootDir>/src/**/*.(test|spec).(ts|tsx|js)',
   ],
 

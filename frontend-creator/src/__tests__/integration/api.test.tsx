@@ -3,14 +3,31 @@
  * Tests API client behavior with mocked HTTP responses
  */
 
-import axios from 'axios';
-import { courseService } from '../../services/courseService';
-import { authService } from '../../services/auth';
 import { CreateCourseRequest, LoginCredentials } from '../../utils/types';
 
-// Mock axios
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+// Mock the API client module before importing services
+jest.mock('../../services/api', () => {
+  const mockApiClient = {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockApiClient,
+    apiClient: mockApiClient,
+  };
+});
+
+// Now import the services after mocking
+import { courseService } from '../../services/courseService';
+import { authService } from '../../services/auth';
+import apiClient from '../../services/api';
+
+// Get the mocked API client
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 // Mock localStorage
 const localStorageMock = {
@@ -29,26 +46,31 @@ describe('API Integration Tests', () => {
     localStorageMock.getItem.mockClear();
     localStorageMock.setItem.mockClear();
     localStorageMock.removeItem.mockClear();
+    
+    // Reset mock API client
+    mockApiClient.get.mockClear();
+    mockApiClient.post.mockClear();
+    mockApiClient.put.mockClear();
+    mockApiClient.patch.mockClear();
+    mockApiClient.delete.mockClear();
   });
 
   describe('Authentication Service', () => {
     it('successfully logs in user', async () => {
       const mockResponse = {
-        data: {
-          user: {
-            id: '1',
-            email: 'test@example.com',
-            name: 'Test User',
-            role: 'admin',
-            createdAt: '2023-01-01T00:00:00Z',
-            updatedAt: '2023-01-01T00:00:00Z',
-          },
-          token: 'mock-jwt-token',
-          refreshToken: 'mock-refresh-token',
+        accessToken: 'mock-jwt-token',
+        refreshToken: 'mock-refresh-token',
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          name: 'Test User',
+          role: 'admin',
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2023-01-01T00:00:00Z',
         },
       };
 
-      mockedAxios.post.mockResolvedValue(mockResponse);
+      mockApiClient.post.mockResolvedValue(mockResponse);
 
       const credentials: LoginCredentials = {
         email: 'test@example.com',
@@ -58,46 +80,46 @@ describe('API Integration Tests', () => {
 
       const result = await authService.login(credentials);
 
-      expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/auth/login', credentials);
-      expect(result).toEqual(mockResponse.data);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'mock-jwt-token');
+      expect(mockApiClient.post).toHaveBeenCalledWith('/auth/login', credentials);
+      expect(result).toEqual(mockResponse);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('access_token', 'mock-jwt-token');
       expect(localStorageMock.setItem).toHaveBeenCalledWith('refresh_token', 'mock-refresh-token');
     });
 
     it('handles login errors correctly', async () => {
       const mockError = {
-        response: {
-          status: 401,
-          data: {
-            message: 'Invalid credentials',
-          },
-        },
+        status: 401,
+        message: 'Invalid credentials',
       };
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockApiClient.post.mockRejectedValue(mockError);
 
       const credentials: LoginCredentials = {
         email: 'test@example.com',
         password: 'wrongpassword',
       };
 
-      await expect(authService.login(credentials)).rejects.toThrow('Invalid credentials');
+      await expect(authService.login(credentials)).rejects.toThrow('Invalid email or password. Please check your credentials and try again.');
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 
     it('logs out user correctly', async () => {
-      mockedAxios.post.mockResolvedValue({ data: { success: true } });
+      mockApiClient.post.mockResolvedValue({ success: true });
 
       await authService.logout();
 
-      expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/auth/logout');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+      expect(mockApiClient.post).toHaveBeenCalledWith('/auth/logout');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('access_token');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('refresh_token');
     });
 
     it('checks authentication status correctly', () => {
-      // Test when token exists
-      localStorageMock.getItem.mockReturnValue('mock-token');
+      // Test when token exists (JWT format with 3 parts)
+      localStorageMock.getItem.mockImplementation((key) => {
+        if (key === 'access_token') return 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ';
+        if (key === 'auth_user') return JSON.stringify({ id: '1', email: 'test@example.com' });
+        return null;
+      });
       expect(authService.isAuthenticated()).toBe(true);
 
       // Test when token doesn't exist
@@ -135,7 +157,7 @@ describe('API Integration Tests', () => {
         updatedAt: '2023-01-01T00:00:00Z',
       };
 
-      mockedAxios.post.mockResolvedValue({ data: mockCourse });
+      mockApiClient.post.mockResolvedValue(mockCourse);
 
       const courseData: CreateCourseRequest = {
         name: 'Test Course',
@@ -147,7 +169,7 @@ describe('API Integration Tests', () => {
 
       const result = await courseService.createCourse(courseData);
 
-      expect(mockedAxios.post).toHaveBeenCalledWith('/api/v1/courses', courseData);
+      expect(mockApiClient.post).toHaveBeenCalledWith('/courses', courseData);
       expect(result).toEqual(mockCourse);
     });
 
@@ -174,26 +196,22 @@ describe('API Integration Tests', () => {
         },
       };
 
-      mockedAxios.get.mockResolvedValue(mockResponse);
+      mockApiClient.get.mockResolvedValue(mockResponse.data);
 
       const params = { page: 1, limit: 10 };
       const result = await courseService.getCourses(params);
 
-      expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/courses', { params });
+      expect(mockApiClient.get).toHaveBeenCalledWith('/courses', { params });
       expect(result).toEqual(mockResponse.data);
     });
 
     it('handles course creation errors', async () => {
       const mockError = {
-        response: {
-          status: 400,
-          data: {
-            message: 'Course name already exists',
-          },
-        },
+        status: 409,
+        message: 'Course name already exists',
       };
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockApiClient.post.mockRejectedValue(mockError);
 
       const courseData: CreateCourseRequest = {
         name: 'Existing Course',
@@ -202,7 +220,7 @@ describe('API Integration Tests', () => {
         isPublic: false,
       };
 
-      await expect(courseService.createCourse(courseData)).rejects.toThrow('Course name already exists');
+      await expect(courseService.createCourse(courseData)).rejects.toThrow('A course with this name already exists');
     });
 
     it('fetches single course by ID', async () => {
@@ -216,17 +234,17 @@ describe('API Integration Tests', () => {
         updatedAt: '2023-01-01T00:00:00Z',
       };
 
-      mockedAxios.get.mockResolvedValue({ data: mockCourse });
+      mockApiClient.get.mockResolvedValue(mockCourse);
 
       const result = await courseService.getCourse('1');
 
-      expect(mockedAxios.get).toHaveBeenCalledWith('/api/v1/courses/1');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/courses/1');
       expect(result).toEqual(mockCourse);
     });
 
     it('handles network errors gracefully', async () => {
       const networkError = new Error('Network Error');
-      mockedAxios.get.mockRejectedValue(networkError);
+      mockApiClient.get.mockRejectedValue(networkError);
 
       await expect(courseService.getCourses()).rejects.toThrow('Network Error');
     });
@@ -235,26 +253,10 @@ describe('API Integration Tests', () => {
   describe('API Client Configuration', () => {
     it('includes auth token in requests when available', async () => {
       localStorageMock.getItem.mockReturnValue('mock-auth-token');
-      
-      // Mock axios create to return a mock instance
-      const mockAxiosInstance = {
-        get: jest.fn().mockResolvedValue({ data: {} }),
-        post: jest.fn().mockResolvedValue({ data: {} }),
-        interceptors: {
-          request: {
-            use: jest.fn(),
-          },
-          response: {
-            use: jest.fn(),
-          },
-        },
-      };
-
-      mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
 
       // Test that interceptor would add auth header
       const requestInterceptor = jest.fn((config) => {
-        const token = localStorage.getItem('auth_token');
+        const token = localStorage.getItem('access_token');
         if (token) {
           config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${token}`;
@@ -281,7 +283,7 @@ describe('API Integration Tests', () => {
       // Simulate response interceptor behavior
       const responseInterceptor = jest.fn((error) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           // In real app, would redirect to login
         }
@@ -289,7 +291,7 @@ describe('API Integration Tests', () => {
       });
 
       await expect(responseInterceptor(mockError)).rejects.toEqual(mockError);
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('auth_token');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('access_token');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('refresh_token');
     });
   });

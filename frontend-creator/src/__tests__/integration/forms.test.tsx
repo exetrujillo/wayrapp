@@ -60,10 +60,10 @@ describe('Form Integration Tests', () => {
         target: { value: 'A test course' },
       });
 
-      fireEvent.click(screen.getByLabelText(/make this course public/i));
+      fireEvent.click(screen.getByLabelText(/make public/i));
 
       // Submit the form
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
       // Wait for API call and success
       await waitFor(() => {
@@ -88,12 +88,13 @@ describe('Form Integration Tests', () => {
       render(<CourseForm />);
 
       // Submit form without filling required fields
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
       // Wait for validation errors
       await waitFor(() => {
         expect(screen.getByText(/course name must be at least 3 characters/i)).toBeInTheDocument();
-        expect(screen.getByText(/please enter a valid bcp 47 language code/i)).toBeInTheDocument();
+        const errorMessages = screen.getAllByText(/please enter a valid bcp 47 language code/i);
+        expect(errorMessages).toHaveLength(2);
       });
 
       // API should not be called
@@ -121,7 +122,7 @@ describe('Form Integration Tests', () => {
       });
 
       // Submit the form
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
       // Wait for API call and error
       await waitFor(() => {
@@ -163,12 +164,14 @@ describe('Form Integration Tests', () => {
       });
 
       // Submit form
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
-      // Check loading state
-      const submitButton = screen.getByText(/create course/i);
-      expect(submitButton).toBeDisabled();
-      expect(submitButton.querySelector('.animate-spin')).toBeInTheDocument();
+      // Wait for and check loading state
+      const submitButton = screen.getByRole('button', { name: /create course/i });
+      await waitFor(() => {
+        expect(submitButton).toBeDisabled();
+        expect(submitButton.querySelector('.animate-spin')).toBeInTheDocument();
+      });
 
       // Wait for completion
       await waitFor(() => {
@@ -206,7 +209,7 @@ describe('Form Integration Tests', () => {
       expect(targetInput.value).toBe('es');
 
       // Submit form
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
       // Wait for success and form reset
       await waitFor(() => {
@@ -247,7 +250,7 @@ describe('Form Integration Tests', () => {
         target: { value: '123' },
       });
 
-      fireEvent.click(screen.getByText(/create course/i));
+      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
       await waitFor(() => {
         const errorMessages = screen.getAllByText(/please enter a valid bcp 47 language code/i);

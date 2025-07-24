@@ -1,6 +1,7 @@
 /**
  * Test Setup File for Jest
  * Enhanced to work with MSW and modern testing environment
+ * Note: import.meta mock is now in jest-setup.ts which runs before module imports
  */
 
 // --- PHASE 1: CRITICAL POLYFILLS BEFORE ANYTHING ELSE ---
@@ -35,6 +36,9 @@ if (typeof global.WritableStream === 'undefined') {
 // --- PHASE 2: IMPORT TESTING LIBRARIES ---
 
 import '@testing-library/jest-dom';
+
+// --- PHASE 2.5: INITIALIZE I18N FOR TESTS ---
+import './i18n'; // Initialize i18n before any tests run
 
 // --- PHASE 3: BROWSER API MOCKS ---
 
