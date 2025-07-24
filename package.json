@@ -9,8 +9,11 @@
   "workspaces": [
     "frontend-shared"
   ],
+  "_moduleAliases": {
+    "@": "dist"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
     "vercel-build": "npm run build",
     "build:shared": "npm run build --workspace=wayrapp-shared",
     "build:all": "npm run build && npm run build:shared",
@@ -41,6 +44,7 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
     "winston": "^3.11.0",
     "xss": "^1.0.15",
     "zod": "^3.22.4"

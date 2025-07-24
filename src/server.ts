@@ -3,6 +3,9 @@
  * Serverless-compatible entry point for Vercel
  */
 
+// Register path aliases for compiled JavaScript
+import 'module-alias/register';
+
 import app from './app';
 
 // Export the Express app for Vercel's serverless runtime
