@@ -1,39 +1,35 @@
-// Vercel serverless function entry point
+// Vercel serverless function entry point for Express app
 const path = require('path');
 
-// Set up path mappings for TypeScript compiled output
+// Register TypeScript path mappings for compiled JavaScript
 const tsConfigPaths = require('tsconfig-paths');
 const baseUrl = path.join(__dirname, '..', 'dist');
 
+// Register path mappings based on tsconfig.json
 tsConfigPaths.register({
   baseUrl: baseUrl,
   paths: {
-    '@/*': ['*']
+    '@/*': ['*'],
+    '@/modules/*': ['modules/*'],
+    '@/shared/*': ['shared/*']
   }
 });
 
-// Load and export the Express app
-let app;
-
 try {
-  const appModule = require('../dist/app.js');
-  app = appModule.default || appModule;
+  const app = require('../dist/app.js');
 
-  if (!app) {
-    throw new Error('No app export found');
-  }
-
-  console.log('App loaded successfully');
+  // Handle both CommonJS and ES module exports
+  module.exports = app.default || app;
 } catch (error) {
-  console.error('Failed to load app:', error);
+  console.error('Error loading app:', error);
+  console.error('Stack trace:', error.stack);
 
-  // Create fallback handler
-  app = (req, res) => {
+  // Fallback: create a simple error handler
+  module.exports = (req, res) => {
     res.status(500).json({
-      error: 'Application failed to initialize',
-      message: error.message
+      error: 'Server initialization failed',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   };
 }
-
-module.exports = app;

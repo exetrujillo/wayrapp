@@ -3,7 +3,7 @@
  * Starts the Express server with performance optimizations
  */
 
-import app from "./app";
+import app from "./app-simple";
 import { logger } from "@/shared/utils/logger";
 import { startupManager } from "@/shared/utils/startup";
 
