@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { STORAGE_KEYS } from '../utils/constants';
 import { ApiError } from '../utils/types';
+import { env } from '../config/environment';
 
 // Custom error class for API errors
 export class ApiClientError extends Error {
@@ -350,6 +351,6 @@ class ExtendedApiClient extends ApiClient {
 }
 
 // Create and export API client instance
-export const apiClient = new ExtendedApiClient('/api/v1');
+export const apiClient = new ExtendedApiClient(env.apiUrl);
 
 export default apiClient;

@@ -106,13 +106,13 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           hint: "",
         };
         break;
-      case "fill_in_the_blank":
+      case "fill-in-the-blank":
         defaultData = {
           text: "",
           blanks: [{ position: 0, answer: "", options: [] }],
         };
         break;
-      case "multiple_choice":
+      case "vof":
         defaultData = {
           question: "",
           options: ["", "", "", ""],
@@ -120,7 +120,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           explanation: "",
         };
         break;
-      case "matching":
+      case "pairs":
         defaultData = {
           pairs: [
             { left: "", right: "" },
@@ -128,18 +128,16 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           ],
         };
         break;
-      case "listening":
+      case "informative":
         defaultData = {
-          audio_url: "",
-          transcript: "",
-          question: "",
+          content: "",
+          title: "",
         };
         break;
-      case "speaking":
+      case "ordering":
         defaultData = {
-          prompt: "",
-          sample_answer: "",
-          pronunciation_guide: "",
+          items: ["", ""],
+          correct_order: [0, 1],
         };
         break;
     }
@@ -263,7 +261,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           </>
         );
 
-      case "fill_in_the_blank":
+      case "fill-in-the-blank":
         return (
           <>
             <div className="mb-4">
@@ -466,7 +464,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           </>
         );
 
-      case "multiple_choice":
+      case "vof":
         return (
           <>
             <div className="mb-4">
@@ -598,7 +596,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           </>
         );
 
-      case "matching":
+      case "pairs":
         return (
           <>
             <div className="mb-4">
@@ -712,7 +710,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           </>
         );
 
-      case "listening":
+      case "informative":
         return (
           <>
             <div className="mb-4">
@@ -778,7 +776,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
           </>
         );
 
-      case "speaking":
+      case "ordering":
         return (
           <>
             <div className="mb-4">
@@ -907,7 +905,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             </div>
           )}
 
-          {exerciseType === "fill_in_the_blank" && (
+          {exerciseType === "fill-in-the-blank" && (
             <div>
               <h4 className="font-medium mb-2">
                 {t(
@@ -976,7 +974,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             </div>
           )}
 
-          {exerciseType === "multiple_choice" && (
+          {exerciseType === "vof" && (
             <div>
               <h4 className="font-medium mb-2">
                 {t(
@@ -1028,7 +1026,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             </div>
           )}
 
-          {exerciseType === "matching" && (
+          {exerciseType === "pairs" && (
             <div>
               <h4 className="font-medium mb-2">
                 {t(
@@ -1087,7 +1085,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             </div>
           )}
 
-          {exerciseType === "listening" && (
+          {exerciseType === "informative" && (
             <div>
               <h4 className="font-medium mb-2">
                 {t(
@@ -1162,7 +1160,7 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
             </div>
           )}
 
-          {exerciseType === "speaking" && (
+          {exerciseType === "ordering" && (
             <div>
               <h4 className="font-medium mb-2">
                 {t(

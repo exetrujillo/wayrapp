@@ -22,9 +22,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user || !user.name) return 'U';
+    if (!user || !user.username) return 'U';
     
-    const nameParts = user.name.split(' ');
+    const nameParts = user.username.split(' ');
     if (nameParts.length === 1) {
       return nameParts[0]?.charAt(0).toUpperCase() || 'U';
     }
@@ -70,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               {getUserInitials()}
             </div>
             <div>
-              <div className="font-medium">{user?.name}</div>
+              <div className="font-medium">{user?.username}</div>
               <div className="text-sm text-neutral-500">{user?.email}</div>
             </div>
           </div>

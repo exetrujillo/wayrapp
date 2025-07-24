@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { AuthResponse, LoginCredentials, RefreshTokenRequest } from '../utils/types';
+import { AuthResponse, LoginCredentials, RefreshTokenRequest, User } from '../utils/types';
 import { STORAGE_KEYS, API_ENDPOINTS } from '../utils/constants';
 
 class AuthService {
@@ -15,6 +15,11 @@ class AuthService {
         credentials
       );
       
+      // Validate response structure
+      if (!response.accessToken || !response.user) {
+        throw new Error('Invalid authentication response from server');
+      }
+      
       // Store tokens and user data
       this.setSession(response);
       
@@ -26,8 +31,23 @@ class AuthService {
       }
       
       return response;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      
+      // Provide more specific error messages for common authentication failures
+      if (error.status === 401) {
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
+      } else if (error.status === 403) {
+        throw new Error('Account is disabled or not authorized. Please contact support.');
+      } else if (error.status === 429) {
+        throw new Error('Too many login attempts. Please wait a few minutes before trying again.');
+      } else if (error.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (!error.status) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
+      // Re-throw the original error if it's not a recognized type
       throw error;
     }
   }
@@ -67,13 +87,28 @@ class AuthService {
         { refreshToken } as RefreshTokenRequest
       );
       
-      // Update stored tokens
+      // Validate response structure
+      if (!response.accessToken) {
+        throw new Error('Invalid refresh token response from server');
+      }
+      
+      // Update stored tokens with new data
       this.setSession(response);
       
       return response;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Token refresh failed:', error);
-      // If refresh fails, logout the user
+      
+      // Provide specific error handling for refresh failures
+      if (error.status === 401 || error.status === 403) {
+        console.info('Refresh token is invalid or expired, redirecting to login');
+      } else if (error.status >= 500) {
+        console.error('Server error during token refresh');
+      } else if (!error.status) {
+        console.error('Network error during token refresh');
+      }
+      
+      // If refresh fails for any reason, clear session and redirect
       this.clearSession();
       window.location.href = '/login';
       throw error;
@@ -86,26 +121,51 @@ class AuthService {
    */
   isAuthenticated(): boolean {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const user = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
     const expiry = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY);
     
-    if (!token) {
+    // Must have both token and user data
+    if (!token || !user) {
       return false;
     }
     
-    // Check if token has expired
+    // Validate token format (JWT tokens should have 3 parts separated by dots)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.warn('Invalid token format detected, clearing session');
+      this.clearSession();
+      return false;
+    }
+    
+    // Check if token has expired (for remember me functionality)
     if (expiry) {
       const expiryDate = new Date(expiry);
       if (expiryDate < new Date()) {
+        console.info('Token expired, clearing session');
         this.clearSession();
         return false;
       }
+    }
+    
+    // Validate user data can be parsed
+    try {
+      const userData = JSON.parse(user);
+      if (!userData.id || !userData.email) {
+        console.warn('Invalid user data detected, clearing session');
+        this.clearSession();
+        return false;
+      }
+    } catch (error) {
+      console.warn('Failed to parse user data, clearing session');
+      this.clearSession();
+      return false;
     }
     
     return true;
   }
 
   /**
-   * Get the current authenticated user
+   * Get the current authenticated user from localStorage
    * @returns User object or null if not authenticated
    */
   getCurrentUser() {
@@ -123,12 +183,63 @@ class AuthService {
   }
 
   /**
+   * Fetch current user profile from the API
+   * @returns Promise with current user data from server
+   */
+  async getCurrentUserProfile(): Promise<User> {
+    try {
+      const user = await apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
+      
+      // Validate user data structure
+      if (!user || !user.id || !user.email) {
+        throw new Error('Invalid user profile data received from server');
+      }
+      
+      // Update stored user data with fresh data from server
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+      
+      return user;
+    } catch (error: any) {
+      console.error('Failed to fetch user profile:', error);
+      
+      // Provide specific error messages for common scenarios
+      if (error.status === 401) {
+        // Token is invalid or expired, clear session
+        this.clearSession();
+        throw new Error('Your session has expired. Please log in again.');
+      } else if (error.status === 403) {
+        throw new Error('You do not have permission to access this profile.');
+      } else if (error.status >= 500) {
+        throw new Error('Server error while fetching profile. Please try again later.');
+      } else if (!error.status) {
+        throw new Error('Network error while fetching profile. Please check your connection.');
+      }
+      
+      // Re-throw the original error if it's not a recognized type
+      throw error;
+    }
+  }
+
+  /**
    * Store authentication session data
    * @param authResponse Authentication response from API
    */
   private setSession(authResponse: AuthResponse): void {
+    // Validate required fields before storing
+    if (!authResponse.accessToken) {
+      throw new Error('Access token is required for authentication');
+    }
+    if (!authResponse.user) {
+      throw new Error('User data is required for authentication');
+    }
+    
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResponse.accessToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refreshToken);
+    
+    // Store refresh token if provided
+    if (authResponse.refreshToken) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refreshToken);
+    }
+    
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authResponse.user));
   }
 
@@ -136,10 +247,28 @@ class AuthService {
    * Clear authentication session data
    */
   private clearSession(): void {
+    // Remove all authentication-related data from localStorage
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY);
+    
+    // Clear any other auth-related data that might exist
+    // This ensures a clean slate for the next login
+    const keysToCheck = Object.values(STORAGE_KEYS);
+    keysToCheck.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+
+  /**
+   * Clear session and redirect to login (public method for external use)
+   */
+  clearSessionAndRedirect(): void {
+    this.clearSession();
+    window.location.href = '/login';
   }
 }
 

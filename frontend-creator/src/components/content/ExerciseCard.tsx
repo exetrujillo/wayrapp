@@ -87,20 +87,20 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   // Extract preview content from exercise data
   const getPreviewContent = () => {
     const { data } = exercise;
-    
+
     switch (exercise.exerciseType) {
       case 'translation':
         return data['source_text'] || data['text'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
-      case 'multiple_choice':
+      case 'vof':
         return data['question'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
-      case 'fill_in_the_blank':
+      case 'fill-in-the-blank':
         return data['sentence'] || data['text'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
-      case 'matching':
+      case 'pairs':
         return data['pairs'] ? `${data['pairs'].length} pairs` : t('creator.components.exerciseCard.noPreview', 'No preview available');
-      case 'listening':
-        return data['audio_url'] ? t('creator.components.exerciseCard.audioExercise', 'Audio exercise') : t('creator.components.exerciseCard.noPreview', 'No preview available');
-      case 'speaking':
-        return data['prompt'] || t('creator.components.exerciseCard.speakingExercise', 'Speaking exercise');
+      case 'informative':
+        return data['content'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
+      case 'ordering':
+        return data['items'] ? `${data['items'].length} items` : t('creator.components.exerciseCard.noPreview', 'No preview available');
       default:
         return t('creator.components.exerciseCard.noPreview', 'No preview available');
     }
@@ -137,9 +137,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
   return (
     <Card
-      className={`exercise-card transition-all duration-200 ${
-        isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
-      } ${showSelection || onView ? 'cursor-pointer' : ''}`}
+      className={`exercise-card transition-all duration-200 ${isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
+        } ${showSelection || onView ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
@@ -234,7 +233,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   key={key}
                   className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800"
                 >
-                  {key}: {typeof exercise.data[key] === 'object' 
+                  {key}: {typeof exercise.data[key] === 'object'
                     ? `${Object.keys(exercise.data[key]).length} items`
                     : String(exercise.data[key]).substring(0, 20) + (String(exercise.data[key]).length > 20 ? '...' : '')
                   }

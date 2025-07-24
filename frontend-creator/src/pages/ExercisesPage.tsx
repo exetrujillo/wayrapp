@@ -109,7 +109,7 @@ const ExercisesPage: React.FC = () => {
             )}
           </div>
         );
-      case 'multiple_choice':
+      case 'vof':
         return (
           <div>
             <h4 className="font-semibold mb-2">{t('creator.components.exerciseCard.question', 'Question')}</h4>
@@ -124,7 +124,7 @@ const ExercisesPage: React.FC = () => {
             </ul>
           </div>
         );
-      case 'fill_in_the_blank':
+      case 'fill-in-the-blank':
         return (
           <div>
             <h4 className="font-semibold mb-2">{t('creator.components.exerciseCard.sentence', 'Sentence')}</h4>

@@ -38,9 +38,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user || !user.name) return 'U';
+    if (!user || !user.username) return 'U';
     
-    const nameParts = user.name.split(' ');
+    const nameParts = user.username.split(' ');
     if (nameParts.length === 1) {
       return nameParts[0]?.charAt(0).toUpperCase() || 'U';
     }
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
                   tabIndex={-1}
                 >
                   <div className="px-4 py-2 text-sm text-neutral-700 border-b border-neutral-200">
-                    <div className="font-medium">{user?.name}</div>
+                    <div className="font-medium">{user?.username}</div>
                     <div className="text-neutral-500">{user?.email}</div>
                   </div>
                   <Link

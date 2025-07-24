@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     REFRESH_TOKEN: '/auth/refresh',
     PROFILE: '/auth/profile',
+    ME: '/auth/me',
   },
   COURSES: {
     BASE: '/courses',

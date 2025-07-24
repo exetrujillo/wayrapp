@@ -21,7 +21,7 @@ const ProfilePage: React.FC = () => {
                 <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-neutral-500">Name</label>
-                    <div className="mt-1 text-neutral-900">{user.name}</div>
+                    <div className="mt-1 text-neutral-900">{user.username}</div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-neutral-500">Email</label>

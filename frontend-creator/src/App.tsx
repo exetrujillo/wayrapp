@@ -1,10 +1,14 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { queryClient } from './config/queryClient';
+import { env } from './config/environment';
 import './styles/globals.css';
 
 // Lazy-loaded pages for better performance
@@ -92,13 +96,17 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Router basename="/creator">
-      <HelmetProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </HelmetProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router basename="/creator">
+        <HelmetProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </HelmetProvider>
+      </Router>
+      {/* React Query Devtools - only in development */}
+      {env.isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 };
 

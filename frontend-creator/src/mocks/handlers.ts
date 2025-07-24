@@ -6,7 +6,7 @@
 import { http, HttpResponse } from 'msw';
 
 // Use environment variable or default to localhost for development
-const baseURL = process.env['VITE_API_URL'] || 'http://localhost:3000';
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Mock API responses (moved from test utils for reuse)
 export const mockApiResponses = {

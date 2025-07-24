@@ -62,7 +62,7 @@ export function ContentList<T extends { id: string }>({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [searchDebounceTimer, setSearchDebounceTimer] =
-    useState<NodeJS.Timeout | null>(null);
+    useState<number | null>(null);
 
   // Debounced search
   const handleSearchChange = useCallback(
@@ -70,14 +70,14 @@ export function ContentList<T extends { id: string }>({
       setSearchQuery(query);
 
       if (searchDebounceTimer) {
-        clearTimeout(searchDebounceTimer);
+        clearTimeout(searchDebounceTimer as unknown as NodeJS.Timeout);
       }
 
       const timer = setTimeout(() => {
         onSearch(query);
       }, 300);
 
-      setSearchDebounceTimer(timer);
+      setSearchDebounceTimer(timer as unknown as number);
     },
     [onSearch, searchDebounceTimer]
   );
@@ -86,7 +86,7 @@ export function ContentList<T extends { id: string }>({
   useEffect(() => {
     return () => {
       if (searchDebounceTimer) {
-        clearTimeout(searchDebounceTimer);
+        clearTimeout(searchDebounceTimer as unknown as NodeJS.Timeout);
       }
     };
   }, [searchDebounceTimer]);

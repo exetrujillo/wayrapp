@@ -226,16 +226,16 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
         switch (exercise.exerciseType) {
             case 'translation':
                 return exercise.data['source_text'] || '';
-            case 'fill_in_the_blank':
+            case 'fill-in-the-blank':
                 return exercise.data['text'] || '';
-            case 'multiple_choice':
+            case 'vof':
                 return exercise.data['question'] || '';
-            case 'matching':
+            case 'pairs':
                 return `${exercise.data['pairs']?.length || 0} pairs`;
-            case 'listening':
-                return exercise.data['transcript'] || '';
-            case 'speaking':
-                return exercise.data['prompt'] || '';
+            case 'informative':
+                return exercise.data['content'] || '';
+            case 'ordering':
+                return `${exercise.data['items']?.length || 0} items`;
             default:
                 return '';
         }
