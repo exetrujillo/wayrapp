@@ -64,9 +64,6 @@ export class CourseRepository {
   }
 
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<Course & { levels_count: number }>> {
-    console.log('--- CourseRepository.findAll ---');
-    console.log('Repository received options:', JSON.stringify(options, null, 2));
-    
     const { filters = {}, search } = options;
     const queryParams = buildPrismaQueryParams(options, SORT_FIELDS.COURSE, 'created_at', COMMON_FIELD_MAPPINGS);
     const searchWhere = buildTextSearchWhere(search, ['name', 'description']);
@@ -74,38 +71,22 @@ export class CourseRepository {
     
     const where = combineWhereConditions(searchWhere, isPublicWhere);
 
-    console.log('Built query params:', JSON.stringify(queryParams, null, 2));
-    console.log('Built where clause:', JSON.stringify(where, null, 2));
-
-    const prismaQuery = {
-      ...queryParams,
-      where,
-      include: {
-        _count: {
-          select: { levels: true },
-        },
-      },
-    };
-
-    console.log('Executing Prisma query:', JSON.stringify(prismaQuery, null, 2));
-
     const [courses, total] = await Promise.all([
-      this.prisma.course.findMany(prismaQuery),
+      this.prisma.course.findMany({
+        ...queryParams,
+        where,
+        include: {
+          _count: {
+            select: { levels: true },
+          },
+        },
+      }),
       this.prisma.course.count({ where }),
     ]);
 
-    console.log(`Prisma query returned ${courses.length} courses out of ${total} total`);
-    console.log('Raw courses from Prisma:', courses);
-
     const mappedCourses = courses.map((course) => this.mapPrismaToModel(course));
 
-    console.log('Mapped courses:', mappedCourses);
-
-    const result = createPaginationResult(mappedCourses, total, options.page || 1, options.limit || 20);
-    
-    console.log('Final pagination result:', result);
-
-    return result;
+    return createPaginationResult(mappedCourses, total, options.page || 1, options.limit || 20);
   }
 
   async update(id: string, data: Partial<CreateCourseDto>): Promise<Course & { levels_count: number }> {

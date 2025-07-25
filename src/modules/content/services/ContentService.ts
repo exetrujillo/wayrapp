@@ -53,16 +53,7 @@ export class ContentService {
   }
 
   async getCourses(options: QueryOptions = {}): Promise<PaginatedResult<Course>> {
-    console.log('--- getCourses Service ---');
-    console.log('Fetching courses with options:', JSON.stringify(options, null, 2));
-    
-    const result = await this.courseRepository.findAll(options);
-    
-    console.log(`Repository returned ${result.data.length} courses`);
-    console.log('First course (if any):', result.data[0]);
-    console.log('Pagination info:', result.pagination);
-    
-    return result;
+    return await this.courseRepository.findAll(options);
   }
 
   async updateCourse(id: string, data: Partial<CreateCourseDto>): Promise<Course> {

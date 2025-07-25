@@ -80,10 +80,6 @@ export class ContentController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-            console.log('--- GET /courses Controller ---');
-            console.log('Request received. Query params:', req.query);
-            console.log('Request pagination middleware data:', req.pagination);
-            
             // Use pagination middleware data if available, otherwise fallback to query params
             const options = req.pagination || {
                 page: 1,
@@ -97,13 +93,7 @@ export class ContentController {
                 options.search = req.query['search'] as string;
             }
 
-            console.log('Final options passed to service:', JSON.stringify(options, null, 2));
-
             const result = await this.contentService.getCourses(options);
-
-            console.log('Data received from service:', result);
-            console.log(`Service returned ${result.data.length} courses`);
-            console.log('First course (if any):', result.data[0]);
 
             const response: ApiResponse = {
                 data: result.data,
@@ -115,10 +105,8 @@ export class ContentController {
             const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
             addPaginationHeaders(res, result.pagination);
 
-            console.log('Sending response with status 200');
             res.status(HttpStatus.OK).json(response);
         } catch (error) {
-            console.error('Error in getCourses controller:', error);
             next(error);
         }
     };
