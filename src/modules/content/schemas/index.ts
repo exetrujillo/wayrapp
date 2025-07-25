@@ -32,7 +32,7 @@ export const CourseQuerySchema = BasePaginationSchema.extend({
   is_public: z
     .string()
     .optional()
-    .transform((val) => val === "true"),
+    .transform((val) => val === undefined ? undefined : val === "true"),
 });
 
 // Level validation schemas
