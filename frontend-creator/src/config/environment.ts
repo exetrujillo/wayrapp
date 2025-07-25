@@ -42,12 +42,12 @@ function createEnvironmentConfig(): EnvironmentConfig {
         isProduction = import.meta.env.PROD;
     } catch {
         // Fallback to process.env for Jest environment
-        apiUrl = process.env.VITE_API_URL || 'http://localhost:3000/api/v1';
-        appName = process.env.VITE_APP_NAME || 'WayrApp Creator Tool';
-        enableMSW = process.env.VITE_ENABLE_MSW === 'true';
-        logLevel = process.env.VITE_LOG_LEVEL || 'info';
-        isDevelopment = process.env.NODE_ENV === 'development';
-        isProduction = process.env.NODE_ENV === 'production';
+        apiUrl = process.env['VITE_API_URL'] || 'http://localhost:3000/api/v1';
+        appName = process.env['VITE_APP_NAME'] || 'WayrApp Creator Tool';
+        enableMSW = process.env['VITE_ENABLE_MSW'] === 'true';
+        logLevel = process.env['VITE_LOG_LEVEL'] || 'info';
+        isDevelopment = process.env['NODE_ENV'] === 'development';
+        isProduction = process.env['NODE_ENV'] === 'production';
     }
 
     // Validate required environment variables

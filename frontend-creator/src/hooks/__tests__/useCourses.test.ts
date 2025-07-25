@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCoursesQuery, courseKeys } from '../useCourses';
+import { useCoursesQuery } from '../useCourses';
+import { queryKeys } from '../queryKeys';
 import { courseService } from '../../services/courseService';
 import React from 'react';
 
@@ -32,15 +33,15 @@ describe('useCourses hooks', () => {
     jest.clearAllMocks();
   });
 
-  describe('courseKeys', () => {
+  describe('queryKeys.courses', () => {
     it('should generate correct query keys', () => {
-      expect(courseKeys.all).toEqual(['courses']);
-      expect(courseKeys.lists()).toEqual(['courses', 'list']);
-      expect(courseKeys.list({ page: 1, limit: 10 })).toEqual(['courses', 'list', { page: 1, limit: 10 }]);
-      expect(courseKeys.details()).toEqual(['courses', 'detail']);
-      expect(courseKeys.detail('123')).toEqual(['courses', 'detail', '123']);
-      expect(courseKeys.packages()).toEqual(['courses', 'package']);
-      expect(courseKeys.package('123')).toEqual(['courses', 'package', '123']);
+      expect(queryKeys.courses.all).toEqual(['courses']);
+      expect(queryKeys.courses.lists()).toEqual(['courses', 'list']);
+      expect(queryKeys.courses.list({ page: 1, limit: 10 })).toEqual(['courses', 'list', { page: 1, limit: 10 }]);
+      expect(queryKeys.courses.details()).toEqual(['courses', 'detail']);
+      expect(queryKeys.courses.detail('123')).toEqual(['courses', 'detail', '123']);
+      expect(queryKeys.courses.packages()).toEqual(['courses', 'package']);
+      expect(queryKeys.courses.package('123')).toEqual(['courses', 'package', '123']);
     });
   });
 
@@ -86,7 +87,7 @@ describe('useCourses hooks', () => {
         { wrapper: createWrapper() }
       );
 
-      // The query key should match what courseKeys.list generates
+      // The query key should match what queryKeys.courses.list generates
       expect(result.current.isLoading).toBe(true);
     });
   });

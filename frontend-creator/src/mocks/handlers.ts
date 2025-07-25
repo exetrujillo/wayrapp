@@ -11,23 +11,33 @@ let baseURL: string;
 try {
   baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 } catch {
-  baseURL = process.env.VITE_API_URL || 'http://localhost:3000';
+  baseURL = process.env['VITE_API_URL'] || 'http://localhost:3000';
 }
 
 // Mock API responses (moved from test utils for reuse)
 export const mockApiResponses = {
   login: {
     success: {
-      user: {
-        id: '1',
-        email: 'test@example.com',
-        name: 'Test User',
-        role: 'admin',
-        createdAt: '2023-01-01T00:00:00Z',
-        updatedAt: '2023-01-01T00:00:00Z',
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          username: 'Test User',
+          countryCode: 'US',
+          registrationDate: '2023-01-01T00:00:00Z',
+          lastLoginDate: '2023-01-01T00:00:00Z',
+          isActive: true,
+          role: 'admin' as const,
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2023-01-01T00:00:00Z',
+        },
+        tokens: {
+          accessToken: 'mock-jwt-token',
+          refreshToken: 'mock-refresh-token',
+        },
       },
-      token: 'mock-jwt-token',
-      refreshToken: 'mock-refresh-token',
     },
     error: {
       message: 'Invalid credentials',
@@ -174,8 +184,47 @@ export const handlers = [
 
   http.post(`${baseURL}/api/v1/auth/refresh`, () => {
     return HttpResponse.json({
-      token: 'new-mock-jwt-token',
-      refreshToken: 'new-mock-refresh-token',
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          username: 'Test User',
+          countryCode: 'US',
+          registrationDate: '2023-01-01T00:00:00Z',
+          lastLoginDate: new Date().toISOString(),
+          isActive: true,
+          role: 'admin' as const,
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: new Date().toISOString(),
+        },
+        tokens: {
+          accessToken: 'new-mock-jwt-token',
+          refreshToken: 'new-mock-refresh-token',
+        },
+      },
+    });
+  }),
+
+  http.get(`${baseURL}/api/v1/auth/me`, () => {
+    return HttpResponse.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          username: 'Test User',
+          countryCode: 'US',
+          registrationDate: '2023-01-01T00:00:00Z',
+          lastLoginDate: new Date().toISOString(),
+          isActive: true,
+          role: 'admin' as const,
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: new Date().toISOString(),
+        },
+      },
     });
   }),
 

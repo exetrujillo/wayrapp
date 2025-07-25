@@ -65,6 +65,19 @@ class LessonService {
    * @returns Created lesson
    */
   async createLesson(moduleId: string, lessonData: CreateLessonRequest): Promise<Lesson> {
+    if (!moduleId || typeof moduleId !== 'string') {
+      throw new Error('Module ID is required and must be a string');
+    }
+
+    // Validate required fields
+    if (typeof lessonData.experiencePoints !== 'number' || lessonData.experiencePoints <= 0) {
+      throw new Error('Experience points must be a positive number');
+    }
+
+    if (typeof lessonData.order !== 'number' || lessonData.order < 0) {
+      throw new Error('Lesson order must be a non-negative number');
+    }
+
     try {
       return await apiClient.post<Lesson>(API_ENDPOINTS.MODULES.LESSONS(moduleId), lessonData);
     } catch (error) {
@@ -169,6 +182,24 @@ class LessonService {
       );
     } catch (error) {
       console.error(`Failed to update exercise assignment ${assignmentId} in lesson ${lessonId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reorder exercises in a lesson
+   * @param lessonId Lesson ID
+   * @param exerciseIds Array of exercise IDs in the new order
+   * @returns Updated exercise assignments
+   */
+  async reorderLessonExercises(lessonId: string, exerciseIds: string[]): Promise<ExerciseAssignment[]> {
+    try {
+      return await apiClient.put<ExerciseAssignment[]>(
+        `${API_ENDPOINTS.LESSONS.EXERCISES(lessonId)}/reorder`,
+        { exerciseIds }
+      );
+    } catch (error) {
+      console.error(`Failed to reorder exercises in lesson ${lessonId}:`, error);
       throw error;
     }
   }

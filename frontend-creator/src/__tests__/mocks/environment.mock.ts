@@ -29,5 +29,3 @@ export const env: EnvironmentConfig = {
     isDevelopment: true,
     isProduction: false,
 };
-
-export type { EnvironmentConfig };

@@ -1,40 +1,53 @@
 /**
- * Jest Setup File - Runs BEFORE any modules are imported
- * This is critical for mocking import.meta before any code tries to use it
+ * Jest setup file that runs before all other setup
+ * This handles critical mocks that need to be in place before modules load
  */
 
-/**
- * JEST MOCK FOR IMPORT.META
- * Mocking import.meta.env for the Jest/Node.js environment.
- * Vite uses import.meta.env to expose environment variables, but this is not
- * standard in Node.js where Jest runs. This mock makes the variables
- * available to modules like `environment.ts` during testing.
- */
-Object.defineProperty(global, 'import.meta', {
+// Mock import.meta for Jest environment
+Object.defineProperty(globalThis, 'import', {
   value: {
-    env: {
-      VITE_API_URL: 'http://localhost:3000/api/v1', // Use a consistent mock URL for all tests
-      VITE_APP_NAME: 'WayrApp Creator Tool [Test]',
-      VITE_ENABLE_MSW: 'true', // MSW should be enabled for tests
-      VITE_LOG_LEVEL: 'warn',
-      DEV: true,
-      PROD: false,
-      // Add any other environment variables your application code might access
+    meta: {
+      env: {
+        VITE_API_URL: 'http://localhost:3000',
+      },
     },
   },
-  writable: true, // Allows for tests to override this mock if needed
+  writable: true,
 });
 
-/**
- * BroadcastChannel polyfill for MSW
- * MSW requires BroadcastChannel which is not available in Node.js
- */
-if (typeof global.BroadcastChannel === 'undefined') {
-  global.BroadcastChannel = class BroadcastChannel {
-    constructor(public name: string) {}
-    postMessage(message: any) {}
-    addEventListener(type: string, listener: any) {}
-    removeEventListener(type: string, listener: any) {}
-    close() {}
-  } as any;
-}
+// Mock BroadcastChannel for MSW
+global.BroadcastChannel = class BroadcastChannel {
+  constructor(public name: string) {}
+  postMessage() {}
+  addEventListener() {}
+  removeEventListener() {}
+  close() {}
+} as any;
+
+// Suppress JSDOM navigation errors by overriding console.error
+const originalError = console.error;
+console.error = (...args: any[]) => {
+  // Suppress JSDOM navigation errors
+  if (
+    args[0] &&
+    typeof args[0] === 'object' &&
+    args[0].type === 'not implemented' &&
+    args[0].message &&
+    args[0].message.includes('navigation')
+  ) {
+    return;
+  }
+  originalError.apply(console, args);
+};
+
+// Mock window.location early to prevent JSDOM navigation errors
+delete (window as any).location;
+(window as any).location = {
+  href: 'http://localhost:3000',
+  pathname: '/',
+  search: '',
+  hash: '',
+  assign: jest.fn(),
+  replace: jest.fn(),
+  reload: jest.fn(),
+};

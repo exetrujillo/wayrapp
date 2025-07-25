@@ -13,6 +13,7 @@ import './styles/globals.css';
 
 // Lazy-loaded pages for better performance
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
 const LessonsPage = lazy(() => import('./pages/LessonsPage'));
 const CreateLessonPage = lazy(() => import('./pages/CreateLessonPage'));
 const ExercisesPage = lazy(() => import('./pages/ExercisesPage'));
@@ -45,6 +46,12 @@ const AppRoutes: React.FC = () => {
         <Route path="/courses" element={
           <ProtectedRoute>
             <CoursesPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/courses/:courseId" element={
+          <ProtectedRoute>
+            <CourseDetailPage />
           </ProtectedRoute>
         } />
         

@@ -29,13 +29,32 @@ export const courseSchema = z.object({
   isPublic: z.boolean(),
 });
 
-// Lesson creation schema
+// Level creation schema
+export const levelSchema = z.object({
+  code: z.string().min(1, 'Level code is required').max(10, 'Level code must be 10 characters or less'),
+  name: z.string().min(3, 'Level name must be at least 3 characters').max(100, 'Level name must be 100 characters or less'),
+  order: z.number().int().nonnegative('Order must be a non-negative number'),
+});
+
+// Section creation schema
+export const sectionSchema = z.object({
+  name: z.string().min(3, 'Section name must be at least 3 characters').max(150, 'Section name must be 150 characters or less'),
+  order: z.number().int().nonnegative('Order must be a non-negative number'),
+});
+
+// Module creation schema
+export const moduleSchema = z.object({
+  moduleType: z.enum(['informative', 'basic_lesson', 'reading', 'dialogue', 'exam'], {
+    errorMap: () => ({ message: 'Please select a valid module type' }),
+  }),
+  name: z.string().min(3, 'Module name must be at least 3 characters').max(150, 'Module name must be 150 characters or less'),
+  order: z.number().int().nonnegative('Order must be a non-negative number'),
+});
+
+// Lesson creation schema (updated to match Prisma schema - no name field)
 export const lessonSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(3, 'Lesson name must be at least 3 characters'),
-  experience_points: z.number().int().positive().default(10),
-  order: z.number().int().nonnegative(),
-  moduleId: z.string().min(1, 'Module ID is required'),
+  experiencePoints: z.number().int().positive('Experience points must be a positive number'),
+  order: z.number().int().nonnegative('Order must be a non-negative number'),
 });
 
 // Exercise creation schema
@@ -61,6 +80,9 @@ export const exerciseAssignmentSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type CourseFormData = z.infer<typeof courseSchema>;
+export type LevelFormData = z.infer<typeof levelSchema>;
+export type SectionFormData = z.infer<typeof sectionSchema>;
+export type ModuleFormData = z.infer<typeof moduleSchema>;
 export type LessonFormData = z.infer<typeof lessonSchema>;
 export type ExerciseFormData = z.infer<typeof exerciseSchema>;
 export type ExerciseAssignmentFormData = z.infer<typeof exerciseAssignmentSchema>;

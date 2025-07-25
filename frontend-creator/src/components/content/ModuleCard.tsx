@@ -1,27 +1,27 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Lesson } from '../../utils/types';
+import { Module } from '../../utils/types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { MODULE_TYPES } from '../../utils/constants';
 
-interface LessonCardProps {
-  lesson: Lesson;
+interface ModuleCardProps {
+  module: Module;
   isSelected?: boolean;
-  onSelect?: (lesson: Lesson) => void;
-  onEdit?: (lesson: Lesson) => void;
-  onDelete?: (lesson: Lesson) => void;
-  onView?: (lesson: Lesson) => void;
+  onSelect?: (module: Module) => void;
+  onEdit?: (module: Module) => void;
+  onDelete?: (module: Module) => void;
+  onView?: (module: Module) => void;
   showActions?: boolean;
   showSelection?: boolean;
 }
 
 /**
- * Card component for displaying Lesson information
+ * Card component for displaying Module information
  * Follows the same pattern as CourseCard for consistency
  */
-export const LessonCard: React.FC<LessonCardProps> = ({
-  lesson,
+export const ModuleCard: React.FC<ModuleCardProps> = ({
+  module,
   isSelected = false,
   onSelect,
   onEdit,
@@ -34,21 +34,21 @@ export const LessonCard: React.FC<LessonCardProps> = ({
 
   const handleCardClick = () => {
     if (showSelection && onSelect) {
-      onSelect(lesson);
+      onSelect(module);
     } else if (onView) {
-      onView(lesson);
+      onView(module);
     }
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit?.(lesson);
+    onEdit?.(module);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(t('creator.components.lessonCard.deleteConfirm', 'Are you sure you want to delete this lesson?'))) {
-      onDelete?.(lesson);
+    if (window.confirm(t('creator.components.moduleCard.deleteConfirm', 'Are you sure you want to delete this module?'))) {
+      onDelete?.(module);
     }
   };
 
@@ -56,9 +56,45 @@ export const LessonCard: React.FC<LessonCardProps> = ({
     return new Date(dateString).toLocaleDateString();
   };
 
+  // Get module type label
+  const getModuleTypeLabel = (type: string) => {
+    const moduleType = MODULE_TYPES.find(mt => mt.value === type);
+    return moduleType ? moduleType.label : type;
+  };
+
+  // Get module type icon
+  const getModuleTypeIcon = (type: string) => {
+    switch (type) {
+      case 'informative':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        );
+      case 'basic_lesson':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        );
+      case 'reading':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        );
+      case 'dialogue':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        );
+      case 'exam':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        );
+      default:
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14-7H5m14 14H5" />
+        );
+    }
+  };
+
   return (
     <Card
-      className={`lesson-card transition-all duration-200 ${
+      className={`module-card transition-all duration-200 ${
         isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
       } ${showSelection || onView ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
@@ -70,33 +106,33 @@ export const LessonCard: React.FC<LessonCardProps> = ({
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => onSelect?.(lesson)}
+              onChange={() => onSelect?.(module)}
               onClick={(e) => e.stopPropagation()}
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
             />
           </div>
         )}
 
-        {/* Lesson Content */}
+        {/* Module Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-neutral-900 truncate">
-                {t('creator.components.lessonCard.lesson', 'Lesson')} #{lesson.order}
+                {module.name}
               </h3>
               <div className="flex items-center mt-1 space-x-4">
                 <div className="flex items-center text-sm text-neutral-500">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                    {getModuleTypeIcon(module.moduleType)}
                   </svg>
-                  {t('creator.components.lessonCard.order', 'Order')}: {lesson.order}
+                  {getModuleTypeLabel(module.moduleType)}
                 </div>
                 <div className="flex items-center text-sm text-neutral-500">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                   </svg>
-                  {t('creator.components.lessonCard.xp', 'XP')}: {lesson.experiencePoints}
+                  {t('creator.components.moduleCard.order', 'Order')}: {module.order}
                 </div>
               </div>
             </div>
@@ -110,7 +146,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onView(lesson);
+                      onView(module);
                     }}
                     title={t('common.buttons.view', 'View')}
                   >
@@ -153,20 +189,11 @@ export const LessonCard: React.FC<LessonCardProps> = ({
           <div className="flex items-center justify-between text-xs text-neutral-500 pt-3 border-t border-neutral-100">
             <div className="flex items-center space-x-4">
               <span>
-                {t('creator.components.lessonCard.id', 'ID')}: {lesson.id}
+                {t('creator.components.moduleCard.id', 'ID')}: {module.id}
               </span>
               <span>
-                {t('creator.components.lessonCard.created', 'Created')}: {formatDate(lesson.createdAt)}
+                {t('creator.components.moduleCard.created', 'Created')}: {formatDate(module.createdAt)}
               </span>
-            </div>
-            <div className="flex space-x-2">
-              <Link
-                to={`/lessons/${lesson.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
-                {t('creator.components.lessonCard.manageExercises', 'Manage Exercises')}
-              </Link>
             </div>
           </div>
         </div>
@@ -175,4 +202,4 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   );
 };
 
-export default LessonCard;
+export default ModuleCard;

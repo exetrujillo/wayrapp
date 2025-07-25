@@ -56,19 +56,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock window.location for navigation tests (only if not already defined)
-if (!window.location || typeof window.location.assign !== 'function') {
-  delete (window as any).location;
-  window.location = {
-    href: 'http://localhost:3000',
-    pathname: '/',
-    search: '',
-    hash: '',
-    assign: jest.fn(),
-    replace: jest.fn(),
-    reload: jest.fn(),
-  } as any;
-}
+
 
 // --- PHASE 4: MSW SETUP (CONDITIONAL) ---
 
@@ -77,24 +65,24 @@ if (!window.location || typeof window.location.assign !== 'function') {
 let server: any = null;
 
 // Check if we need MSW for this test
-const needsMSW = process.env['JEST_WORKER_ID'] !== undefined && 
-                 !process.argv.some(arg => arg.includes('ProtectedRoute'));
+const needsMSW = process.env['JEST_WORKER_ID'] !== undefined &&
+  !process.argv.some(arg => arg.includes('ProtectedRoute'));
 
 if (needsMSW) {
   try {
     const { setupServer } = require('msw/node');
     const { handlers } = require('../mocks/handlers');
-    
+
     server = setupServer(...handlers);
-    
+
     beforeAll(() => {
       server.listen({ onUnhandledRequest: 'warn' });
     });
-    
+
     afterEach(() => {
       server.resetHandlers();
     });
-    
+
     afterAll(() => {
       server.close();
     });

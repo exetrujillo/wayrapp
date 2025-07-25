@@ -39,9 +39,9 @@ export const useAuth = (): UseAuthReturn => {
     
     try {
       const response = await apiClient.login(credentials);
-      localStorage.setItem('auth_token', response.accessToken);
-      localStorage.setItem('auth_user', JSON.stringify(response.user));
-      setUser(response.user);
+      localStorage.setItem('auth_token', response.data.tokens.accessToken);
+      localStorage.setItem('auth_user', JSON.stringify(response.data.user));
+      setUser(response.data.user);
     } catch (e: any) {
       setError(e.response?.data?.message || 'Failed to login');
       throw e;

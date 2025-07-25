@@ -184,7 +184,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login(credentials);
       
       // Validate that we received the expected production API response format
-      if (!response.accessToken || !response.user) {
+      if (!response.tokens || !response.tokens.accessToken || !response.user) {
         console.error('Invalid response format from production API:', response);
         throw new Error('Invalid response format from authentication server. Please try again.');
       }

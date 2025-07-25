@@ -77,7 +77,7 @@ class ApiClient {
             }
 
             const response = await this.client.post('/auth/refresh', { refreshToken });
-            const { accessToken } = response.data;
+            const { accessToken } = response.data.data.tokens;
 
             // Update the token in localStorage
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
@@ -304,8 +304,6 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
   user: {
     id: string;
     email: string;
@@ -319,6 +317,17 @@ export interface AuthResponse {
     createdAt: string;
     updatedAt: string;
   };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+// Full API response wrapper
+export interface FullApiResponse<T> {
+  success: boolean;
+  timestamp: string;
+  data: T;
 }
 
 // Extended API client with auth methods
@@ -328,8 +337,8 @@ class ExtendedApiClient extends ApiClient {
    * @param credentials Login credentials
    * @returns Promise with auth response
    */
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    return this.post<AuthResponse>('/auth/login', credentials);
+  async login(credentials: LoginCredentials): Promise<FullApiResponse<AuthResponse>> {
+    return this.post<FullApiResponse<AuthResponse>>('/auth/login', credentials);
   }
 
   /**
@@ -337,8 +346,8 @@ class ExtendedApiClient extends ApiClient {
    * @param refreshToken Refresh token
    * @returns Promise with new auth response
    */
-  async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    return this.post<AuthResponse>('/auth/refresh', { refreshToken });
+  async refreshToken(refreshToken: string): Promise<FullApiResponse<AuthResponse>> {
+    return this.post<FullApiResponse<AuthResponse>>('/auth/refresh', { refreshToken });
   }
 
   /**

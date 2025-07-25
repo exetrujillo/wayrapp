@@ -4,9 +4,28 @@
  */
 
 import { CreateCourseRequest, LoginCredentials } from '../../utils/types';
+import { ApiClientError } from '../../services/api';
 
 // Mock the API client module before importing services
 jest.mock('../../services/api', () => {
+  class MockApiClientError extends Error {
+    status: number;
+    code?: string;
+    details?: Record<string, any>;
+
+    constructor(message: string, status: number, code?: string, details?: Record<string, any>) {
+      super(message);
+      this.name = 'ApiClientError';
+      this.status = status;
+      if (code !== undefined) {
+        this.code = code;
+      }
+      if (details !== undefined) {
+        this.details = details;
+      }
+    }
+  }
+
   const mockApiClient = {
     get: jest.fn(),
     post: jest.fn(),
@@ -18,6 +37,7 @@ jest.mock('../../services/api', () => {
     __esModule: true,
     default: mockApiClient,
     apiClient: mockApiClient,
+    ApiClientError: MockApiClientError,
   };
 });
 
@@ -58,15 +78,25 @@ describe('API Integration Tests', () => {
   describe('Authentication Service', () => {
     it('successfully logs in user', async () => {
       const mockResponse = {
-        accessToken: 'mock-jwt-token',
-        refreshToken: 'mock-refresh-token',
-        user: {
-          id: '1',
-          email: 'test@example.com',
-          name: 'Test User',
-          role: 'admin',
-          createdAt: '2023-01-01T00:00:00Z',
-          updatedAt: '2023-01-01T00:00:00Z',
+        success: true,
+        timestamp: new Date().toISOString(),
+        data: {
+          user: {
+            id: '1',
+            email: 'test@example.com',
+            username: 'Test User',
+            role: 'admin',
+            countryCode: 'US',
+            registrationDate: '2023-01-01T00:00:00Z',
+            lastLoginDate: '2023-01-01T00:00:00Z',
+            isActive: true,
+            createdAt: '2023-01-01T00:00:00Z',
+            updatedAt: '2023-01-01T00:00:00Z',
+          },
+          tokens: {
+            accessToken: 'mock-jwt-token',
+            refreshToken: 'mock-refresh-token',
+          },
         },
       };
 
@@ -81,16 +111,13 @@ describe('API Integration Tests', () => {
       const result = await authService.login(credentials);
 
       expect(mockApiClient.post).toHaveBeenCalledWith('/auth/login', credentials);
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(mockResponse.data);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('access_token', 'mock-jwt-token');
       expect(localStorageMock.setItem).toHaveBeenCalledWith('refresh_token', 'mock-refresh-token');
     });
 
     it('handles login errors correctly', async () => {
-      const mockError = {
-        status: 401,
-        message: 'Invalid credentials',
-      };
+      const mockError = new ApiClientError('Invalid credentials', 401);
 
       mockApiClient.post.mockRejectedValue(mockError);
 
@@ -99,7 +126,7 @@ describe('API Integration Tests', () => {
         password: 'wrongpassword',
       };
 
-      await expect(authService.login(credentials)).rejects.toThrow('Invalid email or password. Please check your credentials and try again.');
+      await expect(authService.login(credentials)).rejects.toThrow('Invalid credentials');
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
 

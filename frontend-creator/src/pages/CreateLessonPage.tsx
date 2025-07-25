@@ -1,11 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LessonForm } from '../components/forms';
 
 const CreateLessonPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Get moduleId from URL params
+  const moduleId = searchParams.get('moduleId') || '';
 
   const handleSuccess = () => {
     // Navigate to lessons list page after successful creation
@@ -17,6 +21,27 @@ const CreateLessonPage: React.FC = () => {
     navigate('/lessons');
   };
 
+  if (!moduleId) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-error mb-4">
+            {t('creator.pages.createLesson.noModuleError', 'Module ID Required')}
+          </h1>
+          <p className="text-neutral-600 mb-4">
+            {t('creator.pages.createLesson.noModuleDescription', 'A module ID is required to create a lesson.')}
+          </p>
+          <button 
+            onClick={() => navigate('/lessons')}
+            className="btn btn-primary"
+          >
+            {t('common.buttons.back', 'Back')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -27,7 +52,11 @@ const CreateLessonPage: React.FC = () => {
       </div>
       
       <div className="max-w-3xl">
-        <LessonForm onSuccess={handleSuccess} onCancel={handleCancel} />
+        <LessonForm 
+          moduleId={moduleId}
+          onSuccess={handleSuccess} 
+          onCancel={handleCancel} 
+        />
       </div>
     </div>
   );

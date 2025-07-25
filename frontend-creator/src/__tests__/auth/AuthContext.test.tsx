@@ -91,9 +91,11 @@ describe('AuthContext', () => {
       updatedAt: '2024-01-01T00:00:00Z'
     };
     const mockAuthResponse = {
-      accessToken: 'valid-access-token',
-      refreshToken: 'valid-refresh-token',
       user: mockUser,
+      tokens: {
+        accessToken: 'valid-access-token',
+        refreshToken: 'valid-refresh-token',
+      },
     };
 
     mockedAuthService.login.mockResolvedValue(mockAuthResponse);
@@ -255,9 +257,11 @@ describe('AuthContext', () => {
       .mockRejectedValueOnce(new Error('Your session has expired. Please log in again.'))
       .mockResolvedValueOnce(mockUser);
     mockedAuthService.refreshToken.mockResolvedValue({
-      accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
       user: mockUser,
+      tokens: {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      },
     });
 
     render(

@@ -47,9 +47,18 @@ export interface User {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
   user: User;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+// Full API response wrapper
+export interface FullApiResponse<T> {
+  success: boolean;
+  timestamp: string;
+  data: T;
 }
 
 export interface RefreshTokenRequest {
@@ -93,6 +102,18 @@ export interface Level {
   updatedAt: string;
 }
 
+export interface CreateLevelRequest {
+  code: string;
+  name: string;
+  order: number;
+}
+
+export interface UpdateLevelRequest {
+  code?: string;
+  name?: string;
+  order?: number;
+}
+
 // Section Types
 export interface Section {
   id: string;
@@ -101,6 +122,16 @@ export interface Section {
   order: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateSectionRequest {
+  name: string;
+  order: number;
+}
+
+export interface UpdateSectionRequest {
+  name?: string;
+  order?: number;
 }
 
 // Module Types
@@ -130,8 +161,7 @@ export interface UpdateModuleRequest {
 // Lesson Types
 export interface Lesson {
   id: string;
-  name: string;
-  experience_points: number;
+  experiencePoints: number;
   order: number;
   moduleId: string;
   createdAt: string;
@@ -139,15 +169,12 @@ export interface Lesson {
 }
 
 export interface CreateLessonRequest {
-  name: string;
-  experience_points: number;
+  experiencePoints: number;
   order: number;
-  moduleId: string;
 }
 
 export interface UpdateLessonRequest {
-  name?: string;
-  experience_points?: number;
+  experiencePoints?: number;
   order?: number;
 }
 

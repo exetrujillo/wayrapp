@@ -71,7 +71,7 @@ export const sessionTestHelpers = {
     try {
       const response = await authService.refreshToken();
       console.log('✅ Token refresh successful');
-      console.log('New access token received:', !!response.accessToken);
+      console.log('New access token received:', !!response.tokens.accessToken);
     } catch (error: any) {
       console.log('❌ Token refresh failed:', error.message);
       console.log('Error details:', error);

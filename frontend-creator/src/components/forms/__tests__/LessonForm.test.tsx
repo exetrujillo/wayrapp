@@ -54,7 +54,7 @@ describe('LessonForm', () => {
   });
 
   it('renders the form correctly', async () => {
-    render(<LessonForm />);
+    render(<LessonForm moduleId="test-module-id" />);
 
     // Wait for modules to load
     await waitFor(() => {
@@ -62,49 +62,28 @@ describe('LessonForm', () => {
     });
 
     // Check if form elements are rendered
-    expect(screen.getByLabelText(/Lesson Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Module/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Experience Points/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Order/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create lesson/i })).toBeInTheDocument();
   });
 
   it('validates required fields', async () => {
-    render(<LessonForm />);
-
-    // Wait for modules to load
-    await waitFor(() => {
-      expect(moduleService.getModules).toHaveBeenCalled();
-    });
+    render(<LessonForm moduleId="test-module-id" />);
 
     // Submit the form without filling required fields
     fireEvent.click(screen.getByRole('button', { name: /create lesson/i }));
 
     // Check for validation errors
     await waitFor(() => {
-      expect(screen.getByText(/Lesson name must be at least 3 characters/i)).toBeInTheDocument();
-      expect(screen.getByText(/Module ID is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/Experience points must be a positive number/i)).toBeInTheDocument();
     });
   });
 
   it('submits the form with valid data', async () => {
     const onSuccessMock = jest.fn();
-    render(<LessonForm onSuccess={onSuccessMock} />);
-
-    // Wait for modules to load
-    await waitFor(() => {
-      expect(moduleService.getModules).toHaveBeenCalled();
-    });
+    render(<LessonForm moduleId="test-module-id" onSuccess={onSuccessMock} />);
 
     // Fill the form
-    fireEvent.change(screen.getByLabelText(/Lesson Name/i), {
-      target: { value: 'Test Lesson' },
-    });
-
-    fireEvent.change(screen.getByLabelText(/Module/i), {
-      target: { value: 'module-1' },
-    });
-
     fireEvent.change(screen.getByLabelText(/Experience Points/i), {
       target: { value: '15' },
     });
@@ -118,11 +97,9 @@ describe('LessonForm', () => {
 
     // Check if the service was called with correct data
     await waitFor(() => {
-      expect(lessonService.createLesson).toHaveBeenCalledWith('module-1', {
-        name: 'Test Lesson',
-        experience_points: 15,
+      expect(lessonService.createLesson).toHaveBeenCalledWith('test-module-id', {
+        experiencePoints: 15,
         order: 1,
-        moduleId: 'module-1',
       });
       expect(onSuccessMock).toHaveBeenCalledWith(mockLesson);
     });
@@ -132,22 +109,9 @@ describe('LessonForm', () => {
     const errorMessage = 'Failed to create lesson';
     (lessonService.createLesson as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-    render(<LessonForm />);
-
-    // Wait for modules to load
-    await waitFor(() => {
-      expect(moduleService.getModules).toHaveBeenCalled();
-    });
+    render(<LessonForm moduleId="test-module-id" />);
 
     // Fill the form
-    fireEvent.change(screen.getByLabelText(/Lesson Name/i), {
-      target: { value: 'Test Lesson' },
-    });
-
-    fireEvent.change(screen.getByLabelText(/Module/i), {
-      target: { value: 'module-1' },
-    });
-
     fireEvent.change(screen.getByLabelText(/Experience Points/i), {
       target: { value: '15' },
     });
@@ -165,26 +129,12 @@ describe('LessonForm', () => {
     });
   });
 
-  it('handles module loading errors', async () => {
-    // Clear previous mocks and set up the error mock before rendering
-    jest.clearAllMocks();
+  it('renders form with moduleId prop', async () => {
+    render(<LessonForm moduleId="test-module-id" />);
 
-    // Create a mock that rejects immediately
-    const mockError = new Error('Failed to load modules');
-    (moduleService.getModules as jest.Mock).mockImplementation(() => {
-      return Promise.reject(mockError);
-    });
-
-    render(<LessonForm />);
-
-    // Wait for the service to be called
-    await waitFor(() => {
-      expect(moduleService.getModules).toHaveBeenCalled();
-    });
-
-    // Wait for the error to be processed and displayed
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load modules')).toBeInTheDocument();
-    }, { timeout: 5000 });
+    // Check if form elements are rendered
+    expect(screen.getByLabelText(/Experience Points/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Order/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create lesson/i })).toBeInTheDocument();
   });
 });

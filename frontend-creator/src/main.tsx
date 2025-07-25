@@ -2,10 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './i18n';
+import { env } from './config/environment';
 
-// Initialize MSW in development mode
+// Initialize MSW based on environment configuration
 async function enableMocking() {
-  if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW !== 'false') {
+  if (env.enableMSW) {
     const { startMocking } = await import('./mocks/browser');
     return startMocking();
   }

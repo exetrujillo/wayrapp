@@ -5,13 +5,14 @@
 
 import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers';
+import { env } from '../config/environment';
 
 // Setup MSW worker with our handlers for browser environment
 export const worker = setupWorker(...handlers);
 
-// Start the worker in development mode
+// Start the worker only when MSW is enabled via environment variable
 export const startMocking = async () => {
-  if (import.meta.env.DEV) {
+  if (env.enableMSW) {
     try {
       await worker.start({
         onUnhandledRequest: 'warn',
@@ -19,9 +20,11 @@ export const startMocking = async () => {
           url: '/mockServiceWorker.js',
         },
       });
-      console.log('🔶 MSW: Mock Service Worker started for development');
+      console.log('🔶 MSW: Mock Service Worker started (VITE_ENABLE_MSW=true)');
     } catch (error) {
       console.error('Failed to start MSW:', error);
     }
+  } else {
+    console.log('🔶 MSW: Mock Service Worker disabled (VITE_ENABLE_MSW=false)');
   }
 };

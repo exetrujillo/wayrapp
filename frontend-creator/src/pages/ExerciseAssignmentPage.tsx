@@ -74,7 +74,7 @@ const ExerciseAssignmentPage: React.FC = () => {
           </h1>
           {lesson && (
             <p className="text-neutral-600">
-              {t('creator.pages.exerciseAssignment.lessonName', 'Lesson')}: {lesson.name}
+              {t('creator.pages.exerciseAssignment.lessonName', 'Lesson')}: #{lesson.order} ({lesson.experiencePoints} XP)
             </p>
           )}
         </div>

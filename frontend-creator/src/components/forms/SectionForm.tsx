@@ -2,28 +2,31 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { lessonSchema } from '../../utils/validation';
-import { lessonService } from '../../services/lessonService';
+import { sectionSchema } from '../../utils/validation';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Feedback } from '../ui/Feedback';
-import { Lesson } from '../../utils/types';
-import { LessonFormData } from '../../utils/validation';
+import { Section } from '../../utils/types';
+import { SectionFormData } from '../../utils/validation';
 
-interface LessonFormProps {
-  moduleId: string;
-  initialData?: Partial<Lesson> | undefined;
-  onSuccess?: (lesson: Lesson) => void;
+interface SectionFormProps {
+  levelId: string;
+  initialData?: Partial<Section> | undefined;
+  onSuccess?: (section: Section) => void;
   onCancel?: () => void;
-  onSubmit?: (data: LessonFormData) => Promise<Lesson>;
+  onSubmit: (data: SectionFormData) => Promise<Section>;
 }
 
-export const LessonForm: React.FC<LessonFormProps> = ({ 
-  moduleId, 
+/**
+ * Form component for creating and editing sections
+ * Follows the same pattern as LessonForm for consistency
+ */
+export const SectionForm: React.FC<SectionFormProps> = ({ 
+  levelId: _levelId, 
   initialData, 
   onSuccess, 
   onCancel,
-  onSubmit: onSubmitProp
+  onSubmit
 }) => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,38 +37,26 @@ export const LessonForm: React.FC<LessonFormProps> = ({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
-    resolver: zodResolver(lessonSchema),
+  } = useForm<SectionFormData>({
+    resolver: zodResolver(sectionSchema),
     defaultValues: {
-      experiencePoints: initialData?.experiencePoints || 10,
+      name: initialData?.name || '',
       order: initialData?.order || 0,
     },
   });
 
-  const onSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: SectionFormData) => {
     setIsSubmitting(true);
     setFeedback(null);
     
     try {
-      let response: Lesson;
-      
-      if (onSubmitProp) {
-        // Use provided submit handler (for modal usage)
-        response = await onSubmitProp(data);
-      } else {
-        // Use direct service calls (for standalone usage)
-        if (initialData?.id) {
-          response = await lessonService.updateLesson(initialData.id, data);
-        } else {
-          response = await lessonService.createLesson(moduleId, data);
-        }
-      }
+      const response = await onSubmit(data);
       
       setFeedback({
         type: 'success',
-        message: initialData?.id
-          ? t('creator.forms.lesson.updateSuccessMessage', 'Lesson updated successfully!')
-          : t('creator.forms.lesson.createSuccessMessage', 'Lesson created successfully!'),
+        message: initialData?.id 
+          ? t('creator.forms.section.updateSuccessMessage', 'Section updated successfully!')
+          : t('creator.forms.section.createSuccessMessage', 'Section created successfully!'),
       });
       
       reset();
@@ -100,16 +91,15 @@ export const LessonForm: React.FC<LessonFormProps> = ({
         />
       )}
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Experience Points */}
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        {/* Section Name */}
         <Input
-          id="experiencePoints"
-          label={t('creator.forms.lesson.experiencePoints', 'Experience Points')}
-          type="number"
-          min={1}
-          placeholder="10"
-          {...register('experiencePoints', { valueAsNumber: true })}
-          error={errors.experiencePoints?.message || ''}
+          id="name"
+          label={t('creator.forms.section.name', 'Section Name')}
+          type="text"
+          placeholder="Greetings"
+          {...register('name')}
+          error={errors.name?.message || ''}
           isRequired
           fullWidth
         />
@@ -117,7 +107,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
         {/* Order */}
         <Input
           id="order"
-          label={t('creator.forms.lesson.order', 'Order')}
+          label={t('creator.forms.section.order', 'Order')}
           type="number"
           min={0}
           placeholder="0"
@@ -142,8 +132,8 @@ export const LessonForm: React.FC<LessonFormProps> = ({
             isLoading={isSubmitting}
           >
             {initialData?.id 
-              ? t('creator.forms.lesson.update', 'Update Lesson')
-              : t('creator.forms.lesson.create', 'Create Lesson')
+              ? t('creator.forms.section.update', 'Update Section')
+              : t('creator.forms.section.create', 'Create Section')
             }
           </Button>
         </div>
@@ -152,4 +142,4 @@ export const LessonForm: React.FC<LessonFormProps> = ({
   );
 };
 
-export default LessonForm;
+export default SectionForm;

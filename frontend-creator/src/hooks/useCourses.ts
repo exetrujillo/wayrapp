@@ -1,22 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { courseService } from '../services/courseService';
+import { queryKeys } from './queryKeys';
 import { 
   Course, 
   CreateCourseRequest, 
   UpdateCourseRequest, 
   PaginationParams 
 } from '../utils/types';
-
-// Query keys for courses
-export const courseKeys = {
-  all: ['courses'] as const,
-  lists: () => [...courseKeys.all, 'list'] as const,
-  list: (params?: PaginationParams) => [...courseKeys.lists(), params] as const,
-  details: () => [...courseKeys.all, 'detail'] as const,
-  detail: (id: string) => [...courseKeys.details(), id] as const,
-  packages: () => [...courseKeys.all, 'package'] as const,
-  package: (id: string) => [...courseKeys.packages(), id] as const,
-};
 
 /**
  * Hook for fetching paginated courses
@@ -25,7 +15,7 @@ export const courseKeys = {
  */
 export const useCoursesQuery = (params?: PaginationParams) => {
   return useQuery({
-    queryKey: courseKeys.list(params),
+    queryKey: queryKeys.courses.list(params),
     queryFn: () => courseService.getCourses(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
@@ -46,7 +36,7 @@ export const useCoursesQuery = (params?: PaginationParams) => {
  */
 export const useCourseQuery = (id: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: courseKeys.detail(id),
+    queryKey: queryKeys.courses.detail(id),
     queryFn: () => courseService.getCourse(id),
     enabled: enabled && !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -68,7 +58,7 @@ export const useCourseQuery = (id: string, enabled: boolean = true) => {
  */
 export const useCoursePackageQuery = (id: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: courseKeys.package(id),
+    queryKey: queryKeys.courses.package(id),
     queryFn: () => courseService.getCoursePackage(id),
     enabled: enabled && !!id,
     staleTime: 10 * 60 * 1000, // 10 minutes (packages change less frequently)
@@ -93,10 +83,10 @@ export const useCreateCourseMutation = () => {
     mutationFn: (courseData: CreateCourseRequest) => courseService.createCourse(courseData),
     onSuccess: (newCourse: Course) => {
       // Invalidate and refetch courses list
-      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
       
       // Add the new course to the cache
-      queryClient.setQueryData(courseKeys.detail(newCourse.id), newCourse);
+      queryClient.setQueryData(queryKeys.courses.detail(newCourse.id), newCourse);
     },
     onError: (error) => {
       console.error('Failed to create course:', error);
@@ -116,10 +106,10 @@ export const useUpdateCourseMutation = () => {
       courseService.updateCourse(id, courseData),
     onSuccess: (updatedCourse: Course) => {
       // Update the specific course in cache
-      queryClient.setQueryData(courseKeys.detail(updatedCourse.id), updatedCourse);
+      queryClient.setQueryData(queryKeys.courses.detail(updatedCourse.id), updatedCourse);
       
       // Invalidate courses list to reflect changes
-      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
     },
     onError: (error) => {
       console.error('Failed to update course:', error);
@@ -138,10 +128,10 @@ export const useDeleteCourseMutation = () => {
     mutationFn: (id: string) => courseService.deleteCourse(id),
     onSuccess: (_, deletedId: string) => {
       // Remove the course from cache
-      queryClient.removeQueries({ queryKey: courseKeys.detail(deletedId) });
+      queryClient.removeQueries({ queryKey: queryKeys.courses.detail(deletedId) });
       
       // Invalidate courses list to reflect deletion
-      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
     },
     onError: (error) => {
       console.error('Failed to delete course:', error);

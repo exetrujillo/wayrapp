@@ -1,27 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Lesson } from '../../utils/types';
+import { Level } from '../../utils/types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
-interface LessonCardProps {
-  lesson: Lesson;
+interface LevelCardProps {
+  level: Level;
   isSelected?: boolean;
-  onSelect?: (lesson: Lesson) => void;
-  onEdit?: (lesson: Lesson) => void;
-  onDelete?: (lesson: Lesson) => void;
-  onView?: (lesson: Lesson) => void;
+  onSelect?: (level: Level) => void;
+  onEdit?: (level: Level) => void;
+  onDelete?: (level: Level) => void;
+  onView?: (level: Level) => void;
   showActions?: boolean;
   showSelection?: boolean;
 }
 
 /**
- * Card component for displaying Lesson information
+ * Card component for displaying Level information
  * Follows the same pattern as CourseCard for consistency
  */
-export const LessonCard: React.FC<LessonCardProps> = ({
-  lesson,
+export const LevelCard: React.FC<LevelCardProps> = ({
+  level,
   isSelected = false,
   onSelect,
   onEdit,
@@ -34,21 +33,21 @@ export const LessonCard: React.FC<LessonCardProps> = ({
 
   const handleCardClick = () => {
     if (showSelection && onSelect) {
-      onSelect(lesson);
+      onSelect(level);
     } else if (onView) {
-      onView(lesson);
+      onView(level);
     }
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit?.(lesson);
+    onEdit?.(level);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm(t('creator.components.lessonCard.deleteConfirm', 'Are you sure you want to delete this lesson?'))) {
-      onDelete?.(lesson);
+    if (window.confirm(t('creator.components.levelCard.deleteConfirm', 'Are you sure you want to delete this level?'))) {
+      onDelete?.(level);
     }
   };
 
@@ -58,7 +57,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
 
   return (
     <Card
-      className={`lesson-card transition-all duration-200 ${
+      className={`level-card transition-all duration-200 ${
         isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
       } ${showSelection || onView ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
@@ -70,33 +69,33 @@ export const LessonCard: React.FC<LessonCardProps> = ({
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => onSelect?.(lesson)}
+              onChange={() => onSelect?.(level)}
               onClick={(e) => e.stopPropagation()}
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
             />
           </div>
         )}
 
-        {/* Lesson Content */}
+        {/* Level Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-neutral-900 truncate">
-                {t('creator.components.lessonCard.lesson', 'Lesson')} #{lesson.order}
+                {level.name}
               </h3>
               <div className="flex items-center mt-1 space-x-4">
                 <div className="flex items-center text-sm text-neutral-500">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  {t('creator.components.lessonCard.order', 'Order')}: {lesson.order}
+                  {t('creator.components.levelCard.code', 'Code')}: {level.code}
                 </div>
                 <div className="flex items-center text-sm text-neutral-500">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                   </svg>
-                  {t('creator.components.lessonCard.xp', 'XP')}: {lesson.experiencePoints}
+                  {t('creator.components.levelCard.order', 'Order')}: {level.order}
                 </div>
               </div>
             </div>
@@ -110,7 +109,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onView(lesson);
+                      onView(level);
                     }}
                     title={t('common.buttons.view', 'View')}
                   >
@@ -153,20 +152,11 @@ export const LessonCard: React.FC<LessonCardProps> = ({
           <div className="flex items-center justify-between text-xs text-neutral-500 pt-3 border-t border-neutral-100">
             <div className="flex items-center space-x-4">
               <span>
-                {t('creator.components.lessonCard.id', 'ID')}: {lesson.id}
+                {t('creator.components.levelCard.id', 'ID')}: {level.id}
               </span>
               <span>
-                {t('creator.components.lessonCard.created', 'Created')}: {formatDate(lesson.createdAt)}
+                {t('creator.components.levelCard.created', 'Created')}: {formatDate(level.createdAt)}
               </span>
-            </div>
-            <div className="flex space-x-2">
-              <Link
-                to={`/lessons/${lesson.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
-                {t('creator.components.lessonCard.manageExercises', 'Manage Exercises')}
-              </Link>
             </div>
           </div>
         </div>
@@ -175,4 +165,4 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   );
 };
 
-export default LessonCard;
+export default LevelCard;

@@ -25,22 +25,29 @@ export const API_ENDPOINTS = {
     BASE: '/courses',
     DETAIL: (id: string) => `/courses/${id}`,
     PACKAGE: (id: string) => `/courses/${id}/package`,
+    LEVELS: (courseId: string) => `/courses/${courseId}/levels`,
   },
-  MODULES: {
-    BASE: '/modules',
-    DETAIL: (id: string) => `/modules/${id}`,
-    LESSONS: (id: string) => `/modules/${id}/lessons`,
+  LEVELS: {
+    BASE: '/levels',
+    DETAIL: (id: string) => `/levels/${id}`,
+    SECTIONS: (levelId: string) => `/levels/${levelId}/sections`,
   },
   SECTIONS: {
     BASE: '/sections',
     DETAIL: (id: string) => `/sections/${id}`,
     MODULES: (id: string) => `/sections/${id}/modules`,
   },
+  MODULES: {
+    BASE: '/modules',
+    DETAIL: (id: string) => `/modules/${id}`,
+    LESSONS: (id: string) => `/modules/${id}/lessons`,
+  },
   LESSONS: {
     BASE: '/lessons',
     DETAIL: (id: string) => `/lessons/${id}`,
     EXERCISES: (id: string) => `/lessons/${id}/exercises`,
     COMPLETE: (id: string) => `/progress/lessons/${id}/complete`,
+    REORDER_EXERCISES: (id: string) => `/lessons/${id}/exercises/reorder`,
   },
   EXERCISES: {
     BASE: '/exercises',
@@ -51,6 +58,15 @@ export const API_ENDPOINTS = {
     USER: '/progress/user',
   },
 };
+
+// Module types
+export const MODULE_TYPES = [
+  { value: 'informative', label: 'Informative' },
+  { value: 'basic_lesson', label: 'Basic Lesson' },
+  { value: 'reading', label: 'Reading' },
+  { value: 'dialogue', label: 'Dialogue' },
+  { value: 'exam', label: 'Exam' },
+];
 
 // Exercise types
 export const EXERCISE_TYPES = [
@@ -74,6 +90,7 @@ export const STORAGE_KEYS = {
 export default {
   LANGUAGES,
   API_ENDPOINTS,
+  MODULE_TYPES,
   EXERCISE_TYPES,
   STORAGE_KEYS,
 };

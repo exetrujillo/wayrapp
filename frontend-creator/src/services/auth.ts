@@ -1,5 +1,5 @@
-import apiClient from './api';
-import { AuthResponse, LoginCredentials, RefreshTokenRequest, User } from '../utils/types';
+import apiClient, { ApiClientError } from './api';
+import { AuthResponse, LoginCredentials, RefreshTokenRequest, User, FullApiResponse } from '../utils/types';
 import { STORAGE_KEYS, API_ENDPOINTS } from '../utils/constants';
 
 class AuthService {
@@ -10,18 +10,21 @@ class AuthService {
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(
+      const response = await apiClient.post<FullApiResponse<AuthResponse>>(
         API_ENDPOINTS.AUTH.LOGIN, 
         credentials
       );
       
-      // Validate response structure
-      if (!response.accessToken || !response.user) {
+      // Correctly access the nested 'data' object from our API's wrapper
+      const responseData = response.data;
+      
+      // Validate the NEW, correct structure
+      if (!responseData || !responseData.tokens || !responseData.tokens.accessToken || !responseData.user) {
         throw new Error('Invalid authentication response from server');
       }
       
       // Store tokens and user data
-      this.setSession(response);
+      this.setSession(responseData);
       
       // If remember me is not checked, set token to expire in 24 hours
       if (!credentials.rememberMe) {
@@ -30,25 +33,17 @@ class AuthService {
         localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, expiryDate.toISOString());
       }
       
-      return response;
+      return responseData;
     } catch (error: any) {
       console.error('Login failed:', error);
       
-      // Provide more specific error messages for common authentication failures
-      if (error.status === 401) {
-        throw new Error('Invalid email or password. Please check your credentials and try again.');
-      } else if (error.status === 403) {
-        throw new Error('Account is disabled or not authorized. Please contact support.');
-      } else if (error.status === 429) {
-        throw new Error('Too many login attempts. Please wait a few minutes before trying again.');
-      } else if (error.status >= 500) {
-        throw new Error('Server error. Please try again later.');
-      } else if (!error.status) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+      // Re-throw the original ApiClientError so the UI layer can handle it
+      if (error instanceof ApiClientError) {
+        throw error;
       }
       
-      // Re-throw the original error if it's not a recognized type
-      throw error;
+      // Fallback for unexpected errors
+      throw new ApiClientError('An unexpected error occurred during login.', 500);
     }
   }
 
@@ -82,20 +77,23 @@ class AuthService {
         throw new Error('No refresh token available');
       }
       
-      const response = await apiClient.post<AuthResponse>(
+      const response = await apiClient.post<FullApiResponse<AuthResponse>>(
         API_ENDPOINTS.AUTH.REFRESH_TOKEN, 
         { refreshToken } as RefreshTokenRequest
       );
       
-      // Validate response structure
-      if (!response.accessToken) {
+      // Correctly access the nested 'data' object from our API's wrapper
+      const responseData = response.data;
+      
+      // Validate the NEW, correct structure
+      if (!responseData || !responseData.tokens || !responseData.tokens.accessToken) {
         throw new Error('Invalid refresh token response from server');
       }
       
       // Update stored tokens with new data
-      this.setSession(response);
+      this.setSession(responseData);
       
-      return response;
+      return responseData;
     } catch (error: any) {
       console.error('Token refresh failed:', error);
       
@@ -188,9 +186,12 @@ class AuthService {
    */
   async getCurrentUserProfile(): Promise<User> {
     try {
-      const user = await apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
+      const response = await apiClient.get<FullApiResponse<{ user: User }>>(API_ENDPOINTS.AUTH.ME);
       
-      // Validate user data structure
+      // Correctly access the nested 'user' object from our API's standard wrapper
+      const user = response.data.user;
+      
+      // Validate the NEW, correct structure
       if (!user || !user.id || !user.email) {
         throw new Error('Invalid user profile data received from server');
       }
@@ -202,21 +203,19 @@ class AuthService {
     } catch (error: any) {
       console.error('Failed to fetch user profile:', error);
       
-      // Provide specific error messages for common scenarios
-      if (error.status === 401) {
-        // Token is invalid or expired, clear session
+      // Handle 401 errors by clearing session
+      if (error instanceof ApiClientError && error.status === 401) {
         this.clearSession();
-        throw new Error('Your session has expired. Please log in again.');
-      } else if (error.status === 403) {
-        throw new Error('You do not have permission to access this profile.');
-      } else if (error.status >= 500) {
-        throw new Error('Server error while fetching profile. Please try again later.');
-      } else if (!error.status) {
-        throw new Error('Network error while fetching profile. Please check your connection.');
+        throw new ApiClientError('Your session has expired. Please log in again.', 401);
       }
       
-      // Re-throw the original error if it's not a recognized type
-      throw error;
+      // Re-throw the original ApiClientError so the UI layer can handle it
+      if (error instanceof ApiClientError) {
+        throw error;
+      }
+      
+      // Fallback for unexpected errors
+      throw new ApiClientError('An unexpected error occurred while fetching profile.', 500);
     }
   }
 
@@ -226,18 +225,18 @@ class AuthService {
    */
   private setSession(authResponse: AuthResponse): void {
     // Validate required fields before storing
-    if (!authResponse.accessToken) {
+    if (!authResponse.tokens || !authResponse.tokens.accessToken) {
       throw new Error('Access token is required for authentication');
     }
     if (!authResponse.user) {
       throw new Error('User data is required for authentication');
     }
     
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResponse.accessToken);
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResponse.tokens.accessToken);
     
     // Store refresh token if provided
-    if (authResponse.refreshToken) {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResponse.refreshToken);
+    if (authResponse.tokens.refreshToken) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResponse.tokens.refreshToken);
     }
     
     localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authResponse.user));

@@ -1,0 +1,79 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Modal } from '../ui/Modal';
+import { LevelForm } from '../forms/LevelForm';
+import { useCreateLevelMutation, useUpdateLevelMutation } from '../../hooks/useLevels';
+import { Level } from '../../utils/types';
+import { LevelFormData } from '../../utils/validation';
+
+interface CreateOrEditLevelModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  courseId: string;
+  initialData?: Partial<Level>;
+  onSuccess: () => void;
+}
+
+/**
+ * Modal component for creating or editing levels
+ * Uses Modal component from src/components/ui and LevelForm
+ */
+export const CreateOrEditLevelModal: React.FC<CreateOrEditLevelModalProps> = ({
+  isOpen,
+  onClose,
+  courseId,
+  initialData,
+  onSuccess,
+}) => {
+  const { t } = useTranslation();
+  const createLevelMutation = useCreateLevelMutation();
+  const updateLevelMutation = useUpdateLevelMutation();
+
+  const isEditing = !!initialData?.id;
+
+  const handleSubmit = async (data: LevelFormData): Promise<Level> => {
+    if (isEditing && initialData?.id) {
+      return updateLevelMutation.mutateAsync({
+        id: initialData.id,
+        levelData: data,
+      });
+    } else {
+      return createLevelMutation.mutateAsync({
+        courseId,
+        levelData: data,
+      });
+    }
+  };
+
+  const handleSuccess = (_level: Level) => {
+    onSuccess();
+    onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
+  const title = isEditing
+    ? t('creator.modals.level.editTitle', 'Edit Level')
+    : t('creator.modals.level.createTitle', 'Create New Level');
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="md"
+    >
+      <LevelForm
+        courseId={courseId}
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        onSuccess={handleSuccess}
+        onCancel={handleCancel}
+      />
+    </Modal>
+  );
+};
+
+export default CreateOrEditLevelModal;
