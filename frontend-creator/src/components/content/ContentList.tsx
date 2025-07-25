@@ -2,15 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
-import { Feedback } from "../ui/Feedback";
+import { LoadingSpinner, ListSkeleton } from "../ui";
+import { ErrorDisplay } from "../error";
 import { PaginatedResponse, PaginationParams } from "../../utils/types";
 
 interface ContentListProps<T> {
   title: string;
   items: T[];
   isLoading: boolean;
-  error: string | null;
+  error: any; // Changed from string | null to any for better error handling
   pagination: PaginatedResponse<T>["meta"] | null;
   onRefresh: (params?: PaginationParams) => void;
   onSearch: (query: string) => void;
@@ -38,6 +38,11 @@ interface ContentListProps<T> {
     label: string;
     onClick: () => void;
   };
+  // New props for enhanced error handling
+  retryCount?: number;
+  maxRetries?: number;
+  showSkeletonOnLoad?: boolean;
+  skeletonCount?: number;
 }
 
 export function ContentList<T extends { id: string }>({
@@ -57,6 +62,10 @@ export function ContentList<T extends { id: string }>({
   searchPlaceholder,
   emptyMessage,
   emptyAction,
+  retryCount = 0,
+  maxRetries = 3,
+  showSkeletonOnLoad = true,
+  skeletonCount = 3,
 }: ContentListProps<T>) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -279,20 +288,30 @@ export function ContentList<T extends { id: string }>({
       {/* Error Message */}
       {error && (
         <div className="mb-6">
-          <Feedback
-            type="error"
-            message={error}
-            onDismiss={() => onRefresh()}
+          <ErrorDisplay
+            error={error}
+            onRetry={() => onRefresh()}
+            retryCount={retryCount}
+            maxRetries={maxRetries}
+            variant="card"
+            title="Failed to load content"
+            showRetryButton={true}
+            showDismissButton={false}
           />
         </div>
       )}
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      ) : items.length === 0 ? (
+        showSkeletonOnLoad ? (
+          <ListSkeleton count={skeletonCount} />
+        ) : (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size="lg" />
+            <span className="ml-3 text-gray-600">Loading content...</span>
+          </div>
+        )
+      ) : items.length === 0 && !error ? (
         /* Empty State */
         <div className="bg-white shadow rounded-lg p-12 text-center">
           <div className="text-neutral-400 mb-4">

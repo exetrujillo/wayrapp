@@ -1,77 +1,69 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import { ContentList, ExerciseCard } from '../components/content';
 import { Modal } from '../components/ui/Modal';
+import { DynamicExerciseForm } from '../components/forms';
 import { useTranslation } from 'react-i18next';
-import { exerciseService } from '../services/exerciseService';
-import { Exercise, PaginationParams, PaginatedResponse } from '../utils/types';
+import { 
+  useExercisesQuery, 
+  useDeleteExerciseMutation
+} from '../hooks/useExercises';
+import { Exercise, PaginationParams } from '../utils/types';
 
 const ExercisesPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+
   const pageTitle = t('common.navigation.exercises');
   
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<PaginatedResponse<Exercise>['meta'] | null>(null);
   const [currentParams, setCurrentParams] = useState<PaginationParams>({
     page: 1,
     limit: 12,
     search: '',
   });
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  // Fetch exercises
-  const fetchExercises = useCallback(async (params?: PaginationParams) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const finalParams = { ...currentParams, ...params };
-      setCurrentParams(finalParams);
-      
-      const response = await exerciseService.getExercises(finalParams);
-      setExercises(response.data);
-      setPagination(response.meta);
-    } catch (err: any) {
-      setError(err.message || t('common.messages.error', 'An error occurred'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentParams, t]);
+  // Use TanStack Query hooks
+  const { 
+    data: exercisesResponse, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useExercisesQuery(currentParams);
 
-  // Initial load
-  useEffect(() => {
-    fetchExercises();
-  }, []);
+  const deleteExerciseMutation = useDeleteExerciseMutation();
+
+  const exercises = exercisesResponse?.data || [];
+  const pagination = exercisesResponse?.meta || null;
 
   // Handle search
   const handleSearch = useCallback((query: string) => {
-    fetchExercises({ ...currentParams, search: query, page: 1 });
-  }, [currentParams, fetchExercises]);
+    setCurrentParams(prev => ({ ...prev, search: query, page: 1 }));
+  }, []);
 
   // Handle page change
   const handlePageChange = useCallback((page: number) => {
-    fetchExercises({ ...currentParams, page });
-  }, [currentParams, fetchExercises]);
+    setCurrentParams(prev => ({ ...prev, page }));
+  }, []);
 
   // Handle exercise actions
   const handleViewExercise = (exercise: Exercise) => {
-    navigate(`/exercises/${exercise.id}`);
+    setPreviewExercise(exercise);
   };
 
   const handleEditExercise = (exercise: Exercise) => {
-    navigate(`/exercises/${exercise.id}/edit`);
+    setEditingExercise(exercise);
   };
 
   const handleDeleteExercise = async (exercise: Exercise) => {
-    try {
-      await exerciseService.deleteExercise(exercise.id);
-      fetchExercises(); // Refresh the list
-    } catch (err: any) {
-      setError(err.message || t('common.messages.error', 'An error occurred'));
+    if (window.confirm(t('creator.exercises.deleteConfirm', 'Are you sure you want to delete this exercise?'))) {
+      try {
+        await deleteExerciseMutation.mutateAsync(exercise.id);
+      } catch (error) {
+        console.error('Failed to delete exercise:', error);
+      }
     }
   };
 
@@ -81,14 +73,29 @@ const ExercisesPage: React.FC = () => {
 
   // Handle bulk actions
   const handleBulkAction = async (action: string, selectedExercises: Exercise[]) => {
-    try {
-      if (action === 'delete') {
-        await Promise.all(selectedExercises.map(exercise => exerciseService.deleteExercise(exercise.id)));
-        fetchExercises(); // Refresh the list
+    if (action === 'delete') {
+      if (window.confirm(t('creator.exercises.bulkDeleteConfirm', `Are you sure you want to delete ${selectedExercises.length} exercises?`))) {
+        try {
+          await Promise.all(selectedExercises.map(exercise => 
+            deleteExerciseMutation.mutateAsync(exercise.id)
+          ));
+        } catch (error) {
+          console.error('Failed to delete exercises:', error);
+        }
       }
-    } catch (err: any) {
-      setError(err.message || t('common.messages.error', 'An error occurred'));
     }
+  };
+
+  // Handle form success
+  const handleFormSuccess = () => {
+    setCreateModalOpen(false);
+    setEditingExercise(null);
+  };
+
+  // Handle form cancel
+  const handleFormCancel = () => {
+    setCreateModalOpen(false);
+    setEditingExercise(null);
   };
 
   // Render exercise preview
@@ -179,16 +186,16 @@ const ExercisesPage: React.FC = () => {
           title={pageTitle}
           items={exercises}
           isLoading={isLoading}
-          error={error}
+          error={error?.message || null}
           pagination={pagination}
-          onRefresh={fetchExercises}
+          onRefresh={() => refetch()}
           onSearch={handleSearch}
           onPageChange={handlePageChange}
           onBulkAction={handleBulkAction}
           renderItem={renderExerciseItem}
           createButton={{
             label: t('creator.exercises.createNew', 'Create New Exercise'),
-            onClick: () => navigate('/exercises/create'),
+            onClick: () => setCreateModalOpen(true),
           }}
           bulkActions={[
             {
@@ -202,9 +209,40 @@ const ExercisesPage: React.FC = () => {
           emptyMessage={t('creator.pages.exercises.noExercises', 'No exercises found. Create your first exercise!')}
           emptyAction={{
             label: t('creator.exercises.createNew', 'Create New Exercise'),
-            onClick: () => navigate('/exercises/create'),
+            onClick: () => setCreateModalOpen(true),
           }}
         />
+
+        {/* Create Exercise Modal */}
+        <Modal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          title={t('creator.exercises.createNew', 'Create New Exercise')}
+          size="xl"
+        >
+          <DynamicExerciseForm
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+            isModal={true}
+          />
+        </Modal>
+
+        {/* Edit Exercise Modal */}
+        {editingExercise && (
+          <Modal
+            isOpen={!!editingExercise}
+            onClose={() => setEditingExercise(null)}
+            title={t('creator.exercises.editExercise', 'Edit Exercise')}
+            size="xl"
+          >
+            <DynamicExerciseForm
+              initialData={editingExercise}
+              onSuccess={handleFormSuccess}
+              onCancel={handleFormCancel}
+              isModal={true}
+            />
+          </Modal>
+        )}
 
         {/* Exercise Preview Modal */}
         {previewExercise && (

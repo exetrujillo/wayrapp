@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
-import { ExerciseForm } from '../components/forms';
+import { DynamicExerciseForm } from '../components/forms';
 
 const CreateExercisePage: React.FC = () => {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ const CreateExercisePage: React.FC = () => {
     <>
       <PageTitle title={pageTitle} />
       <Layout title={pageTitle}>
-        <ExerciseForm onSuccess={handleSuccess} onCancel={handleCancel} />
+        <DynamicExerciseForm onSuccess={handleSuccess} onCancel={handleCancel} />
       </Layout>
     </>
   );

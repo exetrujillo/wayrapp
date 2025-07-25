@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { levelSchema } from '../../utils/validation';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
-import { Feedback } from '../ui/Feedback';
+import { FormField } from '../ui/FormField';
+import { FormWrapper } from './FormWrapper';
 import { Level } from '../../utils/types';
 import { LevelFormData } from '../../utils/validation';
 
@@ -36,7 +35,8 @@ export const LevelForm: React.FC<LevelFormProps> = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    watch,
+    formState: { errors, isValid, touchedFields },
   } = useForm<LevelFormData>({
     resolver: zodResolver(levelSchema),
     defaultValues: {
@@ -44,7 +44,10 @@ export const LevelForm: React.FC<LevelFormProps> = ({
       name: initialData?.name || '',
       order: initialData?.order || 0,
     },
+    mode: 'onChange',
   });
+
+  const watchedValues = watch();
 
   const handleFormSubmit = async (data: LevelFormData) => {
     setIsSubmitting(true);
@@ -83,75 +86,68 @@ export const LevelForm: React.FC<LevelFormProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {feedback && (
-        <Feedback
-          type={feedback.type}
-          message={feedback.message}
-          onDismiss={() => setFeedback(null)}
-        />
-      )}
+    <FormWrapper
+      onSubmit={handleSubmit(handleFormSubmit)}
+      onCancel={handleCancel}
+      isSubmitting={isSubmitting}
+      isValid={isValid}
+      submitText={initialData?.id 
+        ? t('creator.forms.level.update', 'Update Level')
+        : t('creator.forms.level.create', 'Create Level')
+      }
+      cancelText={t('common.buttons.cancel', 'Cancel')}
+      feedback={feedback}
+      onFeedbackDismiss={() => setFeedback(null)}
+    >
+      {/* Level Code */}
+      <FormField
+        id="code"
+        label={t('creator.forms.level.code', 'Level Code')}
+        type="text"
+        placeholder="A1"
+        {...register('code')}
+        error={errors.code?.message || undefined}
+        isRequired
+        fullWidth
+        maxLength={10}
+        isValid={touchedFields.code && !errors.code && watchedValues.code?.trim().length > 0}
+        showValidationIcon
+        helperText={t('creator.forms.level.codeHelp', 'Uppercase letters and numbers only (e.g., A1, B2)')}
+      />
       
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-        {/* Level Code */}
-        <Input
-          id="code"
-          label={t('creator.forms.level.code', 'Level Code')}
-          type="text"
-          placeholder="A1"
-          {...register('code')}
-          error={errors.code?.message || ''}
-          isRequired
-          fullWidth
-        />
-        
-        {/* Level Name */}
-        <Input
-          id="name"
-          label={t('creator.forms.level.name', 'Level Name')}
-          type="text"
-          placeholder="Beginner Level"
-          {...register('name')}
-          error={errors.name?.message || ''}
-          isRequired
-          fullWidth
-        />
-        
-        {/* Order */}
-        <Input
-          id="order"
-          label={t('creator.forms.level.order', 'Order')}
-          type="number"
-          min={0}
-          placeholder="0"
-          {...register('order', { valueAsNumber: true })}
-          error={errors.order?.message || ''}
-          isRequired
-          fullWidth
-        />
-        
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
-            {t('common.buttons.cancel', 'Cancel')}
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-          >
-            {initialData?.id 
-              ? t('creator.forms.level.update', 'Update Level')
-              : t('creator.forms.level.create', 'Create Level')
-            }
-          </Button>
-        </div>
-      </form>
-    </div>
+      {/* Level Name */}
+      <FormField
+        id="name"
+        label={t('creator.forms.level.name', 'Level Name')}
+        type="text"
+        placeholder="Beginner Level"
+        {...register('name')}
+        error={errors.name?.message || undefined}
+        isRequired
+        fullWidth
+        maxLength={100}
+        isValid={touchedFields.name && !errors.name && watchedValues.name?.trim().length >= 3}
+        showValidationIcon
+        helperText={t('creator.forms.level.nameHelp', 'Descriptive name for the level (min 3 characters)')}
+      />
+      
+      {/* Order */}
+      <FormField
+        id="order"
+        label={t('creator.forms.level.order', 'Order')}
+        type="number"
+        min={0}
+        max={999}
+        placeholder="0"
+        {...register('order', { valueAsNumber: true })}
+        error={errors.order?.message || undefined}
+        isRequired
+        fullWidth
+        isValid={touchedFields.order && !errors.order && watchedValues.order !== undefined && watchedValues.order >= 0}
+        showValidationIcon
+        helperText={t('creator.forms.level.orderHelp', 'Display order (0-999)')}
+      />
+    </FormWrapper>
   );
 };
 

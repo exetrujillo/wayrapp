@@ -178,11 +178,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             </div>
             <div className="flex space-x-2">
               <Link
-                to={`/courses/${course.id}/modules`}
+                to={`/courses/${course.id}`}
                 onClick={(e) => e.stopPropagation()}
                 className="text-primary-600 hover:text-primary-700 font-medium"
               >
-                {t('creator.components.courseCard.manageModules', 'Manage Modules')}
+                {t('creator.components.courseCard.manageContent', 'Manage Content')}
               </Link>
             </div>
           </div>

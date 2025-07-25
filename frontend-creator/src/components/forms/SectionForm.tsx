@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { sectionSchema } from '../../utils/validation';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
-import { Feedback } from '../ui/Feedback';
+import { FormField } from '../ui/FormField';
+import { FormWrapper } from './FormWrapper';
+import { ValidationStatus } from '../ui/ValidationStatus';
+import { FormProgress } from '../ui/FormProgress';
 import { Section } from '../../utils/types';
 import { SectionFormData } from '../../utils/validation';
 
@@ -36,14 +37,44 @@ export const SectionForm: React.FC<SectionFormProps> = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    watch,
+    formState: { errors, isValid, touchedFields },
   } = useForm<SectionFormData>({
     resolver: zodResolver(sectionSchema),
     defaultValues: {
       name: initialData?.name || '',
       order: initialData?.order || 0,
     },
+    mode: 'onChange',
   });
+
+  const watchedValues = watch();
+
+  // Validation rules for real-time feedback
+  const validationRules = [
+    {
+      key: 'name-required',
+      label: t('creator.forms.section.validation.nameRequired', 'Section name is required'),
+      isValid: !!watchedValues.name && watchedValues.name.trim().length > 0,
+      isRequired: true,
+    },
+    {
+      key: 'name-length',
+      label: t('creator.forms.section.validation.nameLength', 'Name must be 3-150 characters'),
+      isValid: !!watchedValues.name && watchedValues.name.trim().length >= 3 && watchedValues.name.length <= 150,
+      isRequired: true,
+    },
+    {
+      key: 'order-valid',
+      label: t('creator.forms.section.validation.orderValid', 'Order must be a valid number (0-999)'),
+      isValid: watchedValues.order !== undefined && watchedValues.order >= 0 && watchedValues.order <= 999,
+      isRequired: true,
+    },
+  ];
+
+  const validFields = validationRules.filter(rule => rule.isValid).length;
+  const requiredFields = validationRules.filter(rule => rule.isRequired).length;
+  const validRequiredFields = validationRules.filter(rule => rule.isRequired && rule.isValid).length;
 
   const handleFormSubmit = async (data: SectionFormData) => {
     setIsSubmitting(true);
@@ -82,62 +113,70 @@ export const SectionForm: React.FC<SectionFormProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {feedback && (
-        <Feedback
-          type={feedback.type}
-          message={feedback.message}
-          onDismiss={() => setFeedback(null)}
-        />
-      )}
-      
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+    <div className="space-y-6">
+      {/* Form Progress */}
+      <FormProgress
+        totalFields={validationRules.length}
+        validFields={validFields}
+        requiredFields={requiredFields}
+        validRequiredFields={validRequiredFields}
+        showDetails={false}
+      />
+
+      <FormWrapper
+        onSubmit={handleSubmit(handleFormSubmit)}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+        isValid={isValid}
+        submitText={initialData?.id 
+          ? t('creator.forms.section.update', 'Update Section')
+          : t('creator.forms.section.create', 'Create Section')
+        }
+        cancelText={t('common.buttons.cancel', 'Cancel')}
+        feedback={feedback}
+        onFeedbackDismiss={() => setFeedback(null)}
+        showActions={false}
+      >
         {/* Section Name */}
-        <Input
+        <FormField
           id="name"
           label={t('creator.forms.section.name', 'Section Name')}
           type="text"
           placeholder="Greetings"
           {...register('name')}
-          error={errors.name?.message || ''}
+          error={errors.name?.message || undefined}
           isRequired
           fullWidth
+          maxLength={150}
+          isValid={touchedFields.name && !errors.name && watchedValues.name?.trim().length >= 3}
+          showValidationIcon
+          helperText={t('creator.forms.section.nameHelp', 'Descriptive name for the section (3-150 characters)')}
         />
         
         {/* Order */}
-        <Input
+        <FormField
           id="order"
           label={t('creator.forms.section.order', 'Order')}
           type="number"
           min={0}
+          max={999}
           placeholder="0"
           {...register('order', { valueAsNumber: true })}
-          error={errors.order?.message || ''}
+          error={errors.order?.message || undefined}
           isRequired
           fullWidth
+          isValid={touchedFields.order && !errors.order && watchedValues.order !== undefined && watchedValues.order >= 0}
+          showValidationIcon
+          helperText={t('creator.forms.section.orderHelp', 'Display order within the level (0-999)')}
         />
-        
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
-            {t('common.buttons.cancel', 'Cancel')}
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-          >
-            {initialData?.id 
-              ? t('creator.forms.section.update', 'Update Section')
-              : t('creator.forms.section.create', 'Create Section')
-            }
-          </Button>
-        </div>
-      </form>
+
+        {/* Validation Status */}
+        <ValidationStatus
+          rules={validationRules}
+          showOnlyErrors={true}
+          className="mt-4"
+        />
+      </FormWrapper>
     </div>
   );
 };

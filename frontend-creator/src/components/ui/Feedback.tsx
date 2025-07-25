@@ -6,7 +6,7 @@ interface FeedbackProps {
   type: FeedbackType;
   message: string;
   className?: string;
-  onDismiss?: () => void;
+  onDismiss?: (() => void) | undefined;
   showIcon?: boolean;
 }
 

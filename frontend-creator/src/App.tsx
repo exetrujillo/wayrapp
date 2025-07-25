@@ -6,6 +6,12 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { ErrorProvider } from './contexts/ErrorContext';
+import { FormValidationProvider } from './contexts/FormValidationContext';
+import { GlobalErrorBoundary } from './components/error/ErrorBoundaryWrapper';
+import { LoadingStateProvider } from './components/ui/LoadingStateProvider';
+import { PageLoading } from './components/ui/LoadingStates';
+import { ToastContainer } from './components/ui/ToastContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { queryClient } from './config/queryClient';
 import { env } from './config/environment';
@@ -13,19 +19,25 @@ import './styles/globals.css';
 
 // Lazy-loaded pages for better performance
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+const CreateCoursePage = lazy(() => import('./pages/CreateCoursePage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
 const LessonsPage = lazy(() => import('./pages/LessonsPage'));
 const CreateLessonPage = lazy(() => import('./pages/CreateLessonPage'));
+const LessonDetailPage = lazy(() => import('./pages/LessonDetailPage'));
 const ExercisesPage = lazy(() => import('./pages/ExercisesPage'));
 const CreateExercisePage = lazy(() => import('./pages/CreateExercisePage'));
 const ExerciseAssignmentPage = lazy(() => import('./pages/ExerciseAssignmentPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
-// Loading fallback
+// Enhanced loading fallback with network awareness
 const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-secondary-100">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+  <div className="min-h-screen bg-secondary-100">
+    <PageLoading
+      message="Loading application..."
+      showNetworkStatus={true}
+      className="min-h-screen"
+    />
   </div>
 );
 
@@ -49,6 +61,12 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
         
+        <Route path="/courses/create" element={
+          <ProtectedRoute>
+            <CreateCoursePage />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/courses/:courseId" element={
           <ProtectedRoute>
             <CourseDetailPage />
@@ -64,6 +82,12 @@ const AppRoutes: React.FC = () => {
         <Route path="/lessons/create" element={
           <ProtectedRoute>
             <CreateLessonPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/lessons/:lessonId" element={
+          <ProtectedRoute>
+            <LessonDetailPage />
           </ProtectedRoute>
         } />
         
@@ -103,17 +127,33 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router basename="/creator">
-        <HelmetProvider>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </HelmetProvider>
-      </Router>
-      {/* React Query Devtools - only in development */}
-      {env.isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router basename="/creator">
+          <HelmetProvider>
+            <ErrorProvider>
+              <LoadingStateProvider
+                options={{
+                  defaultTimeout: 30000,
+                  showSlowConnectionWarning: true,
+                  slowConnectionThreshold: 5000,
+                  maxConcurrentOperations: 10,
+                }}
+              >
+                <AuthProvider>
+                  <FormValidationProvider>
+                    <AppRoutes />
+                    <ToastContainer position="top-right" />
+                  </FormValidationProvider>
+                </AuthProvider>
+              </LoadingStateProvider>
+            </ErrorProvider>
+          </HelmetProvider>
+        </Router>
+        {/* React Query Devtools - only in development */}
+        {env.isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 };
 

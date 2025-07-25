@@ -16,3 +16,5 @@ export { default as CreateOrEditLevelModal } from './CreateOrEditLevelModal';
 export { default as CreateOrEditSectionModal } from './CreateOrEditSectionModal';
 export { default as CreateOrEditModuleModal } from './CreateOrEditModuleModal';
 export { default as CreateOrEditLessonModal } from './CreateOrEditLessonModal';
+export { default as AssignedExercisesList } from './AssignedExercisesList';
+export { default as ExerciseAssignmentModal } from './ExerciseAssignmentModal';

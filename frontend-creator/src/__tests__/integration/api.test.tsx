@@ -187,11 +187,12 @@ describe('API Integration Tests', () => {
       mockApiClient.post.mockResolvedValue(mockCourse);
 
       const courseData: CreateCourseRequest = {
+        id: 'test-course',
         name: 'Test Course',
-        sourceLanguage: 'en',
-        targetLanguage: 'es',
+        source_language: 'en',
+        target_language: 'es',
         description: 'A test course',
-        isPublic: true,
+        is_public: true,
       };
 
       const result = await courseService.createCourse(courseData);
@@ -241,10 +242,11 @@ describe('API Integration Tests', () => {
       mockApiClient.post.mockRejectedValue(mockError);
 
       const courseData: CreateCourseRequest = {
+        id: 'existing-course',
         name: 'Existing Course',
-        sourceLanguage: 'en',
-        targetLanguage: 'es',
-        isPublic: false,
+        source_language: 'en',
+        target_language: 'es',
+        is_public: false,
       };
 
       await expect(courseService.createCourse(courseData)).rejects.toThrow('A course with this name already exists');

@@ -110,7 +110,7 @@ class CourseService {
    */
   async createCourse(courseData: CreateCourseRequest): Promise<Course> {
     // Validate required fields
-    if (!courseData.name || !courseData.sourceLanguage || !courseData.targetLanguage) {
+    if (!courseData.name || !courseData.source_language || !courseData.target_language) {
       throw new Error('Course name, source language, and target language are required');
     }
 

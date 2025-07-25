@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import Breadcrumb from '../components/layout/Breadcrumb';
-import { LoadingSpinner } from '../components/ui';
+import { Feedback } from '../components/ui';
+import { PageErrorBoundary } from '../components/error/ErrorBoundaryWrapper';
+import { WithLoading } from '../components/ui/LoadingStateProvider';
 import { HierarchicalNavigator } from '../components/content/HierarchicalNavigator';
 import { CreateOrEditLevelModal } from '../components/content/CreateOrEditLevelModal';
 import { CreateOrEditSectionModal } from '../components/content/CreateOrEditSectionModal';
 import { CreateOrEditModuleModal } from '../components/content/CreateOrEditModuleModal';
 import { CreateOrEditLessonModal } from '../components/content/CreateOrEditLessonModal';
 import { useCourseQuery } from '../hooks/useCourses';
+import { useEnhancedQuery } from '../hooks/useApiOperation';
 import { Level, Section, Module, Lesson } from '../utils/types';
 
 /**
@@ -27,10 +30,32 @@ const CourseDetailPage: React.FC = () => {
   const { t } = useTranslation();
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Fetch course data
-  const { data: course, isLoading, error } = useCourseQuery(courseId || '', !!courseId);
+  // Handle navigation state messages (e.g., from course creation)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  useEffect(() => {
+    if (location.state?.message) {
+      setFeedback({
+        type: location.state.type || 'success',
+        message: location.state.message
+      });
+      // Clear the state to prevent showing the message on refresh
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
+
+  // Fetch course data with enhanced error handling
+  const courseQuery = useCourseQuery(courseId || '', !!courseId);
+  const enhancedQuery = useEnhancedQuery(courseQuery, {
+    context: 'course-detail',
+    showErrorToast: true,
+    maxRetries: 3,
+  });
+  
+  const { data: course, isLoading, error } = enhancedQuery;
 
   // Selection state - synchronized with URL params
   const [selectedLevel, setSelectedLevel] = useState<string | undefined>(
@@ -208,35 +233,24 @@ const CourseDetailPage: React.FC = () => {
     // TanStack Query will handle cache invalidation
   }, []);
 
-  // Handle loading state
-  if (isLoading) {
+  // Handle loading and error states
+  if (isLoading || error || !course) {
     return (
-      <Layout title={t('creator.pages.courseDetail.loading', 'Loading Course...')}>
-        <div className="flex justify-center items-center min-h-64">
-          <LoadingSpinner size="lg" />
-        </div>
-      </Layout>
-    );
-  }
-
-  // Handle error state
-  if (error || !course) {
-    return (
-      <Layout title={t('creator.pages.courseDetail.error', 'Course Not Found')}>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-4">
-            {t('creator.pages.courseDetail.notFound', 'Course Not Found')}
-          </h2>
-          <p className="text-neutral-600 mb-6">
-            {t('creator.pages.courseDetail.notFoundMessage', 'The course you are looking for does not exist or you do not have permission to view it.')}
-          </p>
-          <button
-            onClick={() => navigate('/courses')}
-            className="bg-primary-500 text-white px-6 py-2 rounded-md hover:bg-primary-600 transition-colors"
+      <Layout title={error ? t('creator.pages.courseDetail.error', 'Course Not Found') : t('creator.pages.courseDetail.loading', 'Loading Course...')}>
+        <PageErrorBoundary>
+          <WithLoading
+            isLoading={isLoading}
+            error={error}
+            onRetry={enhancedQuery.retry}
+            variant="page"
+            message="Loading course details..."
+            showNetworkStatus={true}
+            retryCount={enhancedQuery.retryCount}
+            maxRetries={3}
           >
-            {t('creator.pages.courseDetail.backToCourses', 'Back to Courses')}
-          </button>
-        </div>
+            <div className="min-h-64" />
+          </WithLoading>
+        </PageErrorBoundary>
       </Layout>
     );
   }
@@ -247,123 +261,136 @@ const CourseDetailPage: React.FC = () => {
     <>
       <PageTitle title={pageTitle} />
       <Layout title={pageTitle}>
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb title={pageTitle} />
+        <PageErrorBoundary>
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb title={pageTitle} />
 
-        {/* Course Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                {course.name}
-              </h1>
-              <div className="flex items-center space-x-4 text-sm text-neutral-600 mb-4">
-                <span>
-                  {t('creator.course.sourceLanguage', 'Source')}: {course.sourceLanguage}
-                </span>
-                <span>→</span>
-                <span>
-                  {t('creator.course.targetLanguage', 'Target')}: {course.targetLanguage}
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  course.isPublic 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {course.isPublic 
-                    ? t('creator.course.public', 'Public') 
-                    : t('creator.course.private', 'Private')
-                  }
-                </span>
-              </div>
-              {course.description && (
-                <p className="text-neutral-700">
-                  {course.description}
-                </p>
-              )}
+          {/* Success/Error Feedback */}
+          {feedback && (
+            <div className="mb-6">
+              <Feedback
+                type={feedback.type}
+                message={feedback.message}
+                onDismiss={() => setFeedback(null)}
+              />
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => navigate(`/courses/${course.id}/edit`)}
-                className="bg-neutral-100 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-200 transition-colors"
-              >
-                {t('common.buttons.edit', 'Edit')}
-              </button>
+          )}
+
+          {/* Course Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                  {course.name}
+                </h1>
+                <div className="flex items-center space-x-4 text-sm text-neutral-600 mb-4">
+                  <span>
+                    {t('creator.course.sourceLanguage', 'Source')}: {course.sourceLanguage}
+                  </span>
+                  <span>→</span>
+                  <span>
+                    {t('creator.course.targetLanguage', 'Target')}: {course.targetLanguage}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    course.isPublic 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {course.isPublic 
+                      ? t('creator.course.public', 'Public') 
+                      : t('creator.course.private', 'Private')
+                    }
+                  </span>
+                </div>
+                {course.description && (
+                  <p className="text-neutral-700">
+                    {course.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => navigate(`/courses/${course.id}/edit`)}
+                  className="bg-neutral-100 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-200 transition-colors"
+                >
+                  {t('common.buttons.edit', 'Edit')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Hierarchical Navigator */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-          <h2 className="text-xl font-semibold text-neutral-900 mb-6">
-            {t('creator.pages.courseDetail.courseStructure', 'Course Structure')}
-          </h2>
-          
-          <HierarchicalNavigator
+          {/* Hierarchical Navigator */}
+          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+            <h2 className="text-xl font-semibold text-neutral-900 mb-6">
+              {t('creator.pages.courseDetail.courseStructure', 'Course Structure')}
+            </h2>
+            
+            <HierarchicalNavigator
+              courseId={course.id}
+              {...(selectedLevel && { selectedLevel })}
+              {...(selectedSection && { selectedSection })}
+              {...(selectedModule && { selectedModule })}
+              onLevelSelect={handleLevelSelect}
+              onSectionSelect={handleSectionSelect}
+              onModuleSelect={handleModuleSelect}
+              onLessonClick={handleLessonClick}
+              onCreateLevel={handleCreateLevel}
+              onEditLevel={handleEditLevel}
+              onDeleteLevel={handleDeleteLevel}
+              onCreateSection={handleCreateSection}
+              onEditSection={handleEditSection}
+              onDeleteSection={handleDeleteSection}
+              onCreateModule={handleCreateModule}
+              onEditModule={handleEditModule}
+              onDeleteModule={handleDeleteModule}
+              onCreateLesson={handleCreateLesson}
+              onEditLesson={handleEditLesson}
+              onDeleteLesson={handleDeleteLesson}
+            />
+          </div>
+
+          {/* Level Modal */}
+          <CreateOrEditLevelModal
+            isOpen={levelModalOpen}
+            onClose={handleCloseLevelModal}
             courseId={course.id}
-            {...(selectedLevel && { selectedLevel })}
-            {...(selectedSection && { selectedSection })}
-            {...(selectedModule && { selectedModule })}
-            onLevelSelect={handleLevelSelect}
-            onSectionSelect={handleSectionSelect}
-            onModuleSelect={handleModuleSelect}
-            onLessonClick={handleLessonClick}
-            onCreateLevel={handleCreateLevel}
-            onEditLevel={handleEditLevel}
-            onDeleteLevel={handleDeleteLevel}
-            onCreateSection={handleCreateSection}
-            onEditSection={handleEditSection}
-            onDeleteSection={handleDeleteSection}
-            onCreateModule={handleCreateModule}
-            onEditModule={handleEditModule}
-            onDeleteModule={handleDeleteModule}
-            onCreateLesson={handleCreateLesson}
-            onEditLesson={handleEditLesson}
-            onDeleteLesson={handleDeleteLesson}
+            {...(editingLevel && { initialData: editingLevel })}
+            onSuccess={handleLevelSuccess}
           />
-        </div>
 
-        {/* Level Modal */}
-        <CreateOrEditLevelModal
-          isOpen={levelModalOpen}
-          onClose={handleCloseLevelModal}
-          courseId={course.id}
-          {...(editingLevel && { initialData: editingLevel })}
-          onSuccess={handleLevelSuccess}
-        />
+          {/* Section Modal */}
+          {selectedLevel && (
+            <CreateOrEditSectionModal
+              isOpen={sectionModalOpen}
+              onClose={handleCloseSectionModal}
+              levelId={selectedLevel}
+              {...(editingSection && { initialData: editingSection })}
+              onSuccess={handleSectionSuccess}
+            />
+          )}
 
-        {/* Section Modal */}
-        {selectedLevel && (
-          <CreateOrEditSectionModal
-            isOpen={sectionModalOpen}
-            onClose={handleCloseSectionModal}
-            levelId={selectedLevel}
-            {...(editingSection && { initialData: editingSection })}
-            onSuccess={handleSectionSuccess}
-          />
-        )}
+          {/* Module Modal */}
+          {selectedSection && (
+            <CreateOrEditModuleModal
+              isOpen={moduleModalOpen}
+              onClose={handleCloseModuleModal}
+              sectionId={selectedSection}
+              {...(editingModule && { initialData: editingModule })}
+              onSuccess={handleModuleSuccess}
+            />
+          )}
 
-        {/* Module Modal */}
-        {selectedSection && (
-          <CreateOrEditModuleModal
-            isOpen={moduleModalOpen}
-            onClose={handleCloseModuleModal}
-            sectionId={selectedSection}
-            {...(editingModule && { initialData: editingModule })}
-            onSuccess={handleModuleSuccess}
-          />
-        )}
-
-        {/* Lesson Modal */}
-        {selectedModule && (
-          <CreateOrEditLessonModal
-            isOpen={lessonModalOpen}
-            onClose={handleCloseLessonModal}
-            moduleId={selectedModule}
-            {...(editingLesson && { initialData: editingLesson })}
-            onSuccess={handleLessonSuccess}
-          />
-        )}
+          {/* Lesson Modal */}
+          {selectedModule && (
+            <CreateOrEditLessonModal
+              isOpen={lessonModalOpen}
+              onClose={handleCloseLessonModal}
+              moduleId={selectedModule}
+              {...(editingLesson && { initialData: editingLesson })}
+              onSuccess={handleLessonSuccess}
+            />
+          )}
+        </PageErrorBoundary>
       </Layout>
     </>
   );

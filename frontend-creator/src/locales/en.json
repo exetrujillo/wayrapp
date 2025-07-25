@@ -16,7 +16,8 @@
       "previous": "Previous",
       "next": "Next",
       "retry": "Retry",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "goBack": "Go Back"
     },
     "messages": {
       "loading": "Loading...",
@@ -108,6 +109,34 @@
       "exerciseAssignment": {
         "title": "Assign Exercises to Lesson",
         "lessonName": "Lesson"
+      },
+      "lessonDetail": {
+        "title": "Lesson {{id}} - Exercise Management",
+        "description": "Manage exercises for lesson {{id}}",
+        "heading": "Lesson Exercise Management",
+        "subheading": "Assign and manage exercises for this lesson",
+        "breadcrumb": {
+          "lesson": "Lesson {{id}}"
+        },
+        "lessonInfo": {
+          "title": "Lesson Information",
+          "id": "Lesson ID",
+          "experiencePoints": "Experience Points",
+          "order": "Order",
+          "moduleId": "Module ID"
+        },
+        "exercises": {
+          "title": "Assigned Exercises",
+          "subtitle": "Drag and drop to reorder exercises",
+          "count": "exercises"
+        },
+        "buttons": {
+          "assignExercise": "Assign Exercise"
+        },
+        "error": {
+          "title": "Error Loading Lesson",
+          "notFound": "Lesson not found"
+        }
       }
     },
     "components": {
@@ -164,6 +193,56 @@
         "deleteConfirmTitle": "Confirm Delete",
         "deleteConfirmMessage": "This action cannot be undone. Are you sure you want to delete this item?",
         "actionConfirm": "Are you sure you want to {{action}}?"
+      },
+      "assignedExercisesList": {
+        "exerciseNotFound": "Exercise not found",
+        "dragHandle": "Drag to reorder",
+        "exerciseId": "ID",
+        "unassign": "Unassign",
+        "unassignConfirm": "Are you sure you want to unassign this exercise?",
+        "empty": {
+          "title": "No exercises assigned",
+          "description": "Start building your lesson by assigning exercises from the global exercise bank."
+        },
+        "error": {
+          "title": "Error",
+          "message": "Failed to update exercises"
+        },
+        "instructions": {
+          "title": "How to manage exercises",
+          "drag": "Drag exercises by the handle to reorder them",
+          "unassign": "Click the X button to unassign an exercise",
+          "order": "The order number shows the sequence students will see"
+        }
+      },
+      "exerciseAssignmentModal": {
+        "title": "Assign Exercises",
+        "searchPlaceholder": "Search exercises...",
+        "allTypes": "All Types",
+        "selectNone": "Select None",
+        "selectAll": "Select All",
+        "selected": "selected",
+        "available": "available exercises",
+        "assignButton": "Assign {{count}} Exercise(s)",
+        "noResults": {
+          "title": "No exercises found",
+          "description": "Try adjusting your search or filter criteria."
+        },
+        "noExercises": {
+          "title": "No exercises available",
+          "description": "All exercises have been assigned to this lesson or no exercises exist in the global bank."
+        },
+        "pagination": {
+          "showing": "Showing {{start}} to {{end}} of {{total}} exercises"
+        },
+        "error": {
+          "title": "Error Loading Exercises",
+          "message": "Failed to load exercises"
+        },
+        "assignError": {
+          "title": "Assignment Failed",
+          "message": "Failed to assign exercises"
+        }
       }
     },
     "forms": {

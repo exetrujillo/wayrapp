@@ -4,10 +4,11 @@ import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { courseSchema, CourseFormData } from '../../utils/validation';
 import { LANGUAGES } from '../../utils/constants';
-import { courseService } from '../../services/courseService';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
-import { Feedback } from '../ui/Feedback';
+import { useCreateCourseMutation } from '../../hooks/useCourses';
+import { FormField } from '../ui/FormField';
+import { Textarea } from '../ui/Textarea';
+
+import { FormWrapper } from './FormWrapper';
 import { CreateCourseRequest } from '@/utils/types';
 
 interface CourseFormProps {
@@ -17,58 +18,78 @@ interface CourseFormProps {
 
 export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) => {
   const { t } = useTranslation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  
+  const createCourseMutation = useCreateCourseMutation();
 
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { errors },
+    watch,
+    formState: { errors, isValid, touchedFields },
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
+      id: '',
       name: '',
       sourceLanguage: '',
       targetLanguage: '',
       description: undefined,
-      isPublic: false,
+      isPublic: true,
     },
+    mode: 'onChange',
   });
 
+  const watchedValues = watch();
+
   const onSubmit: SubmitHandler<CourseFormData> = async (data) => {
-    setIsSubmitting(true);
     setFeedback(null);
 
-    try {
-      // Transform form data to match API expectations
-      const courseData: CreateCourseRequest = {
-        name: data.name,
-        sourceLanguage: data.sourceLanguage,
-        targetLanguage: data.targetLanguage,
-        isPublic: data.isPublic,
-        ...(data.id && { id: data.id }),
-        ...(data.description && { description: data.description }),
-      };
+    // Transform form data to match API expectations (snake_case field names)
+    const courseData: CreateCourseRequest = {
+      id: data.id,
+      name: data.name,
+      source_language: data.sourceLanguage,
+      target_language: data.targetLanguage,
+      is_public: data.isPublic,
+      ...(data.description && { description: data.description }),
+    };
 
-      const response = await courseService.createCourse(courseData);
-      setFeedback({
-        type: 'success',
-        message: t('creator.forms.course.successMessage', 'Course created successfully!'),
-      });
-      reset();
-      if (onSuccess) {
-        onSuccess(response);
-      }
-    } catch (error: any) {
-      setFeedback({
-        type: 'error',
-        message: error.message || t('common.messages.error', 'An error occurred'),
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    createCourseMutation.mutate(courseData, {
+      onSuccess: (response) => {
+        setFeedback({
+          type: 'success',
+          message: t('creator.forms.course.successMessage', 'Course created successfully!'),
+        });
+        reset();
+        if (onSuccess) {
+          onSuccess(response);
+        }
+      },
+      onError: (error: any) => {
+        let errorMessage = t('common.messages.error', 'An error occurred');
+        
+        // Handle different types of errors
+        if (error?.response?.status === 409) {
+          errorMessage = t('creator.forms.course.errors.duplicate', 'A course with this ID already exists');
+        } else if (error?.response?.status === 400) {
+          errorMessage = t('creator.forms.course.errors.validation', 'Please check your input and try again');
+        } else if (error?.response?.status === 401) {
+          errorMessage = t('creator.forms.course.errors.unauthorized', 'You are not authorized to create courses');
+        } else if (error?.response?.status >= 500) {
+          errorMessage = t('creator.forms.course.errors.server', 'Server error. Please try again later');
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        setFeedback({
+          type: 'error',
+          message: errorMessage,
+        });
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -79,162 +100,145 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-6">{t('creator.forms.course.title', 'Create Course')}</h2>
+    <FormWrapper
+      title={t('creator.forms.course.title', 'Create Course')}
+      onSubmit={handleSubmit(onSubmit)}
+      onCancel={handleCancel}
+      isSubmitting={createCourseMutation.isPending}
+      isValid={isValid}
+      submitText={createCourseMutation.isPending 
+        ? t('creator.forms.course.submitting', 'Creating Course...') 
+        : t('creator.forms.course.submit', 'Create Course')
+      }
+      cancelText={t('common.buttons.cancel', 'Cancel')}
+      feedback={feedback}
+      onFeedbackDismiss={() => setFeedback(null)}
+    >
+      {/* Course ID */}
+      <FormField
+        id="id"
+        label={t('creator.forms.course.id', 'Course ID')}
+        placeholder={t('creator.forms.course.idPlaceholder', 'e.g., basic-spanish')}
+        helperText={t('creator.forms.course.idHelp', 'Unique identifier for the course (max 20 characters)')}
+        {...register('id')}
+        error={errors.id?.message || undefined}
+        isRequired
+        fullWidth
+        maxLength={20}
+        isValid={touchedFields.id && !errors.id && watchedValues.id?.trim().length > 0}
+        showValidationIcon
+      />
 
-      {feedback && (
-        <div className="mb-6">
-          <Feedback
-            type={feedback.type}
-            message={feedback.message}
-            onDismiss={() => setFeedback(null)}
-          />
-        </div>
-      )}
+      {/* Course Name */}
+      <FormField
+        id="name"
+        label={t('creator.forms.course.name', 'Course Name')}
+        placeholder={t('creator.forms.course.namePlaceholder', 'e.g., Basic Spanish')}
+        helperText={t('creator.forms.course.nameHelp', 'Display name for the course (max 100 characters)')}
+        {...register('name')}
+        error={errors.name?.message || undefined}
+        isRequired
+        fullWidth
+        maxLength={100}
+        isValid={touchedFields.name && !errors.name && watchedValues.name?.trim().length > 0}
+        showValidationIcon
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Course ID */}
-        <Input
-          id="id"
-          label={t('creator.forms.course.id', 'Course ID')}
-          placeholder={t('creator.forms.course.idPlaceholder', 'e.g., basic-spanish')}
-          {...register('id')}
-          {...(errors.id?.message && { error: errors.id.message })}
-          isRequired
-          fullWidth
-        />
-
-        {/* Course Name */}
-        <Input
-          id="name"
-          label={t('creator.forms.course.name', 'Course Name')}
-          placeholder={t('creator.forms.course.namePlaceholder', 'e.g., Basic Spanish')}
-          {...register('name')}
-          {...(errors.name?.message && { error: errors.name.message })}
-          isRequired
-          fullWidth
-        />
-
-        {/* Source Language */}
-        <div className="mb-4">
-          <label htmlFor="sourceLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
-            {t('creator.forms.course.sourceLanguage', 'Source Language')}
-            <span className="text-error ml-1">*</span>
-          </label>
-          <Controller
-            name="sourceLanguage"
-            control={control}
-            render={({ field }) => (
-              <div className="relative">
-                <input
-                  id="sourceLanguage"
-                  list="source_languages"
-                  className={`input w-full ${errors.sourceLanguage ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
-                  placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
-                  {...field}
-                />
-                <datalist id="source_languages">
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </datalist>
-                {errors.sourceLanguage && (
-                  <p className="mt-1 text-sm text-error">
-                    {errors.sourceLanguage.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-        </div>
-
-        {/* Target Language */}
-        <div className="mb-4">
-          <label htmlFor="targetLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
-            {t('creator.forms.course.targetLanguage', 'Target Language')}
-            <span className="text-error ml-1">*</span>
-          </label>
-          <Controller
-            name="targetLanguage"
-            control={control}
-            render={({ field }) => (
-              <div className="relative">
-                <input
-                  id="targetLanguage"
-                  list="target_languages"
-                  className={`input w-full ${errors.targetLanguage ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
-                  placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
-                  {...field}
-                />
-                <datalist id="target_languages">
-                  {LANGUAGES.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </datalist>
-                {errors.targetLanguage && (
-                  <p className="mt-1 text-sm text-error">
-                    {errors.targetLanguage.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-        </div>
-
-        {/* Description */}
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-1">
-            {t('creator.forms.course.description', 'Description')}
-          </label>
-          <textarea
-            id="description"
-            className={`input w-full min-h-[100px] ${errors.description ? 'border-error focus:border-error focus:ring-error' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500'}`}
-            placeholder={t('creator.forms.course.descriptionPlaceholder', 'Enter course description...')}
-            {...register('description')}
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-error">
-              {errors.description.message}
-            </p>
+      {/* Source Language */}
+      <div className="mb-4">
+        <label htmlFor="sourceLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
+          {t('creator.forms.course.sourceLanguage', 'Source Language')}
+          <span className="text-error ml-1">*</span>
+        </label>
+        <Controller
+          name="sourceLanguage"
+          control={control}
+          render={({ field }) => (
+            <div className="relative">
+              <FormField
+                id="sourceLanguage"
+                list="source_languages"
+                placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
+                {...field}
+                error={errors.sourceLanguage?.message || undefined}
+                fullWidth
+                maxLength={20}
+                isValid={touchedFields.sourceLanguage && !errors.sourceLanguage && watchedValues.sourceLanguage?.trim().length > 0}
+                showValidationIcon
+              />
+              <datalist id="source_languages">
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </option>
+                ))}
+              </datalist>
+            </div>
           )}
-        </div>
+        />
+      </div>
 
-        {/* Is Public */}
-        <div className="mb-4 flex items-center">
-          <input
-            type="checkbox"
-            id="isPublic"
-            className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-neutral-300 rounded"
-            {...register('isPublic')}
-          />
-          <label htmlFor="isPublic" className="ml-2 block text-sm text-neutral-700">
-            {t('creator.forms.course.isPublic', 'Make this course public')}
-          </label>
-        </div>
+      {/* Target Language */}
+      <div className="mb-4">
+        <label htmlFor="targetLanguage" className="block text-sm font-medium text-neutral-700 mb-1">
+          {t('creator.forms.course.targetLanguage', 'Target Language')}
+          <span className="text-error ml-1">*</span>
+        </label>
+        <Controller
+          name="targetLanguage"
+          control={control}
+          render={({ field }) => (
+            <div className="relative">
+              <FormField
+                id="targetLanguage"
+                list="target_languages"
+                placeholder={t('creator.forms.course.languagePlaceholder', 'Search or enter BCP 47 code (e.g., en, es-MX)')}
+                {...field}
+                error={errors.targetLanguage?.message || undefined}
+                fullWidth
+                maxLength={20}
+                isValid={touchedFields.targetLanguage && !errors.targetLanguage && watchedValues.targetLanguage?.trim().length > 0}
+                showValidationIcon
+              />
+              <datalist id="target_languages">
+                {LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </option>
+                ))}
+              </datalist>
+            </div>
+          )}
+        />
+      </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
-            {t('common.buttons.cancel', 'Cancel')}
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-          >
-            {t('creator.forms.course.submit', 'Create Course')}
-          </Button>
-        </div>
-      </form>
-    </div>
+      {/* Description */}
+      <Textarea
+        id="description"
+        label={t('creator.forms.course.description', 'Description')}
+        placeholder={t('creator.forms.course.descriptionPlaceholder', 'Enter course description...')}
+        {...register('description')}
+        error={errors.description?.message || undefined}
+        fullWidth
+        maxLength={255}
+        showCharCount
+        minHeight="100px"
+        isSuccess={!!(touchedFields.description && !errors.description && watchedValues.description && watchedValues.description.trim().length > 0)}
+      />
+
+      {/* Is Public */}
+      <div className="mb-4 flex items-center">
+        <input
+          type="checkbox"
+          id="isPublic"
+          className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-neutral-300 rounded"
+          {...register('isPublic')}
+        />
+        <label htmlFor="isPublic" className="ml-2 block text-sm text-neutral-700">
+          {t('creator.forms.course.isPublic', 'Make this course public')}
+        </label>
+      </div>
+    </FormWrapper>
   );
 };
 

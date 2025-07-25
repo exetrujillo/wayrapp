@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { courseService } from '../services/courseService';
 import { queryKeys } from './queryKeys';
+import { useApiErrorHandler } from '../contexts/ErrorContext';
 import { 
   Course, 
   CreateCourseRequest, 
@@ -78,6 +79,7 @@ export const useCoursePackageQuery = (id: string, enabled: boolean = true) => {
  */
 export const useCreateCourseMutation = () => {
   const queryClient = useQueryClient();
+  const { handleError, handleSuccess } = useApiErrorHandler();
 
   return useMutation({
     mutationFn: (courseData: CreateCourseRequest) => courseService.createCourse(courseData),
@@ -87,9 +89,15 @@ export const useCreateCourseMutation = () => {
       
       // Add the new course to the cache
       queryClient.setQueryData(queryKeys.courses.detail(newCourse.id), newCourse);
+      
+      // Show success message
+      handleSuccess('Course created successfully!');
     },
     onError: (error) => {
       console.error('Failed to create course:', error);
+      handleError(error, () => {
+        // Retry logic would be handled by the component
+      });
     },
   });
 };
@@ -100,6 +108,7 @@ export const useCreateCourseMutation = () => {
  */
 export const useUpdateCourseMutation = () => {
   const queryClient = useQueryClient();
+  const { handleError, handleSuccess } = useApiErrorHandler();
 
   return useMutation({
     mutationFn: ({ id, courseData }: { id: string; courseData: UpdateCourseRequest }) => 
@@ -110,9 +119,13 @@ export const useUpdateCourseMutation = () => {
       
       // Invalidate courses list to reflect changes
       queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
+      
+      // Show success message
+      handleSuccess('Course updated successfully!');
     },
     onError: (error) => {
       console.error('Failed to update course:', error);
+      handleError(error);
     },
   });
 };
@@ -123,6 +136,7 @@ export const useUpdateCourseMutation = () => {
  */
 export const useDeleteCourseMutation = () => {
   const queryClient = useQueryClient();
+  const { handleError, handleSuccess } = useApiErrorHandler();
 
   return useMutation({
     mutationFn: (id: string) => courseService.deleteCourse(id),
@@ -132,9 +146,13 @@ export const useDeleteCourseMutation = () => {
       
       // Invalidate courses list to reflect deletion
       queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
+      
+      // Show success message
+      handleSuccess('Course deleted successfully!');
     },
     onError: (error) => {
       console.error('Failed to delete course:', error);
+      handleError(error);
     },
   });
 };

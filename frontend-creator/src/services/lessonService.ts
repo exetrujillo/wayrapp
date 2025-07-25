@@ -195,7 +195,7 @@ class LessonService {
   async reorderLessonExercises(lessonId: string, exerciseIds: string[]): Promise<ExerciseAssignment[]> {
     try {
       return await apiClient.put<ExerciseAssignment[]>(
-        `${API_ENDPOINTS.LESSONS.EXERCISES(lessonId)}/reorder`,
+        API_ENDPOINTS.LESSONS.REORDER_EXERCISES(lessonId),
         { exerciseIds }
       );
     } catch (error) {

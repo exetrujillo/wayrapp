@@ -78,11 +78,12 @@ export interface Course {
 }
 
 export interface CreateCourseRequest {
+  id: string;
   name: string;
-  sourceLanguage: string;
-  targetLanguage: string;
+  source_language: string;
+  target_language: string;
   description?: string;
-  isPublic: boolean;
+  is_public: boolean;
 }
 
 export interface UpdateCourseRequest {

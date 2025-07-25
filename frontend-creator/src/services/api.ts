@@ -113,6 +113,9 @@ class ApiClient {
    * @returns ApiClientError with structured error information
    */
   private handleAxiosError(error: AxiosError): ApiClientError {
+    // Check for network connectivity
+    const isOffline = !navigator.onLine;
+    
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
@@ -120,24 +123,99 @@ class ApiClient {
       const data = error.response.data as any;
 
       // Extract error details from response
-      const message = data?.message || 'An error occurred with the API request';
+      let message = data?.message || this.getDefaultErrorMessage(status);
       const code = data?.code;
       const details = data?.details;
 
-      return new ApiClientError(message, status, code, details);
+      // Add network context if relevant
+      if (isOffline) {
+        message = 'You appear to be offline. Please check your internet connection.';
+      }
+
+      const apiError = new ApiClientError(message, status, code, details);
+      
+      // Add additional context
+      (apiError as any).isNetworkError = this.isNetworkError(status);
+      (apiError as any).isRetryable = this.isRetryableError(status);
+      (apiError as any).timestamp = new Date().toISOString();
+      
+      return apiError;
     } else if (error.request) {
       // The request was made but no response was received
-      return new ApiClientError(
-        'No response received from server. Please check your network connection.',
-        0
-      );
+      const message = isOffline 
+        ? 'You appear to be offline. Please check your internet connection.'
+        : 'No response received from server. Please check your network connection.';
+        
+      const apiError = new ApiClientError(message, 0);
+      (apiError as any).isNetworkError = true;
+      (apiError as any).isRetryable = true;
+      (apiError as any).timestamp = new Date().toISOString();
+      
+      return apiError;
     } else {
       // Something happened in setting up the request that triggered an Error
-      return new ApiClientError(
-        error.message || 'An error occurred while setting up the request',
-        0
-      );
+      const message = error.message || 'An error occurred while setting up the request';
+      const apiError = new ApiClientError(message, 0);
+      (apiError as any).isNetworkError = false;
+      (apiError as any).isRetryable = false;
+      (apiError as any).timestamp = new Date().toISOString();
+      
+      return apiError;
     }
+  }
+
+  /**
+   * Get default error message based on HTTP status code
+   */
+  private getDefaultErrorMessage(status: number): string {
+    switch (status) {
+      case 400:
+        return 'Invalid request. Please check your input and try again.';
+      case 401:
+        return 'You are not authorized. Please log in again.';
+      case 403:
+        return 'You do not have permission to perform this action.';
+      case 404:
+        return 'The requested resource was not found.';
+      case 408:
+        return 'The request timed out. Please try again.';
+      case 409:
+        return 'There was a conflict with your request. Please try again.';
+      case 422:
+        return 'The data provided is invalid. Please check your input.';
+      case 429:
+        return 'Too many requests. Please wait a moment before trying again.';
+      case 500:
+        return 'Internal server error. Please try again later.';
+      case 502:
+        return 'Bad gateway. The server is temporarily unavailable.';
+      case 503:
+        return 'Service unavailable. Please try again later.';
+      case 504:
+        return 'Gateway timeout. Please try again later.';
+      default:
+        return 'An error occurred with the API request.';
+    }
+  }
+
+  /**
+   * Check if error is network-related
+   */
+  private isNetworkError(status: number): boolean {
+    return status === 0 || status >= 500 || status === 408 || status === 429;
+  }
+
+  /**
+   * Check if error is retryable
+   */
+  private isRetryableError(status: number): boolean {
+    // Don't retry client errors (4xx) except for auth and timeout
+    if (status >= 400 && status < 500) {
+      return status === 401 || status === 408 || status === 429;
+    }
+    
+    // Retry network errors and server errors
+    return status === 0 || status >= 500;
   }
 
   /**
