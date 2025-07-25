@@ -71,15 +71,6 @@ export class CourseRepository {
     
     const where = combineWhereConditions(searchWhere, isPublicWhere);
 
-    // Debug logging
-    console.log('CourseRepository.findAll - Query params:', JSON.stringify(queryParams, null, 2));
-    console.log('CourseRepository.findAll - Where clause:', JSON.stringify(where, null, 2));
-    console.log('CourseRepository.findAll - Original options:', JSON.stringify(options, null, 2));
-
-    // Let's also check total courses without any filters
-    const totalCoursesInDb = await this.prisma.course.count();
-    console.log('Total courses in database (no filters):', totalCoursesInDb);
-
     const [courses, total] = await Promise.all([
       this.prisma.course.findMany({
         ...queryParams,
@@ -92,11 +83,6 @@ export class CourseRepository {
       }),
       this.prisma.course.count({ where }),
     ]);
-
-    console.log(`Query returned ${courses.length} courses out of ${total} total matching filters`);
-    if (courses.length > 0) {
-      console.log('First course:', courses[0]);
-    }
 
     const mappedCourses = courses.map((course) => this.mapPrismaToModel(course));
 

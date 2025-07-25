@@ -64,15 +64,11 @@ export const paginationMiddleware = (options: PaginationOptions = {}) => {
       // Parse filters if allowed
       const filters: Record<string, any> = {};
       if (allowedFilters.length > 0) {
-        console.log('Pagination middleware - req.query:', req.query);
-        console.log('Pagination middleware - allowedFilters:', allowedFilters);
         for (const filterKey of allowedFilters) {
           if (req.query[filterKey] !== undefined) {
-            console.log(`Pagination middleware - Processing filter ${filterKey}:`, req.query[filterKey], typeof req.query[filterKey]);
             filters[filterKey] = req.query[filterKey];
           }
         }
-        console.log('Pagination middleware - Final filters:', filters);
       }
 
       // Handle both pagination strategies

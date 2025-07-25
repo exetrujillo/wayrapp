@@ -38,9 +38,7 @@ class CourseService {
    */
   async getCourses(params?: PaginationParams): Promise<PaginatedResponse<Course>> {
     try {
-      console.log('CourseService.getCourses - Sending params:', params);
       const response = await apiClient.get<PaginatedResponse<Course>>(API_ENDPOINTS.COURSES.BASE, { params });
-      console.log('CourseService.getCourses - Received response:', response);
 
       // Validate response structure
       if (!response || !Array.isArray(response.data)) {
