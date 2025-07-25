@@ -3,17 +3,45 @@
  * This handles critical mocks that need to be in place before modules load
  */
 
+// Ensure NODE_ENV is set to test
+process.env.NODE_ENV = 'test';
+
+// Set up environment variables for Jest
+process.env.VITE_API_URL = 'https://wayrapp.vercel.app/api/v1';
+process.env.VITE_APP_NAME = 'WayrApp Creator Tool (Test)';
+process.env.VITE_ENABLE_MSW = 'false';
+process.env.VITE_LOG_LEVEL = 'debug';
+
 // Mock import.meta for Jest environment
+// This needs to be set up before any modules are imported
+const mockImportMeta = {
+  env: {
+    VITE_API_URL: 'https://wayrapp.vercel.app/api/v1',
+    VITE_APP_NAME: 'WayrApp Creator Tool (Test)',
+    VITE_ENABLE_MSW: 'false',
+    VITE_LOG_LEVEL: 'debug',
+    DEV: false,
+    PROD: false,
+  },
+};
+
+// Set up import.meta mock on global object
 Object.defineProperty(globalThis, 'import', {
   value: {
-    meta: {
-      env: {
-        VITE_API_URL: 'http://localhost:3000',
-      },
-    },
+    meta: mockImportMeta,
   },
   writable: true,
 });
+
+// Also set up on global for compatibility
+if (typeof global !== 'undefined') {
+  Object.defineProperty(global, 'import', {
+    value: {
+      meta: mockImportMeta,
+    },
+    writable: true,
+  });
+}
 
 // Mock BroadcastChannel for MSW
 global.BroadcastChannel = class BroadcastChannel {

@@ -6,31 +6,59 @@ import { SectionsSection } from './SectionsSection';
 import { ModulesSection } from './ModulesSection';
 import { LessonsSection } from './LessonsSection';
 
+/**
+ * Props for the HierarchicalNavigator component
+ */
 interface HierarchicalNavigatorProps {
+  /** ID of the course to display content for */
   courseId: string;
+  /** Currently selected level ID */
   selectedLevel?: string;
+  /** Currently selected section ID */
   selectedSection?: string;
+  /** Currently selected module ID */
   selectedModule?: string;
+  
+  // Selection handlers
+  /** Handler for level selection */
   onLevelSelect: (levelId: string) => void;
+  /** Handler for section selection */
   onSectionSelect: (sectionId: string) => void;
+  /** Handler for module selection */
   onModuleSelect: (moduleId: string) => void;
+  /** Handler for lesson click */
   onLessonClick: (lessonId: string) => void;
   
-  // Modal handlers
+  // Level modal handlers
+  /** Handler for creating a new level */
   onCreateLevel: () => void;
+  /** Handler for editing an existing level */
   onEditLevel: (level: Level) => void;
+  /** Handler for deleting a level */
   onDeleteLevel: (level: Level) => void;
   
+  // Section modal handlers
+  /** Handler for creating a new section */
   onCreateSection: () => void;
+  /** Handler for editing an existing section */
   onEditSection: (section: Section) => void;
+  /** Handler for deleting a section */
   onDeleteSection: (section: Section) => void;
   
+  // Module modal handlers
+  /** Handler for creating a new module */
   onCreateModule: () => void;
+  /** Handler for editing an existing module */
   onEditModule: (module: Module) => void;
+  /** Handler for deleting a module */
   onDeleteModule: (module: Module) => void;
   
+  // Lesson modal handlers
+  /** Handler for creating a new lesson */
   onCreateLesson: () => void;
+  /** Handler for editing an existing lesson */
   onEditLesson: (lesson: Lesson) => void;
+  /** Handler for deleting a lesson */
   onDeleteLesson: (lesson: Lesson) => void;
 }
 

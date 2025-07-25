@@ -14,6 +14,8 @@ try {
   baseURL = process.env['VITE_API_URL'] || 'http://localhost:3000';
 }
 
+
+
 // Mock API responses (moved from test utils for reuse)
 export const mockApiResponses = {
   login: {
@@ -168,10 +170,11 @@ export const handlers = [
     const body = await request.json() as any;
     const { email, password } = body;
     
-    if (email === 'test@example.com' && password === 'password123') {
+    // Accept both test credentials and E2E test credentials
+    if ((email === 'test@example.com' && password === 'password123') ||
+        (email === 'testuser@example.com' && password === 'ValidPassword123!')) {
       return HttpResponse.json(mockApiResponses.login.success);
     }
-    
     return HttpResponse.json(
       mockApiResponses.login.error,
       { status: 401 }

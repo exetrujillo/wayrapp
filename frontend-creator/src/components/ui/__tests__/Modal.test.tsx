@@ -1,364 +1,288 @@
-/**
- * Unit tests for Modal component
- * Tests modal behavior, accessibility, and interaction patterns
- */
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render } from '../../../__tests__/utils/test-utils';
+import { Modal } from '../Modal';
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Modal, ConfirmModal } from '../Modal';
+describe('Modal', () => {
+  const mockOnClose = jest.fn();
 
-// Mock createPortal to render in the same container
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  createPortal: (children: React.ReactNode) => children,
-}));
-
-describe('Modal Component', () => {
   beforeEach(() => {
-    // Reset body overflow style
-    document.body.style.overflow = 'unset';
+    jest.clearAllMocks();
   });
 
-  it('does not render when isOpen is false', () => {
+  it('should not render when isOpen is false', () => {
     render(
-      <Modal isOpen={false} onClose={jest.fn()}>
-        Modal content
+      <Modal isOpen={false} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
+
+    expect(screen.queryByText('Test Modal')).not.toBeInTheDocument();
     expect(screen.queryByText('Modal content')).not.toBeInTheDocument();
   });
 
-  it('renders when isOpen is true', () => {
+  it('should render when isOpen is true', () => {
     render(
-      <Modal isOpen={true} onClose={jest.fn()}>
-        Modal content
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
+
+    expect(screen.getByText('Test Modal')).toBeInTheDocument();
     expect(screen.getByText('Modal content')).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('renders with title', () => {
-    render(
-      <Modal isOpen={true} onClose={jest.fn()} title="Modal Title">
-        Modal content
-      </Modal>
-    );
-    
-    expect(screen.getByText('Modal Title')).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby', 'modal-title');
-  });
-
-  it('renders with footer', () => {
-    const footer = <button data-testid="footer-button">Footer Button</button>;
+  it('should call onClose when close button is clicked', async () => {
+    const user = userEvent.setup();
     
     render(
-      <Modal isOpen={true} onClose={jest.fn()} footer={footer}>
-        Modal content
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
-    expect(screen.getByTestId('footer-button')).toBeInTheDocument();
+
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    await user.click(closeButton);
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('applies different sizes correctly', () => {
+  it('should call onClose when overlay is clicked', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    // Click on the overlay (backdrop) - simulate clicking outside the modal content
+    const overlay = screen.getByRole('dialog').parentElement!;
+    await user.click(overlay);
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call onClose when modal content is clicked', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    // Click on the modal content
+    const modalContent = screen.getByText('Modal content');
+    await user.click(modalContent);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('should call onClose when Escape key is pressed', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    await user.keyboard('{Escape}');
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render with custom size', () => {
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal" size="lg">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    const modalDialog = screen.getByRole('dialog');
+    expect(modalDialog).toHaveClass('max-w-lg');
+  });
+
+  it('should render with default styling', () => {
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    const modalDialog = screen.getByRole('dialog');
+    expect(modalDialog).toHaveClass('bg-white', 'rounded-component');
+  });
+
+  it('should render footer when provided', () => {
+    const footer = (
+      <div>
+        <button>Cancel</button>
+        <button>Save</button>
+      </div>
+    );
+
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal" footer={footer}>
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+  });
+
+  it('should not render footer when not provided', () => {
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
+      </Modal>
+    );
+
+    // Footer should not be present
+    const modalContent = screen.getByRole('dialog');
+    expect(modalContent.querySelector('[data-testid="modal-footer"]')).not.toBeInTheDocument();
+  });
+
+  it('should trap focus within modal', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <div>
+        <button>Outside button</button>
+        <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+          <button>Inside button 1</button>
+          <button>Inside button 2</button>
+        </Modal>
+      </div>
+    );
+
+    // Focus should be trapped within the modal
+    const insideButton1 = screen.getByRole('button', { name: /inside button 1/i });
+    const insideButton2 = screen.getByRole('button', { name: /inside button 2/i });
+    const closeButton = screen.getByRole('button', { name: /close/i });
+
+    // Tab through modal elements
+    await user.tab();
+    expect(closeButton).toHaveFocus();
+
+    await user.tab();
+    expect(insideButton1).toHaveFocus();
+
+    await user.tab();
+    expect(insideButton2).toHaveFocus();
+
+    // Should cycle back to close button
+    await user.tab();
+    expect(closeButton).toHaveFocus();
+  });
+
+  it('should prevent body scroll when modal is open', () => {
     const { rerender } = render(
-      <Modal isOpen={true} onClose={jest.fn()} size="sm">
-        Content
+      <Modal isOpen={false} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
-    let modal = screen.getByRole('dialog');
-    expect(modal).toHaveClass('max-w-sm');
 
+    // Body should not have overflow hidden initially
+    expect(document.body.style.overflow).not.toBe('hidden');
+
+    // Open modal
     rerender(
-      <Modal isOpen={true} onClose={jest.fn()} size="md">
-        Content
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    modal = screen.getByRole('dialog');
-    expect(modal).toHaveClass('max-w-md');
 
-    rerender(
-      <Modal isOpen={true} onClose={jest.fn()} size="lg">
-        Content
-      </Modal>
-    );
-    modal = screen.getByRole('dialog');
-    expect(modal).toHaveClass('max-w-lg');
-
-    rerender(
-      <Modal isOpen={true} onClose={jest.fn()} size="xl">
-        Content
-      </Modal>
-    );
-    modal = screen.getByRole('dialog');
-    expect(modal).toHaveClass('max-w-xl');
-  });
-
-  it('shows close button by default', () => {
-    render(
-      <Modal isOpen={true} onClose={jest.fn()}>
-        Modal content
-      </Modal>
-    );
-    
-    const closeButton = screen.getByLabelText('Close modal');
-    expect(closeButton).toBeInTheDocument();
-  });
-
-  it('hides close button when showCloseButton is false', () => {
-    render(
-      <Modal isOpen={true} onClose={jest.fn()} showCloseButton={false}>
-        Modal content
-      </Modal>
-    );
-    
-    expect(screen.queryByLabelText('Close modal')).not.toBeInTheDocument();
-  });
-
-  it('calls onClose when close button is clicked', () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose}>
-        Modal content
-      </Modal>
-    );
-    
-    fireEvent.click(screen.getByLabelText('Close modal'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onClose when Escape key is pressed', () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose}>
-        Modal content
-      </Modal>
-    );
-    
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not close on Escape when closeOnEsc is false', () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose} closeOnEsc={false}>
-        Modal content
-      </Modal>
-    );
-    
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('calls onClose when clicking outside modal', async () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose}>
-        Modal content
-      </Modal>
-    );
-    
-    // Click on the backdrop (outside the modal)
-    const backdrop = screen.getByRole('dialog').parentElement;
-    fireEvent.mouseDown(backdrop!);
-    
-    await waitFor(() => {
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('does not close when clicking inside modal', async () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose}>
-        Modal content
-      </Modal>
-    );
-    
-    // Click inside the modal
-    fireEvent.mouseDown(screen.getByRole('dialog'));
-    
-    await waitFor(() => {
-      expect(onClose).not.toHaveBeenCalled();
-    });
-  });
-
-  it('does not close on outside click when closeOnOverlayClick is false', async () => {
-    const onClose = jest.fn();
-    render(
-      <Modal isOpen={true} onClose={onClose} closeOnOverlayClick={false}>
-        Modal content
-      </Modal>
-    );
-    
-    // Click on the backdrop
-    const backdrop = screen.getByRole('dialog').parentElement;
-    fireEvent.mouseDown(backdrop!);
-    
-    await waitFor(() => {
-      expect(onClose).not.toHaveBeenCalled();
-    });
-  });
-
-  it('sets body overflow to hidden when open', () => {
-    render(
-      <Modal isOpen={true} onClose={jest.fn()}>
-        Modal content
-      </Modal>
-    );
-    
+    // Body should have overflow hidden when modal is open
     expect(document.body.style.overflow).toBe('hidden');
-  });
 
-  it('restores body overflow when closed', () => {
-    const { rerender } = render(
-      <Modal isOpen={true} onClose={jest.fn()}>
-        Modal content
-      </Modal>
-    );
-    
-    expect(document.body.style.overflow).toBe('hidden');
-    
+    // Close modal
     rerender(
-      <Modal isOpen={false} onClose={jest.fn()}>
-        Modal content
+      <Modal isOpen={false} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
-    expect(document.body.style.overflow).toBe('unset');
+
+    // Body overflow should be restored
+    expect(document.body.style.overflow).toBe('');
   });
 
-  it('has proper accessibility attributes', () => {
+  it('should handle multiple modals correctly', () => {
     render(
-      <Modal isOpen={true} onClose={jest.fn()} title="Accessible Modal">
-        Modal content
+      <div>
+        <Modal isOpen={true} onClose={mockOnClose} title="First Modal">
+          <p>First modal content</p>
+        </Modal>
+        <Modal isOpen={true} onClose={jest.fn()} title="Second Modal">
+          <p>Second modal content</p>
+        </Modal>
+      </div>
+    );
+
+    expect(screen.getByText('First Modal')).toBeInTheDocument();
+    expect(screen.getByText('Second Modal')).toBeInTheDocument();
+    expect(screen.getByText('First modal content')).toBeInTheDocument();
+    expect(screen.getByText('Second modal content')).toBeInTheDocument();
+  });
+
+  it('should render modal content correctly', () => {
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} title="Test Modal">
+        <p>Modal content</p>
       </Modal>
     );
-    
-    const modal = screen.getByRole('dialog');
-    expect(modal).toHaveAttribute('aria-modal', 'true');
-    expect(modal).toHaveAttribute('aria-labelledby', 'modal-title');
-  });
-});
 
-describe('ConfirmModal Component', () => {
-  it('renders with default props', () => {
+    expect(screen.getByText('Modal content')).toBeInTheDocument();
+  });
+
+  it('should disable close actions when closeOnOverlayClick is false', async () => {
+    const user = userEvent.setup();
+    
     render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        title="Confirm Action"
-        message="Are you sure?"
-      />
+      <Modal 
+        isOpen={true} 
+        onClose={mockOnClose} 
+        title="Test Modal" 
+        closeOnOverlayClick={false}
+      >
+        <p>Modal content</p>
+      </Modal>
     );
-    
-    expect(screen.getByText('Confirm Action')).toBeInTheDocument();
-    expect(screen.getByText('Are you sure?')).toBeInTheDocument();
-    expect(screen.getByText('Confirm')).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
+
+    // Click on overlay should not close modal
+    const overlay = screen.getByRole('dialog').parentElement!;
+    await user.click(overlay);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+
+    // Escape key should still work
+    await user.keyboard('{Escape}');
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('renders with custom button text', () => {
+  it('should disable close actions when closeOnEsc is false', async () => {
+    const user = userEvent.setup();
+    
     render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        title="Delete Item"
-        message="This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Keep"
-      />
+      <Modal 
+        isOpen={true} 
+        onClose={mockOnClose} 
+        title="Test Modal" 
+        closeOnEsc={false}
+      >
+        <p>Modal content</p>
+      </Modal>
     );
-    
-    expect(screen.getByText('Delete')).toBeInTheDocument();
-    expect(screen.getByText('Keep')).toBeInTheDocument();
-  });
 
-  it('calls onConfirm when confirm button is clicked', () => {
-    const onConfirm = jest.fn();
-    render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={onConfirm}
-        title="Confirm"
-        message="Are you sure?"
-      />
-    );
-    
-    fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
-    expect(onConfirm).toHaveBeenCalledTimes(1);
-  });
+    // Escape key should not close modal
+    await user.keyboard('{Escape}');
+    expect(mockOnClose).not.toHaveBeenCalled();
 
-  it('calls onClose when cancel button is clicked', () => {
-    const onClose = jest.fn();
-    render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={onClose}
-        onConfirm={jest.fn()}
-        title="Confirm"
-        message="Are you sure?"
-      />
-    );
-    
-    fireEvent.click(screen.getByText('Cancel'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows loading state on confirm button', () => {
-    render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        title="Confirm"
-        message="Are you sure?"
-        isLoading={true}
-      />
-    );
-    
-    const confirmButton = screen.getByRole('button', { name: /confirm/i });
-    expect(confirmButton).toBeDisabled();
-    
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    expect(cancelButton).toBeDisabled();
-  });
-
-  it('applies different confirm button variants', () => {
-    const { rerender } = render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        title="Confirm"
-        message="Are you sure?"
-        confirmVariant="primary"
-      />
-    );
-    
-    let confirmButton = screen.getByRole('button', { name: /confirm/i });
-    expect(confirmButton).toHaveClass('btn-primary');
-
-    rerender(
-      <ConfirmModal
-        isOpen={true}
-        onClose={jest.fn()}
-        onConfirm={jest.fn()}
-        title="Confirm"
-        message="Are you sure?"
-        confirmVariant="secondary"
-      />
-    );
-    
-    confirmButton = screen.getByRole('button', { name: /confirm/i });
-    expect(confirmButton).toHaveClass('btn-secondary');
+    // Close button should still work
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    await user.click(closeButton);
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 });

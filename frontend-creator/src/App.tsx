@@ -1,21 +1,25 @@
+// src/App.tsx
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
+import { HelmetProvider } from 'react-helmet-async';
+
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorProvider } from './contexts/ErrorContext';
 import { FormValidationProvider } from './contexts/FormValidationContext';
-import { GlobalErrorBoundary } from './components/error/ErrorBoundaryWrapper';
 import { LoadingStateProvider } from './components/ui/LoadingStateProvider';
-import { PageLoading } from './components/ui/LoadingStates';
-import { ToastContainer } from './components/ui/ToastContainer';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+
 import { queryClient } from './config/queryClient';
+import { ToastContainer } from './components/ui/ToastContainer';
 import { env } from './config/environment';
 import './styles/globals.css';
+
+// Import pages
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import { PageLoading } from './components/ui/LoadingStates';
 
 // Lazy-loaded pages for better performance
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
@@ -125,36 +129,54 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+function App() {
   return (
-    <GlobalErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+    // 1. QueryClientProvider: Manages all server state.
+    <QueryClientProvider client={queryClient}>
+      
+      {/* 2. ErrorProvider: Catches errors from any component below it. */}
+      <ErrorProvider>
+        
+        {/* 3. Router: Handles all application routing. */}
         <Router basename="/creator">
+          
+          {/* 4. HelmetProvider: Manages document head tags. */}
           <HelmetProvider>
-            <ErrorProvider>
-              <LoadingStateProvider
-                options={{
-                  defaultTimeout: 30000,
-                  showSlowConnectionWarning: true,
-                  slowConnectionThreshold: 5000,
-                  maxConcurrentOperations: 10,
-                }}
-              >
-                <AuthProvider>
-                  <FormValidationProvider>
-                    <AppRoutes />
-                    <ToastContainer position="top-right" />
-                  </FormValidationProvider>
-                </AuthProvider>
-              </LoadingStateProvider>
-            </ErrorProvider>
+            
+            {/* 5. LoadingStateProvider: Manages global loading indicators. */}
+            <LoadingStateProvider
+              options={{
+                defaultTimeout: 30000,
+                showSlowConnectionWarning: true,
+                slowConnectionThreshold: 5000,
+                maxConcurrentOperations: 10,
+              }}
+            >
+              
+              {/* 6. AuthProvider: Manages user authentication state. */}
+              <AuthProvider>
+                
+                {/* 7. FormValidationProvider: Manages form state. */}
+                <FormValidationProvider>
+                  
+                  {/* Main application routes are the innermost children */}
+                  <AppRoutes />
+                  
+                  {/* Global components like Toasts go here */}
+                  <ToastContainer position="top-right" />
+                  
+                </FormValidationProvider>
+              </AuthProvider>
+            </LoadingStateProvider>
           </HelmetProvider>
         </Router>
-        {/* React Query Devtools - only in development */}
-        {env.isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
-      </QueryClientProvider>
-    </GlobalErrorBoundary>
+      </ErrorProvider>
+      
+      {/* React Query Devtools for debugging in development */}
+      {env.isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
+      
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;

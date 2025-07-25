@@ -33,6 +33,17 @@ if (typeof global.WritableStream === 'undefined') {
   global.WritableStream = WritableStream;
 }
 
+// Polyfill for BroadcastChannel (needed by MSW)
+if (typeof global.BroadcastChannel === 'undefined') {
+  global.BroadcastChannel = class BroadcastChannel {
+    constructor(public name: string) {}
+    postMessage() {}
+    addEventListener() {}
+    removeEventListener() {}
+    close() {}
+  } as any;
+}
+
 // --- PHASE 2: IMPORT TESTING LIBRARIES ---
 
 import '@testing-library/jest-dom';
@@ -68,7 +79,10 @@ let server: any = null;
 const needsMSW = process.env['JEST_WORKER_ID'] !== undefined &&
   !process.argv.some(arg => arg.includes('ProtectedRoute'));
 
-if (needsMSW) {
+// Always enable MSW for E2E tests
+const isE2ETest = process.argv.some(arg => arg.includes('e2e.test'));
+
+if (needsMSW || isE2ETest) {
   try {
     const { setupServer } = require('msw/node');
     const { handlers } = require('../mocks/handlers');
