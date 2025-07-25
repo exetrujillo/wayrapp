@@ -3,36 +3,40 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import { ContentList, CourseCard } from '../components/content';
-import { PageErrorBoundary } from '../components/error/ErrorBoundaryWrapper';
+
 import { WithLoading } from '../components/ui/LoadingStateProvider';
 import { useTranslation } from 'react-i18next';
-import { useCoursesQuery, useDeleteCourseMutation, useUpdateCourseMutation } from '../hooks/useCourses';
-import { useEnhancedQuery } from '../hooks/useApiOperation';
+import { useDeleteCourseMutation, useUpdateCourseMutation } from '../hooks/useCourses';
 import { Course, PaginationParams } from '../utils/types';
+import { useQuery } from '@tanstack/react-query';
+import { courseService } from '../services/courseService';
+import { queryKeys } from '../hooks/queryKeys';
 
 const CoursesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const pageTitle = t('common.navigation.courses');
-  
+
   const [currentParams, setCurrentParams] = useState<PaginationParams>({
     page: 1,
     limit: 10,
     search: '',
   });
 
-  // Use TanStack Query for data fetching with enhanced error handling
-  const coursesQuery = useCoursesQuery(currentParams);
-  const enhancedQuery = useEnhancedQuery(coursesQuery, {
-    context: 'courses-list',
-    showErrorToast: true,
-    maxRetries: 3,
+  // --- TEMPORARY DEBUGGING CODE ---
+  // We are using the raw `useQuery` hook, bypassing any custom wrappers like `useEnhancedQuery`.
+  const { data: paginatedResponse, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.courses.lists(), // Use the standard query key
+    queryFn: () => courseService.getCourses({ page: 1, limit: 10, is_public: true }),
   });
-  
+
+  console.log('[CoursesPage Debug] Raw Query State:', { isLoading, isError, data: paginatedResponse });
+  // --- END OF TEMPORARY DEBUGGING CODE ---
+
   const deleteCourseMutation = useDeleteCourseMutation();
   const updateCourseMutation = useUpdateCourseMutation();
-  
-  const { data: coursesResponse, isLoading, error } = enhancedQuery;
+
+  const coursesResponse = paginatedResponse;
 
   const courses = coursesResponse?.data || [];
   const pagination = coursesResponse?.meta || null;
@@ -72,17 +76,17 @@ const CoursesPage: React.FC = () => {
     } else if (action === 'publish') {
       // Update courses to be public
       for (const course of selectedCourses) {
-        updateCourseMutation.mutate({ 
-          id: course.id, 
-          courseData: { isPublic: true } 
+        updateCourseMutation.mutate({
+          id: course.id,
+          courseData: { isPublic: true }
         });
       }
     } else if (action === 'unpublish') {
       // Update courses to be private
       for (const course of selectedCourses) {
-        updateCourseMutation.mutate({ 
-          id: course.id, 
-          courseData: { isPublic: false } 
+        updateCourseMutation.mutate({
+          id: course.id,
+          courseData: { isPublic: false }
         });
       }
     }
@@ -107,63 +111,61 @@ const CoursesPage: React.FC = () => {
     <>
       <PageTitle title={pageTitle} />
       <Layout title={pageTitle}>
-        <PageErrorBoundary>
-          <WithLoading
+        <WithLoading
+          isLoading={isLoading}
+          error={error}
+          onRetry={() => { }}
+          variant="page"
+          message="Loading courses..."
+          showNetworkStatus={true}
+          retryCount={0}
+          maxRetries={3}
+        >
+          <ContentList
+            title={pageTitle}
+            items={courses}
             isLoading={isLoading}
             error={error}
-            onRetry={enhancedQuery.retry}
-            variant="page"
-            message="Loading courses..."
-            showNetworkStatus={true}
-            retryCount={enhancedQuery.retryCount}
+            pagination={pagination}
+            onRefresh={() => { }}
+            onSearch={handleSearch}
+            onPageChange={handlePageChange}
+            onBulkAction={handleBulkAction}
+            renderItem={renderCourseItem}
+            retryCount={0}
             maxRetries={3}
-          >
-            <ContentList
-              title={pageTitle}
-              items={courses}
-              isLoading={isLoading}
-              error={error}
-              pagination={pagination}
-              onRefresh={enhancedQuery.refetch}
-              onSearch={handleSearch}
-              onPageChange={handlePageChange}
-              onBulkAction={handleBulkAction}
-              renderItem={renderCourseItem}
-              retryCount={enhancedQuery.retryCount}
-              maxRetries={3}
-              showSkeletonOnLoad={true}
-              skeletonCount={5}
-              createButton={{
-                label: t('creator.forms.course.create', 'Create Course'),
-                onClick: () => navigate('/courses/create'),
-              }}
-              bulkActions={[
-                {
-                  id: 'publish',
-                  label: t('creator.pages.courses.publish', 'Publish'),
-                  variant: 'primary',
-                },
-                {
-                  id: 'unpublish',
-                  label: t('creator.pages.courses.unpublish', 'Unpublish'),
-                  variant: 'outline',
-                },
-                {
-                  id: 'delete',
-                  label: t('common.buttons.delete', 'Delete'),
-                  variant: 'outline',
-                  requiresConfirmation: true,
-                },
-              ]}
-              searchPlaceholder={t('creator.pages.courses.searchPlaceholder', 'Search courses...')}
-              emptyMessage={t('creator.pages.courses.noCourses', 'No courses found. Create your first course!')}
-              emptyAction={{
-                label: t('creator.forms.course.create', 'Create Course'),
-                onClick: () => navigate('/courses/create'),
-              }}
-            />
-          </WithLoading>
-        </PageErrorBoundary>
+            showSkeletonOnLoad={true}
+            skeletonCount={5}
+            createButton={{
+              label: t('creator.forms.course.create', 'Create Course'),
+              onClick: () => navigate('/courses/create'),
+            }}
+            bulkActions={[
+              {
+                id: 'publish',
+                label: t('creator.pages.courses.publish', 'Publish'),
+                variant: 'primary',
+              },
+              {
+                id: 'unpublish',
+                label: t('creator.pages.courses.unpublish', 'Unpublish'),
+                variant: 'outline',
+              },
+              {
+                id: 'delete',
+                label: t('common.buttons.delete', 'Delete'),
+                variant: 'outline',
+                requiresConfirmation: true,
+              },
+            ]}
+            searchPlaceholder={t('creator.pages.courses.searchPlaceholder', 'Search courses...')}
+            emptyMessage={t('creator.pages.courses.noCourses', 'No courses found. Create your first course!')}
+            emptyAction={{
+              label: t('creator.forms.course.create', 'Create Course'),
+              onClick: () => navigate('/courses/create'),
+            }}
+          />
+        </WithLoading>
       </Layout>
     </>
   );
