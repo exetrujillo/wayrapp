@@ -90,9 +90,27 @@ router.get('/health/database', async (_req, res) => {
     // Get additional database metrics if available
     const dbMetrics = (prisma as any).getMetrics ? (prisma as any).getMetrics() : null;
     
+    // Get table counts for debugging
+    const tableCounts = await Promise.all([
+      prisma.course.count().catch(() => 0),
+      prisma.level.count().catch(() => 0),
+      prisma.section.count().catch(() => 0),
+      prisma.module.count().catch(() => 0),
+      prisma.lesson.count().catch(() => 0),
+      prisma.exercise.count().catch(() => 0),
+    ]);
+    
     res.json({
       ...dbHealth,
       metrics: dbMetrics,
+      tableCounts: {
+        courses: tableCounts[0],
+        levels: tableCounts[1],
+        sections: tableCounts[2],
+        modules: tableCounts[3],
+        lessons: tableCounts[4],
+        exercises: tableCounts[5],
+      },
       connectionPool: {
         limit: process.env['DB_CONNECTION_LIMIT'] || '10',
         timeout: process.env['DB_POOL_TIMEOUT'] || '10',
