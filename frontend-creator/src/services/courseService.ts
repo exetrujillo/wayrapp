@@ -38,7 +38,9 @@ class CourseService {
    */
   async getCourses(params?: PaginationParams): Promise<PaginatedResponse<Course>> {
     try {
+      console.log('CourseService.getCourses - Sending params:', params);
       const response = await apiClient.get<PaginatedResponse<Course>>(API_ENDPOINTS.COURSES.BASE, { params });
+      console.log('CourseService.getCourses - Received response:', response);
 
       // Validate response structure
       if (!response || !Array.isArray(response.data)) {
@@ -116,14 +118,23 @@ class CourseService {
 
     try {
       const transformedData = this.transformCourseToApi(courseData);
-      const response = await apiClient.post<Course>(API_ENDPOINTS.COURSES.BASE, transformedData);
+      console.log('Sending CREATE COURSE payload:', transformedData);
+      const response = await apiClient.post<any>(API_ENDPOINTS.COURSES.BASE, transformedData);
 
-      // Validate response structure
-      if (!response || !response.id) {
-        throw new Error('Invalid response from course creation API');
+      console.log('Raw API response on course creation:', response);
+
+      // The API returns a wrapped response with the course data inside a 'data' property
+      // Extract the actual course object from response.data
+      const actualCourseData = response.data || response;
+      
+      // Validate that the course data has the expected structure
+      if (actualCourseData && actualCourseData.id) {
+        return this.transformCourseFromApi(actualCourseData);
+      } else {
+        // This is the case we were hitting before
+        console.error('API response is missing expected data:', response);
+        throw new Error('Invalid response structure from course creation API');
       }
-
-      return this.transformCourseFromApi(response);
     } catch (error: any) {
       console.error('Failed to create course:', error);
 

@@ -13,6 +13,7 @@ export interface PaginationParams {
   search?: string;
   sort?: string;
   order?: 'asc' | 'desc';
+  is_public?: boolean;
 }
 
 export interface PaginatedResponse<T> {
