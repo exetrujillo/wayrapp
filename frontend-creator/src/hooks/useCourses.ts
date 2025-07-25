@@ -84,7 +84,8 @@ export const useCreateCourseMutation = () => {
   return useMutation({
     mutationFn: (courseData: CreateCourseRequest) => courseService.createCourse(courseData),
     onSuccess: (newCourse: Course) => {
-      // Invalidate and refetch courses list
+      // Invalidate and refetch courses list (both specific and general keys)
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
       
       // Add the new course to the cache

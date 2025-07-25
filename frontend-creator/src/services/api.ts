@@ -113,6 +113,9 @@ class ApiClient {
    * @returns ApiClientError with structured error information
    */
   private handleAxiosError(error: AxiosError): ApiClientError {
+    // Log detailed error information for debugging
+    console.error('AXIOS ERROR DETAILS:', error.response?.data || error.message);
+    
     // Check for network connectivity
     const isOffline = !navigator.onLine;
     

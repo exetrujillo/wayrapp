@@ -11,10 +11,10 @@ const CreateCoursePage: React.FC = () => {
   const navigate = useNavigate();
   const pageTitle = t('creator.pages.createCourse.title', 'Create Course');
 
-  const handleSuccess = (course: Course) => {
-    // Navigate to the course detail page after successful creation
-    // This ensures the user can immediately start managing the course structure
-    navigate(`/courses/${course.id}`, { 
+  const handleSuccess = (_course: Course) => {
+    // Navigate to the courses list page after successful creation
+    // This allows the user to see their new course in the list
+    navigate('/courses', { 
       replace: true,
       state: { 
         message: t('creator.pages.createCourse.successMessage', 'Course created successfully!'),

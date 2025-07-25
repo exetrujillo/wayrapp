@@ -118,15 +118,18 @@ export const EnhancedLoading: React.FC<EnhancedLoadingProps> = ({
   // Render based on variant
   switch (variant) {
     case 'page':
-      return (
-        <PageLoading
-          message={getLoadingMessage()}
-          error={error}
-          onRetry={handleRetry}
-          showNetworkStatus={showNetworkStatus}
-          className={className}
-        />
-      );
+      if (error || isLoading) {
+        return (
+          <PageLoading
+            message={getLoadingMessage()}
+            error={error}
+            onRetry={handleRetry}
+            showNetworkStatus={showNetworkStatus}
+            className={className}
+          />
+        );
+      }
+      return <>{children}</>;
 
     case 'inline':
       if (error) {

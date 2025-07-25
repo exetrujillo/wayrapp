@@ -24,7 +24,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     showCharCount = false,
     maxLength,
     minHeight = '80px',
-    value = '',
+    value,
     ...props 
   }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -66,7 +66,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       if (props.onBlur) props.onBlur(e);
     };
 
-    const currentLength = String(value).length;
+    const currentLength = String(value || '').length;
     const isNearLimit = maxLength && currentLength > maxLength * 0.8;
     const isOverLimit = maxLength && currentLength > maxLength;
 

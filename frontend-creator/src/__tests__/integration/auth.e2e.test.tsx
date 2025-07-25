@@ -1,7 +1,7 @@
 // NOTE: Replace 'AppRoutes' if your route component has a different name.
 import { render, screen, waitFor } from '../utils/test-utils';
 import userEvent from '@testing-library/user-event';
-import { AppRoutes } from '../../App'; // IMPORTANT: Adjust this import path to your main routes component
+import App from '../../App'; // IMPORTANT: Adjust this import path to your main routes component
 
 // --- IMPORTANT ---
 // We are NOT mocking any services. These tests will make REAL API calls.
@@ -13,9 +13,8 @@ describe('E2E Authentication Flow', () => {
 
         // --- Setup ---
         // We use our custom `render` which provides all necessary contexts (Auth, Query, Error, etc.).
-        // We render <AppRoutes /> INSTEAD of <App /> to avoid nested routers,
-        // as our customRender already provides a MemoryRouter.
-        render(<AppRoutes />, {
+        // We render <App /> which contains all the routing logic.
+        render(<App />, {
             initialEntries: ['/login']
         });
 
@@ -46,7 +45,7 @@ describe('E2E Authentication Flow', () => {
     it('should redirect an unauthenticated user from a protected route to the login page', async () => {
         // --- Setup ---
         // Render the routes starting at a protected path.
-        render(<AppRoutes />, {
+        render(<App />, {
             initialEntries: ['/dashboard']
         });
 

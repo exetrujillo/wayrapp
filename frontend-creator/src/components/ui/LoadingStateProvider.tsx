@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useLoadingStateManager } from '../../hooks/useLoadingStateManager';
 import { EnhancedLoading } from './EnhancedLoadingStates';
-import { ErrorBoundaryWrapper } from '../error/ErrorBoundaryWrapper';
+// import { ErrorBoundaryWrapper } from '../error/ErrorBoundaryWrapper';
 
 interface LoadingStateContextValue {
   startLoading: (message: string, options?: any) => string;
@@ -95,23 +95,21 @@ export const WithLoading: React.FC<WithLoadingProps> = ({
   maxRetries = 3,
 }) => {
   return (
-    <ErrorBoundaryWrapper level="component" context="loading-wrapper">
-      <EnhancedLoading
-        isLoading={isLoading}
-        error={error}
-        variant={variant}
-        message={message}
-        {...(onRetry && { onRetry })}
-        showNetworkStatus={showNetworkStatus}
-        showRetryButton={showRetryButton}
-        retryCount={retryCount}
-        maxRetries={maxRetries}
-        className={className}
-        skeletonCount={skeletonCount}
-      >
-        {children}
-      </EnhancedLoading>
-    </ErrorBoundaryWrapper>
+    <EnhancedLoading
+      isLoading={isLoading}
+      error={error}
+      variant={variant}
+      message={message}
+      {...(onRetry && { onRetry })}
+      showNetworkStatus={showNetworkStatus}
+      showRetryButton={showRetryButton}
+      retryCount={retryCount}
+      maxRetries={maxRetries}
+      className={className}
+      skeletonCount={skeletonCount}
+    >
+      {children}
+    </EnhancedLoading>
   );
 };
 

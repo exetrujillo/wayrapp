@@ -9,7 +9,6 @@ import { AuthContext, AuthContextType, AuthProvider } from '../../contexts/AuthC
 import { ErrorProvider } from '../../contexts/ErrorContext';
 import { FormValidationProvider } from '../../contexts/FormValidationContext';
 import { LoadingStateProvider } from '../../components/ui/LoadingStateProvider';
-import { ErrorBoundaryProvider } from '../../components/error/ErrorBoundaryProvider';
 import { User } from '../../utils/types';
 
 // A mock ToastContainer to prevent interference in tests
@@ -67,37 +66,35 @@ const AllTheProviders = ({
   const isE2ETest = expect.getState().testPath?.includes('e2e.test') || false;
 
   return (
-    <ErrorBoundaryProvider>
-      <MemoryRouter initialEntries={initialEntries}>
-        <QueryClientProvider client={testQueryClient}>
-          <HelmetProvider>
-            <I18nextProvider i18n={i18n}>
-              <ErrorProvider>
-                <LoadingStateProvider>
-                  {isE2ETest ? (
-                    // For E2E tests, use the real AuthProvider
-                    <AuthProvider>
-                      <FormValidationProvider>
-                        {children}
-                        <MockToastContainer />
-                      </FormValidationProvider>
-                    </AuthProvider>
-                  ) : (
-                    // For unit tests, use the mock AuthContext
-                    <AuthContext.Provider value={mergedAuthContextValue}>
-                      <FormValidationProvider>
-                        {children}
-                        <MockToastContainer />
-                      </FormValidationProvider>
-                    </AuthContext.Provider>
-                  )}
-                </LoadingStateProvider>
-              </ErrorProvider>
-            </I18nextProvider>
-          </HelmetProvider>
-        </QueryClientProvider>
-      </MemoryRouter>
-    </ErrorBoundaryProvider>
+    <MemoryRouter initialEntries={initialEntries}>
+      <QueryClientProvider client={testQueryClient}>
+        <HelmetProvider>
+          <I18nextProvider i18n={i18n}>
+            <ErrorProvider>
+              <LoadingStateProvider>
+                {isE2ETest ? (
+                  // For E2E tests, use the real AuthProvider
+                  <AuthProvider>
+                    <FormValidationProvider>
+                      {children}
+                      <MockToastContainer />
+                    </FormValidationProvider>
+                  </AuthProvider>
+                ) : (
+                  // For unit tests, use the mock AuthContext
+                  <AuthContext.Provider value={mergedAuthContextValue}>
+                    <FormValidationProvider>
+                      {children}
+                      <MockToastContainer />
+                    </FormValidationProvider>
+                  </AuthContext.Provider>
+                )}
+              </LoadingStateProvider>
+            </ErrorProvider>
+          </I18nextProvider>
+        </HelmetProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 };
 

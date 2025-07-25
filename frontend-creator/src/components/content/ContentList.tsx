@@ -151,18 +151,18 @@ export function ContentList<T extends { id: string }>({
     const pages = [];
     const currentPage = pagination.page;
     const totalPages = pagination.totalPages;
-    
+
     // Always show first page
     if (currentPage > 3) {
       pages.push(1);
       if (currentPage > 4) pages.push('...');
     }
-    
+
     // Show pages around current page
     for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
       pages.push(i);
     }
-    
+
     // Always show last page
     if (currentPage < totalPages - 2) {
       if (currentPage < totalPages - 3) pages.push('...');

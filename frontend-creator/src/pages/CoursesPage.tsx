@@ -25,12 +25,11 @@ const CoursesPage: React.FC = () => {
 
   // --- TEMPORARY DEBUGGING CODE ---
   // We are using the raw `useQuery` hook, bypassing any custom wrappers like `useEnhancedQuery`.
-  const { data: paginatedResponse, isLoading, isError, error } = useQuery({
+  const { data: paginatedResponse, isLoading, error } = useQuery({
     queryKey: queryKeys.courses.lists(), // Use the standard query key
     queryFn: () => courseService.getCourses({ page: 1, limit: 10 }),
   });
 
-  console.log('[CoursesPage Debug] Raw Query State:', { isLoading, isError, data: paginatedResponse });
   // --- END OF TEMPORARY DEBUGGING CODE ---
 
   const deleteCourseMutation = useDeleteCourseMutation();

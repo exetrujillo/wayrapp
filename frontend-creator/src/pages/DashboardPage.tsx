@@ -3,15 +3,20 @@ import { useTranslation } from 'react-i18next';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import { ContentDashboard } from '../components/content';
-import { courseService } from '../services/courseService';
-import { lessonService } from '../services/lessonService';
-import { exerciseService } from '../services/exerciseService';
+// TODO: Uncomment these imports when re-enabling the stats API calls
+// import { courseService } from '../services/courseService';
+// import { lessonService } from '../services/lessonService';
+// import { exerciseService } from '../services/exerciseService';
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const pageTitle = t('creator.dashboard.title', 'Creator Dashboard');
-  
-  const [stats, setStats] = useState<Array<{
+
+  // const [stats, setStats] = useState<Array<{
+  //   label: string;
+  //   value: string;
+  //   icon: React.ReactNode;
+  const [stats] = useState<Array<{
     label: string;
     value: string;
     icon: React.ReactNode;
@@ -158,6 +163,9 @@ export const DashboardPage: React.FC = () => {
 
   // Load dashboard stats
   useEffect(() => {
+    // TODO: Re-enable this when the proper /api/v1/stats endpoint is implemented.
+    // The current logic calls non-existent or incorrect endpoints causing 400 Bad Request errors.
+    /*
     const loadStats = async () => {
       try {
         const [coursesResponse, lessonsResponse, exercisesResponse] = await Promise.all([
@@ -214,8 +222,9 @@ export const DashboardPage: React.FC = () => {
     };
 
     loadStats();
+    */
   }, []);
-  
+
   return (
     <>
       <PageTitle title={pageTitle} />

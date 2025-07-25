@@ -100,6 +100,16 @@ router.get('/health/database', async (_req, res) => {
       prisma.exercise.count().catch(() => 0),
     ]);
     
+    // Get sample course data for debugging
+    const sampleCourse = await prisma.course.findFirst({
+      select: {
+        id: true,
+        name: true,
+        isPublic: true,
+        createdAt: true,
+      }
+    }).catch(() => null);
+    
     res.json({
       ...dbHealth,
       metrics: dbMetrics,
@@ -111,6 +121,7 @@ router.get('/health/database', async (_req, res) => {
         lessons: tableCounts[4],
         exercises: tableCounts[5],
       },
+      sampleCourse,
       connectionPool: {
         limit: process.env['DB_CONNECTION_LIMIT'] || '10',
         timeout: process.env['DB_POOL_TIMEOUT'] || '10',

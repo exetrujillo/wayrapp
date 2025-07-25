@@ -38,19 +38,26 @@ class CourseService {
    */
   async getCourses(params?: PaginationParams): Promise<PaginatedResponse<Course>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<Course>>(API_ENDPOINTS.COURSES.BASE, { params });
+      const response = await apiClient.get<{data: Course[], success: boolean, timestamp: string}>(API_ENDPOINTS.COURSES.BASE, { params });
 
       // Validate response structure
-      if (!response || !Array.isArray(response.data)) {
+      if (!response || !response.data || !Array.isArray(response.data)) {
         throw new Error('Invalid response format from courses API');
       }
 
       // Transform course data if needed
       const transformedData = response.data.map(course => this.transformCourseFromApi(course));
 
+      // For now, return a basic pagination structure
+      // TODO: Extract pagination info from response headers
       return {
-        ...response,
-        data: transformedData
+        data: transformedData,
+        meta: {
+          total: transformedData.length,
+          page: 1,
+          limit: 20,
+          totalPages: 1
+        }
       };
     } catch (error: any) {
       console.error('Failed to fetch courses:', error);

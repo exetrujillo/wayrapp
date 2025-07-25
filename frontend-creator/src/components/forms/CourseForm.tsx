@@ -43,6 +43,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
   });
 
   const watchedValues = watch();
+  const descriptionValue = watch('description');
 
   const onSubmit: SubmitHandler<CourseFormData> = async (data) => {
     setFeedback(null);
@@ -218,12 +219,13 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
         label={t('creator.forms.course.description', 'Description')}
         placeholder={t('creator.forms.course.descriptionPlaceholder', 'Enter course description...')}
         {...register('description')}
+        value={descriptionValue || ''}
         error={errors.description?.message || undefined}
         fullWidth
         maxLength={255}
         showCharCount
         minHeight="100px"
-        isSuccess={!!(touchedFields.description && !errors.description && watchedValues.description && watchedValues.description.trim().length > 0)}
+        isSuccess={!!(touchedFields.description && !errors.description && descriptionValue && descriptionValue.trim().length > 0)}
       />
 
       {/* Is Public */}
