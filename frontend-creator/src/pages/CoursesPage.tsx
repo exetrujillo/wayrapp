@@ -27,7 +27,7 @@ const CoursesPage: React.FC = () => {
   // We are using the raw `useQuery` hook, bypassing any custom wrappers like `useEnhancedQuery`.
   const { data: paginatedResponse, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.courses.lists(), // Use the standard query key
-    queryFn: () => courseService.getCourses({ page: 1, limit: 10, is_public: true }),
+    queryFn: () => courseService.getCourses({ page: 1, limit: 10 }),
   });
 
   console.log('[CoursesPage Debug] Raw Query State:', { isLoading, isError, data: paginatedResponse });
