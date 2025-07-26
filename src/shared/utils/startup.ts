@@ -1,8 +1,22 @@
+// src/shared/utils/startup.ts
+
 /**
- * Application Startup Utilities
- * Initialize performance optimizations, caching, and monitoring
+ * Node initialization and health check utilities for WayrApp sovereign nodes.
  * 
+ * This module provides comprehensive startup management for community-owned WayrApp nodes,
+ * handling database optimization, cache warming, health monitoring, and graceful shutdown
+ * procedures. It ensures each educational platform node starts with optimal performance
+ * configurations and maintains system health throughout its lifecycle. The StartupManager
+ * orchestrates initialization sequences, sets up periodic maintenance tasks, and provides
+ * health check capabilities essential for serverless and traditional deployment environments.
+ * 
+ * @exports {class} StartupManager - Main startup orchestration class with initialization and health management
+ * @exports {StartupManager} startupManager - Singleton instance for application-wide startup management
+ * 
+ * @fileoverview Node initialization and health check utilities for WayrApp sovereign nodes
  * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
  */
 
 import { logger } from './logger';
@@ -10,15 +24,69 @@ import { cacheService, CACHE_KEYS } from './cache';
 import { DatabaseOptimizer } from '@/shared/database/optimization';
 import { prisma } from '@/shared/database/connection';
 
+/**
+ * Main startup orchestration class for WayrApp sovereign nodes.
+ * 
+ * Manages the complete initialization lifecycle of a community-owned educational platform node,
+ * including database optimization, cache warming, health monitoring, and graceful shutdown.
+ * This class ensures optimal performance from startup and maintains system health through
+ * automated maintenance tasks.
+ * 
+ * @example
+ * // Basic usage with singleton instance
+ * import { startupManager } from '@/shared/utils/startup';
+ * 
+ * // Initialize the application
+ * await startupManager.initialize();
+ * 
+ * // Check system health
+ * const isHealthy = await startupManager.healthCheck();
+ * if (!isHealthy) {
+ *   console.error('System health check failed');
+ *   process.exit(1);
+ * }
+ * 
+ * // Graceful shutdown
+ * await startupManager.shutdown();
+ * 
+ * @example
+ * // Custom instance usage
+ * const customStartup = new StartupManager();
+ * await customStartup.initialize();
+ */
 export class StartupManager {
   private dbOptimizer: DatabaseOptimizer;
 
+  /**
+   * Creates a new StartupManager instance.
+   * 
+   * Initializes the database optimizer with the Prisma client connection.
+   * The constructor sets up the foundation for all startup operations but
+   * does not perform any initialization tasks - call initialize() for that.
+   */
   constructor() {
     this.dbOptimizer = new DatabaseOptimizer(prisma);
   }
 
   /**
-   * Initialize all performance optimizations
+   * Initialize all performance optimizations and startup procedures.
+   * 
+   * Orchestrates the complete startup sequence including database optimization,
+   * cache warming, and maintenance task setup. This method should be called
+   * during application startup to ensure optimal performance from the beginning.
+   * 
+   * @returns {Promise<void>} Promise that resolves when initialization is complete
+   * @throws {Error} Throws if critical initialization steps fail
+   * 
+   * @example
+   * // Initialize during application startup
+   * try {
+   *   await startupManager.initialize();
+   *   console.log('Application ready to serve requests');
+   * } catch (error) {
+   *   console.error('Startup failed:', error);
+   *   process.exit(1);
+   * }
    */
   async initialize(): Promise<void> {
     logger.info('Starting application initialization...');
@@ -88,7 +156,7 @@ export class StartupManager {
         },
         ttl: 30 * 60 * 1000, // 30 minutes
       },
-      
+
       // System health check data
       {
         key: CACHE_KEYS.HEALTH_CHECK(),
@@ -154,8 +222,8 @@ export class StartupManager {
         const analysis = await this.dbOptimizer.runPerformanceAnalysis();
         logger.info('Periodic performance analysis completed', {
           databaseSize: analysis.database_info?.database?.[0]?.database_size,
-          tableCount: Array.isArray(analysis.database_info?.tables) 
-            ? analysis.database_info.tables.length 
+          tableCount: Array.isArray(analysis.database_info?.tables)
+            ? analysis.database_info.tables.length
             : 0,
         });
       } catch (error) {
@@ -181,7 +249,21 @@ export class StartupManager {
   }
 
   /**
-   * Graceful shutdown cleanup
+   * Graceful shutdown cleanup for application termination.
+   * 
+   * Performs orderly cleanup of resources including cache clearing and database
+   * disconnection. This method should be called during application shutdown to
+   * ensure proper resource cleanup and prevent data corruption.
+   * 
+   * @returns {Promise<void>} Promise that resolves when shutdown is complete
+   * 
+   * @example
+   * // Handle graceful shutdown on SIGTERM
+   * process.on('SIGTERM', async () => {
+   *   console.log('Received SIGTERM, shutting down gracefully...');
+   *   await startupManager.shutdown();
+   *   process.exit(0);
+   * });
    */
   async shutdown(): Promise<void> {
     logger.info('Starting graceful shutdown...');
@@ -200,23 +282,46 @@ export class StartupManager {
   }
 
   /**
-   * Health check for startup readiness
+   * Health check for startup readiness and system status verification.
+   * 
+   * Performs comprehensive health checks including database connectivity and
+   * cache functionality tests. This method is essential for determining if
+   * the application is ready to serve requests and for monitoring system health.
+   * 
+   * @returns {Promise<boolean>} Promise that resolves to true if all health checks pass, false otherwise
+   * 
+   * @example
+   * // Verify system health before starting server
+   * const isHealthy = await startupManager.healthCheck();
+   * if (!isHealthy) {
+   *   logger.error('Health check failed, aborting startup');
+   *   process.exit(1);
+   * }
+   * 
+   * @example
+   * // Periodic health monitoring
+   * setInterval(async () => {
+   *   const healthy = await startupManager.healthCheck();
+   *   if (!healthy) {
+   *     logger.warn('Health check failed during runtime');
+   *   }
+   * }, 60000); // Check every minute
    */
   async healthCheck(): Promise<boolean> {
     try {
       // Test database connection
       await prisma.$queryRaw`SELECT 1`;
-      
+
       // Test cache functionality
       await cacheService.set('startup_test', 'ok', 1000);
       const testValue = await cacheService.get('startup_test');
-      
+
       if (testValue !== 'ok') {
         throw new Error('Cache test failed');
       }
 
       await cacheService.delete('startup_test');
-      
+
       return true;
     } catch (error) {
       logger.error('Startup health check failed', { error });
@@ -225,7 +330,28 @@ export class StartupManager {
   }
 }
 
-// Singleton instance
+/**
+ * Singleton instance of StartupManager for application-wide startup management.
+ * 
+ * Pre-configured StartupManager instance that should be used throughout the application
+ * for consistent startup behavior. This singleton ensures that initialization, health
+ * checks, and shutdown procedures are coordinated across the entire application.
+ * 
+ * @type {StartupManager}
+ * 
+ * @example
+ * // Import and use the singleton instance
+ * import { startupManager } from '@/shared/utils/startup';
+ * 
+ * // Application startup
+ * await startupManager.initialize();
+ * 
+ * // Health monitoring
+ * const isHealthy = await startupManager.healthCheck();
+ * 
+ * // Graceful shutdown
+ * await startupManager.shutdown();
+ */
 export const startupManager = new StartupManager();
 
 // Graceful shutdown handlers

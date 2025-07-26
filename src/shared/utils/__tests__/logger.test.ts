@@ -1,184 +1,254 @@
+// src/shared/utils/__tests__/logger.test.ts
+
 /**
- * Logger Utility Tests
+ * Test suite for the logger utility module, covering environment-aware logging configuration and Winston integration.
+ * 
+ * These tests verify that the logger correctly adapts to different deployment environments (serverless vs traditional),
+ * properly configures Winston transports, handles log levels appropriately, and manages file system operations safely.
+ * The test suite validates the core logging functionality, environment detection logic, directory creation behavior,
+ * and ensures the logger exports are correctly structured for both named and default imports.
+ * 
+ * @fileoverview Unit tests for logger.ts - environment-aware logging utility
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
  */
-import { mockLogger } from '@/shared/test/utils/testUtils';
-import winston from 'winston';
+
+// Mock fs module
+const mockFs = {
+  existsSync: jest.fn(),
+  mkdirSync: jest.fn(),
+};
+jest.mock('fs', () => mockFs);
 
 // Mock winston
-jest.mock('winston', () => {
-  const mockFormat = {
+const mockWinston = {
+  format: {
     combine: jest.fn().mockReturnThis(),
     timestamp: jest.fn().mockReturnThis(),
     printf: jest.fn().mockReturnThis(),
     colorize: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
-  };
-  
-  const mockTransport = jest.fn();
-  
-  const mockLoggerInstance = {
+    simple: jest.fn().mockReturnThis(),
+  },
+  transports: {
+    Console: jest.fn(),
+    File: jest.fn(),
+  },
+  createLogger: jest.fn().mockReturnValue({
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
-  };
-  
-  return {
-    format: mockFormat,
-    transports: {
-      Console: mockTransport,
-      File: mockTransport,
-    },
-    createLogger: jest.fn().mockReturnValue(mockLoggerInstance),
-  };
-});
-
-// Mock the logger module
-jest.mock('../logger', () => {
-  const mockLoggerInstance = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  };
-  
-  return {
-    logger: mockLoggerInstance,
-    configureLogger: jest.fn(),
-  };
-});
+    http: jest.fn(),
+  }),
+  addColors: jest.fn(),
+};
+jest.mock('winston', () => mockWinston);
 
 describe('Logger Utility', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules();
+    // Reset environment variables
+    process.env = { ...originalEnv };
+    delete process.env['VERCEL'];
+    delete process.env['AWS_LAMBDA_FUNCTION_NAME'];
+    delete process.env['NETLIFY'];
+    delete process.env['LOG_LEVEL'];
   });
-  
-  describe('logger', () => {
-    it('should expose logging methods', () => {
-      // Import the mocked logger
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  describe('logger exports', () => {
+    it('should expose all required logging methods', () => {
+      // Import the logger after mocking
       const { logger } = require('../logger');
-      
-      // Assert
+
+      // Assert all log levels are available
       expect(logger.info).toBeDefined();
       expect(logger.warn).toBeDefined();
       expect(logger.error).toBeDefined();
       expect(logger.debug).toBeDefined();
+      expect(logger.http).toBeDefined();
     });
-    
-    it('should log messages with correct level', () => {
-      // Arrange
-      const { logger: mockLoggerInstance } = mockLogger();
-      
-      // Act
-      mockLoggerInstance.info('Info message', { context: 'test' });
-      mockLoggerInstance.warn('Warning message');
-      mockLoggerInstance.error('Error message', new Error('Test error'));
-      mockLoggerInstance.debug('Debug message');
-      
-      // Assert
-      expect(mockLoggerInstance.info).toHaveBeenCalledWith('Info message', { context: 'test' });
-      expect(mockLoggerInstance.warn).toHaveBeenCalledWith('Warning message');
-      expect(mockLoggerInstance.error).toHaveBeenCalledWith('Error message', new Error('Test error'));
-      expect(mockLoggerInstance.debug).toHaveBeenCalledWith('Debug message');
+
+    it('should provide both named and default exports', () => {
+      const loggerModule = require('../logger');
+
+      // Assert both export patterns work
+      expect(loggerModule.logger).toBeDefined();
+      expect(loggerModule.default).toBeDefined();
+      expect(loggerModule.logger).toBe(loggerModule.default);
     });
   });
-  
-  describe('configureLogger', () => {
-    const originalNodeEnv = process.env['NODE_ENV'];
-    
-    afterEach(() => {
-      process.env['NODE_ENV'] = originalNodeEnv;
+
+  describe('winston configuration', () => {
+    it('should configure winston with colors', () => {
+      // Import to trigger winston setup
+      require('../logger');
+
+      // Assert winston.addColors was called
+      expect(mockWinston.addColors).toHaveBeenCalledWith({
+        error: "red",
+        warn: "yellow",
+        info: "green",
+        http: "magenta",
+        debug: "white",
+      });
     });
-    
-    it('should configure logger with development settings', () => {
-      // Arrange
-      process.env['NODE_ENV'] = 'development';
-      
-      // Act
-      configureLogger();
-      
-      // Assert
-      expect(winston.createLogger).toHaveBeenCalled();
-      expect(winston.format.combine).toHaveBeenCalled();
-      expect(winston.format.timestamp).toHaveBeenCalled();
-      expect(winston.format.colorize).toHaveBeenCalled();
-      expect(winston.transports.Console).toHaveBeenCalled();
+
+    it('should create logger with correct configuration', () => {
+      // Import to trigger winston setup
+      require('../logger');
+
+      // Assert winston.createLogger was called with expected config
+      expect(mockWinston.createLogger).toHaveBeenCalledWith({
+        level: "info", // default when LOG_LEVEL not set
+        levels: {
+          error: 0,
+          warn: 1,
+          info: 2,
+          http: 3,
+          debug: 4,
+        },
+        format: expect.any(Object),
+        transports: expect.any(Array),
+        exitOnError: false,
+      });
     });
-    
-    it('should configure logger with production settings', () => {
+
+    it('should respect LOG_LEVEL environment variable', () => {
       // Arrange
-      process.env['NODE_ENV'] = 'production';
-      
+      process.env['LOG_LEVEL'] = 'debug';
+
       // Act
-      configureLogger();
-      
+      require('../logger');
+
       // Assert
-      expect(winston.createLogger).toHaveBeenCalled();
-      expect(winston.format.combine).toHaveBeenCalled();
-      expect(winston.format.timestamp).toHaveBeenCalled();
-      expect(winston.format.json).toHaveBeenCalled();
-      expect(winston.transports.Console).toHaveBeenCalled();
-      expect(winston.transports.File).toHaveBeenCalledWith({ filename: 'error.log', level: 'error' });
-      expect(winston.transports.File).toHaveBeenCalledWith({ filename: 'combined.log' });
+      expect(mockWinston.createLogger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'debug'
+        })
+      );
     });
-    
-    it('should configure logger with test settings', () => {
+  });
+
+  describe('environment detection', () => {
+    it('should detect Vercel serverless environment', () => {
       // Arrange
-      process.env['NODE_ENV'] = 'test';
-      
+      process.env['VERCEL'] = '1';
+
       // Act
-      configureLogger();
-      
+      require('../logger');
+
+      // Assert - should only have console transport (no file transports)
+      expect(mockWinston.transports.Console).toHaveBeenCalled();
+      expect(mockWinston.transports.File).not.toHaveBeenCalled();
+    });
+
+    it('should detect AWS Lambda serverless environment', () => {
+      // Arrange
+      process.env['AWS_LAMBDA_FUNCTION_NAME'] = 'my-function';
+
+      // Act
+      require('../logger');
+
+      // Assert - should only have console transport
+      expect(mockWinston.transports.Console).toHaveBeenCalled();
+      expect(mockWinston.transports.File).not.toHaveBeenCalled();
+    });
+
+    it('should detect Netlify serverless environment', () => {
+      // Arrange
+      process.env['NETLIFY'] = 'true';
+
+      // Act
+      require('../logger');
+
+      // Assert - should only have console transport
+      expect(mockWinston.transports.Console).toHaveBeenCalled();
+      expect(mockWinston.transports.File).not.toHaveBeenCalled();
+    });
+
+    it('should configure file transports in traditional server environment', () => {
+      // Act
+      require('../logger');
+
+      // Assert - should have console + file transports
+      expect(mockWinston.transports.Console).toHaveBeenCalled();
+      expect(mockWinston.transports.File).toHaveBeenCalledWith({
+        filename: "logs/error.log",
+        level: "error",
+        format: expect.any(Object),
+      });
+      expect(mockWinston.transports.File).toHaveBeenCalledWith({
+        filename: "logs/combined.log",
+        format: expect.any(Object),
+      });
+    });
+  });
+
+  describe('directory creation', () => {
+    it('should create logs directory when it does not exist in traditional environment', () => {
+      // Arrange
+      mockFs.existsSync.mockReturnValue(false);
+
+      // Act
+      require('../logger');
+
       // Assert
-      expect(winston.createLogger).toHaveBeenCalled();
-      // In test mode, we might want to silence logs or use a different transport
+      expect(mockFs.existsSync).toHaveBeenCalledWith('logs');
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith('logs');
+    });
+
+    it('should not create logs directory when it already exists', () => {
+      // Arrange
+      mockFs.existsSync.mockReturnValue(true);
+
+      // Act
+      require('../logger');
+
+      // Assert
+      expect(mockFs.existsSync).toHaveBeenCalledWith('logs');
+      expect(mockFs.mkdirSync).not.toHaveBeenCalled();
+    });
+
+    it('should not attempt directory creation in serverless environment', () => {
+      // Arrange
+      process.env['VERCEL'] = '1';
+
+      // Act
+      require('../logger');
+
+      // Assert
+      expect(mockFs.existsSync).not.toHaveBeenCalled();
+      expect(mockFs.mkdirSync).not.toHaveBeenCalled();
+    });
+
+    it('should handle directory creation errors gracefully', () => {
+      // Arrange
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.mkdirSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      // Act & Assert - should not throw
+      expect(() => require('../logger')).not.toThrow();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Could not create logs directory:',
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });
 
-// Mock implementation of configureLogger function
-function configureLogger() {
-  const env = process.env['NODE_ENV'] || 'development';
-  
-  const transports: any[] = [];
-  
-  if (env === 'production') {
-    // Production: JSON format with file transports
-    transports.push(
-      new winston.transports.Console(),
-      new winston.transports.File({ filename: 'error.log', level: 'error' }),
-      new winston.transports.File({ filename: 'combined.log' })
-    );
-    
-    winston.createLogger({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
-      transports
-    });
-  } else if (env === 'development') {
-    // Development: Colorized console output
-    transports.push(new winston.transports.Console());
-    
-    winston.createLogger({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.colorize(),
-        winston.format.printf(({ timestamp, level, message }) => {
-          return `${timestamp} [${level}]: ${message}`;
-        })
-      ),
-      transports
-    });
-  } else {
-    // Test: Silent or minimal logging
-    winston.createLogger({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
-      transports: []
-    });
-  }
-}
+

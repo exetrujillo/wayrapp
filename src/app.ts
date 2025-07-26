@@ -110,7 +110,7 @@ import healthRoutes from "@/shared/routes/healthRoutes";
 app.use(healthRoutes);
 
 // Import routes
-import authRoutes from "@/modules/users/routes/authRoutes";
+import { createAuthRoutes } from "@/modules/users/routes/authRoutes";
 import userRoutes from "@/modules/users/routes/userRoutes";
 import {
   createContentRoutes,
@@ -119,6 +119,24 @@ import {
 } from "@/modules/content/routes";
 import { createProgressRoutes } from "@/modules/progress/routes/progressRoutes";
 import { prisma } from "@/shared/database/connection";
+
+// Import dependencies for DI container
+import { PrismaClient } from '@prisma/client';
+import { AuthController } from '@/modules/users/controllers/authController';
+import { UserService } from '@/modules/users/services/userService';
+import { UserRepository } from '@/modules/users/repositories/userRepository';
+import { TokenBlacklistService } from '@/modules/users/services/tokenBlacklistService';
+
+// --- DEPENDENCY INJECTION CONTAINER ---
+const prismaClient = new PrismaClient();
+
+// User Module Dependencies
+const userRepository = new UserRepository(prismaClient);
+const tokenBlacklistService = new TokenBlacklistService(prismaClient);
+const userService = new UserService(userRepository);
+const authController = new AuthController(userService, tokenBlacklistService);
+
+// ... (Instantiate other modules' dependencies here in the future)
 
 // API versioning configuration
 const API_VERSION = "v1";
@@ -622,7 +640,7 @@ app.get("/api/docs", (_req, res) => {
 
 // Versioned API routes
 // Authentication routes
-app.use(`${API_BASE}/auth`, authRoutes);
+app.use(`${API_BASE}/auth`, createAuthRoutes(authController));
 
 // User routes
 app.use(`${API_BASE}/users`, userRoutes);

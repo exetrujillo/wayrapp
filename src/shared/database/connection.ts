@@ -31,6 +31,10 @@
  * The robust design ensures that each community's educational platform can operate
  * independently and reliably, regardless of other nodes' status or existence.
  * 
+ * @exports {PrismaClient} prisma - Configured Prisma client singleton for database operations
+ * @exports {PrismaClient} default - Default export of the Prisma client singleton
+ * 
+ * @fileoverview Database connection manager for WayrApp sovereign nodes
  * @author Exequiel Trujillo
  * @version 1.0.0
  * @since 1.0.0

@@ -45,6 +45,11 @@
  * tasks, ensuring each community's educational platform maintains optimal performance
  * throughout its lifecycle.
  *
+ * @exports {class} DatabaseOptimizer - Main database optimization class with performance tuning methods
+ * @exports {function} monitorQuery - Decorator for monitoring database query performance
+ * @exports {class} BatchOperations - Utility class for optimized bulk database operations
+ * 
+ * @fileoverview Database optimization utilities for WayrApp sovereign nodes
  * @author Exequiel Trujillo
  * @version 1.0.0
  * @since 1.0.0
@@ -78,6 +83,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { logger } from '@/shared/utils/logger';
+import { TokenBlacklistService } from '@/modules/users/services/tokenBlacklistService';
 
 /**
  * Database Optimizer for Sovereign WayrApp Nodes
@@ -93,7 +99,11 @@ import { logger } from '@/shared/utils/logger';
  * @class DatabaseOptimizer
  */
 export class DatabaseOptimizer {
-  constructor(private prisma: PrismaClient) { }
+  private tokenBlacklistService: TokenBlacklistService;
+
+  constructor(private prisma: PrismaClient) {
+    this.tokenBlacklistService = new TokenBlacklistService(this.prisma);
+  }
 
   /**
    * Create Performance Indexes for Educational Platform Queries
@@ -368,16 +378,10 @@ export class DatabaseOptimizer {
     logger.info('Starting expired data cleanup...');
 
     try {
-      // Clean up expired revoked tokens
-      const expiredTokens = await this.prisma.revokedToken.deleteMany({
-        where: {
-          expiresAt: {
-            lt: new Date(),
-          },
-        },
-      });
-
-      logger.info(`Cleaned up ${expiredTokens.count} expired tokens`);
+      // Clean up expired revoked tokens using the dedicated service
+      logger.info('Cleaning up expired revoked tokens...');
+      const cleanedTokensCount = await this.tokenBlacklistService.cleanupExpiredTokens();
+      logger.info(`Token cleanup complete. Removed ${cleanedTokensCount} tokens.`);
 
       // Clean up old lesson completions (older than 2 years) to keep table size manageable
       const twoYearsAgo = new Date();

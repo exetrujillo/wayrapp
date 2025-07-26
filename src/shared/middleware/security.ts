@@ -24,6 +24,15 @@ import { ErrorCodes, HttpStatus } from '@/shared/types';
  * making it suitable for both monolithic deployments and distributed microservice architectures
  * where different nodes may require different security configurations.
  * 
+ * @exports {object} corsOptions - CORS configuration with environment-based origin validation
+ * @exports {function} createRateLimiter - Factory function for creating custom rate limiters
+ * @exports {function} defaultRateLimiter - General purpose rate limiting middleware
+ * @exports {function} authRateLimiter - Authentication-specific rate limiting middleware
+ * @exports {object} helmetOptions - Security headers configuration for Helmet.js
+ * @exports {function} sanitizeInput - Input sanitization middleware for removing malicious content
+ * @exports {function} securityHeaders - Custom security headers middleware
+ * @exports {function} requestSizeLimiter - Request size validation and limiting middleware
+ * 
  * @fileoverview Security hardening middleware for Express.js applications
  * @author Exequiel Trujillo
  * @version 1.0.0

@@ -6,6 +6,9 @@
  * This module provides comprehensive database connectivity testing and schema verification
  * specifically designed for community-owned WayrApp educational platform deployments.
  * 
+ * @exports {function} testDatabaseConnection - Comprehensive database connectivity test function
+ * 
+ * @fileoverview Database connection test utility for WayrApp sovereign nodes
  * @author Exequiel Trujillo
  * @version 1.0.0
  * @since 1.0.0

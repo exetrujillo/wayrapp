@@ -3,7 +3,7 @@
 /**
  * Security Middleware Test Suite
  * 
- * Comprehensive test suite for the security middleware components that form the foundation
+ * Test suite for the security middleware components that form the foundation
  * of the WayrApp backend security infrastructure. This test suite validates all security
  * middleware functions including CORS configuration, rate limiting, input sanitization,
  * security headers, and request size validation.

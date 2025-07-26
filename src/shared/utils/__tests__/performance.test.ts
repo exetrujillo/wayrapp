@@ -1,6 +1,33 @@
+// src/shared/utils/__tests__/performance.test.ts
+
 /**
- * Performance Monitoring Tests
- * Test suite for performance monitoring utilities
+ * Test suite for the performance monitoring and system health utilities.
+ * 
+ * This test suite validates the complete functionality of the WayrApp performance monitoring
+ * infrastructure, including request tracking, system health checks, database query optimization,
+ * and cache performance monitoring. The tests ensure that all performance metrics are accurately
+ * calculated, health checks properly assess system component status, and optimization
+ * recommendations are generated based on realistic performance thresholds.
+ * 
+ * The testing strategy covers both unit tests for individual components and integration tests
+ * for the complete performance monitoring workflow. Key aspects validated include:
+ * - HTTP request performance tracking with response time and error rate calculations
+ * - System resource monitoring (memory, CPU, uptime) with proper metric collection
+ * - Database connectivity health checks with latency measurement and error handling
+ * - Cache performance analysis with hit rate and size threshold evaluation
+ * - Query optimization suggestions for N+1 prevention and pagination improvements
+ * - Express middleware integration for automatic request tracking
+ * - Comprehensive performance report generation with actionable recommendations
+ * 
+ * Mock strategies are employed for external dependencies (database, logger) to ensure
+ * isolated testing while maintaining realistic behavior patterns. The cache service
+ * integration tests validate real cache operations including LRU eviction, pattern-based
+ * invalidation, and warm-up functionality.
+ * 
+ * @fileoverview Unit and integration tests for performance monitoring utilities
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
  */
 
 import { performanceMonitor, healthChecks, QueryOptimizer } from '../performance';
@@ -15,13 +42,34 @@ jest.mock('@/shared/database/connection', () => ({
 }));
 jest.mock('../logger');
 
+/**
+ * Test suite for core performance monitoring functionality.
+ * 
+ * Validates the PerformanceMonitor class, health check utilities, query optimization,
+ * and Express middleware integration. Tests cover request tracking accuracy, system
+ * metrics collection, health status assessment, and performance recommendation generation.
+ * 
+ * @group PerformanceMonitoring
+ */
 describe('Performance Monitoring', () => {
   beforeEach(() => {
     performanceMonitor.resetMetrics();
     jest.clearAllMocks();
   });
 
+  /**
+   * Tests for the PerformanceMonitor class functionality.
+   * 
+   * Validates request tracking, metrics calculation, system resource monitoring,
+   * and performance report generation with recommendations.
+   */
   describe('PerformanceMonitor', () => {
+    /**
+     * Validates accurate request metrics tracking and calculation.
+     * 
+     * Tests request counting, average response time calculation, slow request detection,
+     * error rate calculation, and peak/fastest response time tracking.
+     */
     it('should track request metrics correctly', () => {
       // Track some requests
       performanceMonitor.trackRequest(100, false);
@@ -49,6 +97,12 @@ describe('Performance Monitoring', () => {
       expect(typeof metrics.uptime).toBe('number');
     });
 
+    /**
+     * Validates comprehensive performance report generation.
+     * 
+     * Tests aggregation of system metrics, request metrics, database health,
+     * cache statistics, and recommendation generation into a unified report.
+     */
     it('should generate performance report', async () => {
       // Mock prisma query
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
@@ -63,6 +117,12 @@ describe('Performance Monitoring', () => {
       expect(Array.isArray(report.recommendations)).toBe(true);
     });
 
+    /**
+     * Validates intelligent performance recommendation generation.
+     * 
+     * Tests that performance recommendations are generated based on realistic
+     * thresholds for response times, error rates, and slow request patterns.
+     */
     it('should generate recommendations based on metrics', async () => {
       // Track slow requests to trigger recommendations
       for (let i = 0; i < 10; i++) {
@@ -76,6 +136,12 @@ describe('Performance Monitoring', () => {
     });
   });
 
+  /**
+   * Tests for system health check utilities.
+   * 
+   * Validates database connectivity checks, cache performance assessment,
+   * memory usage monitoring, and comprehensive system health evaluation.
+   */
   describe('Health Checks', () => {
     it('should check database health', async () => {
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
@@ -116,6 +182,12 @@ describe('Performance Monitoring', () => {
       expect(health.usage).toHaveProperty('heapTotalMB');
     });
 
+    /**
+     * Validates comprehensive system health assessment.
+     * 
+     * Tests aggregation of database, cache, and memory health checks into
+     * an overall system health status suitable for monitoring dashboards.
+     */
     it('should check overall system health', async () => {
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
 
@@ -130,6 +202,12 @@ describe('Performance Monitoring', () => {
     });
   });
 
+  /**
+   * Tests for database query optimization utilities.
+   * 
+   * Validates query analysis for N+1 prevention, pagination optimization,
+   * and index suggestion generation based on query patterns.
+   */
   describe('Query Optimizer', () => {
     it('should analyze queries and provide suggestions', () => {
       const suggestions = QueryOptimizer.analyzeQuery('User', 'findMany', {});
@@ -146,6 +224,12 @@ describe('Performance Monitoring', () => {
       expect(suggestions.some(s => s.includes('cursor-based pagination'))).toBe(true);
     });
 
+    /**
+     * Validates database index suggestion generation.
+     * 
+     * Tests analysis of query patterns to identify frequently used fields
+     * and generate specific index recommendations for performance optimization.
+     */
     it('should suggest indexes based on query patterns', () => {
       const queryLog = [
         { model: 'User', operation: 'findMany', args: { where: { email: 'test@example.com' } } },
@@ -162,7 +246,19 @@ describe('Performance Monitoring', () => {
     });
   });
 
+  /**
+   * Tests for Express middleware integration.
+   * 
+   * Validates automatic request tracking, response time measurement,
+   * and error detection through Express middleware.
+   */
   describe('Performance Middleware', () => {
+    /**
+     * Validates Express middleware integration for automatic request tracking.
+     * 
+     * Tests that the performance middleware correctly measures response times
+     * and updates metrics when HTTP requests complete.
+     */
     it('should track request performance', (done) => {
       const { performanceMiddleware } = require('../performance');
       const middleware = performanceMiddleware(performanceMonitor);
@@ -174,7 +270,7 @@ describe('Performance Monitoring', () => {
             // Simulate response finish after 100ms
             setTimeout(() => {
               callback();
-              
+
               // Check that metrics were updated
               const metrics = performanceMonitor.getRequestMetrics();
               expect(metrics.totalRequests).toBe(1);
@@ -192,6 +288,15 @@ describe('Performance Monitoring', () => {
   });
 });
 
+/**
+ * Integration tests for cache service performance monitoring.
+ * 
+ * Validates cache statistics tracking, hit rate calculation, warm-up functionality,
+ * pattern-based invalidation, and LRU eviction behavior. These tests use the actual
+ * cache service to ensure realistic performance characteristics.
+ * 
+ * @group CachePerformance
+ */
 describe('Cache Service Performance', () => {
   beforeEach(async () => {
     await cacheService.clear();
@@ -201,11 +306,11 @@ describe('Cache Service Performance', () => {
     // Add some cache entries
     await cacheService.set('test1', 'value1');
     await cacheService.set('test2', 'value2');
-    
+
     // Access one entry to increase hit count
     await cacheService.get('test1');
     await cacheService.get('test1');
-    
+
     // Try to access non-existent entry to increase miss count
     await cacheService.get('nonexistent');
 
@@ -247,14 +352,20 @@ describe('Cache Service Performance', () => {
     const invalidated = await cacheService.invalidatePattern('^user:');
 
     expect(invalidated).toBe(2);
-    
+
     const user1 = await cacheService.get('user:1');
     const course1 = await cacheService.get('course:1');
-    
+
     expect(user1).toBeNull();
     expect(course1).toBe('course1');
   });
 
+  /**
+   * Validates LRU (Least Recently Used) cache eviction behavior.
+   * 
+   * Tests that the cache properly evicts least recently used items when
+   * capacity is reached, maintaining performance under memory constraints.
+   */
   it('should perform LRU eviction when cache is full', async () => {
     // Set a small cache size for testing
     const originalMaxSize = (cacheService as any).maxSize;
@@ -282,7 +393,7 @@ describe('Cache Service Performance', () => {
       // At least one item should be evicted and item4 should exist
       expect(item4).toBe('value4'); // Should exist (newly added)
       expect(item1).toBe('value1'); // Should still exist (recently accessed)
-      
+
       // Either item2 or item3 should be evicted (the one that was least recently used)
       const evictedCount = [item2, item3].filter(item => item === null).length;
       expect(evictedCount).toBe(1);

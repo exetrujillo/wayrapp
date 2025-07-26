@@ -1,6 +1,24 @@
+// src/modules/users/controllers/authController.ts
+
 /**
- * Authentication Controller
- * Handles user authentication endpoints: login, refresh, logout
+ * Authentication Controller Module
+ * 
+ * This module provides comprehensive user authentication functionality for the WayrApp platform.
+ * It serves as the primary controller layer for all authentication-related HTTP endpoints,
+ * handling user registration, login, token refresh, logout, and user profile retrieval operations.
+ * The controller integrates with the UserService for user management, TokenBlacklistService for
+ * security token management, and implements robust validation, error handling, and security measures.
+ * 
+ * @exports {class} AuthController - Main authentication controller class with all endpoint handlers
+ * @exports {interface} LoginRequest - Type definition for login request payload
+ * @exports {interface} RefreshTokenRequest - Type definition for refresh token request payload  
+ * @exports {interface} RegisterRequest - Type definition for user registration request payload
+ * @exports {interface} AuthResponse - Type definition for authentication response structure
+ * 
+ * @fileoverview Handles all authentication endpoints including registration, login, token refresh, logout, and user profile retrieval
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
  */
 
 import { Request, Response } from 'express';
@@ -14,6 +32,7 @@ import {
 } from '@/shared/utils/auth';
 import { logger } from '@/shared/utils/logger';
 import { UserService } from '../services/userService';
+import { CreateUserDto } from '../types';
 
 // Validation schemas
 const LoginSchema = z.object({
@@ -38,15 +57,35 @@ const RegisterSchema = z.object({
   profile_picture_url: z.string().url('Invalid URL format').optional()
 });
 
+/**
+ * Login request payload interface
+ * @interface LoginRequest
+ * @property {string} email - User's email address (must be valid email format)
+ * @property {string} password - User's password (minimum 1 character required)
+ */
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
+/**
+ * Refresh token request payload interface
+ * @interface RefreshTokenRequest
+ * @property {string} refreshToken - JWT refresh token for generating new access tokens
+ */
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+/**
+ * User registration request payload interface
+ * @interface RegisterRequest
+ * @property {string} email - User's email address (must be valid email format)
+ * @property {string} password - User's password (must meet security requirements: 8+ chars, uppercase, lowercase, number, special char)
+ * @property {string} [username] - Optional username (minimum 3 characters)
+ * @property {string} [country_code] - Optional ISO 3166-1 alpha-2 country code (exactly 2 characters)
+ * @property {string} [profile_picture_url] - Optional profile picture URL (must be valid URL format)
+ */
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -55,6 +94,18 @@ export interface RegisterRequest {
   profile_picture_url?: string;
 }
 
+/**
+ * Authentication response interface containing user data and JWT tokens
+ * @interface AuthResponse
+ * @property {Object} user - User information object
+ * @property {string} user.id - Unique user identifier (UUID)
+ * @property {string} user.email - User's email address
+ * @property {string} [user.username] - User's display name (optional)
+ * @property {string} user.role - User's role in the system (e.g., 'student', 'instructor', 'admin')
+ * @property {Object} tokens - JWT token pair for authentication
+ * @property {string} tokens.accessToken - Short-lived JWT access token for API requests
+ * @property {string} tokens.refreshToken - Long-lived JWT refresh token for token renewal
+ */
 export interface AuthResponse {
   user: {
     id: string;
@@ -69,44 +120,65 @@ export interface AuthResponse {
 }
 
 import { TokenBlacklistService } from '../services/tokenBlacklistService';
-import { PrismaClient } from '@prisma/client';
 
+/**
+ * Authentication Controller Class
+ * 
+ * Handles all authentication-related HTTP endpoints for the WayrApp platform.
+ * This controller manages user registration, login, token refresh, logout, and profile retrieval.
+ * It integrates with UserService for user operations and TokenBlacklistService for security.
+ * 
+ * @class AuthController
+ * @example
+ * // Initialize controller with dependencies
+ * const userService = new UserService(userRepository);
+ * const tokenBlacklistService = new TokenBlacklistService(prisma);
+ * const authController = new AuthController(userService, tokenBlacklistService);
+ * 
+ * // Use in Express routes
+ * router.post('/login', authController.login);
+ * router.post('/register', authController.register);
+ */
 export class AuthController {
-  private tokenBlacklistService: TokenBlacklistService;
-
-  constructor(
-    private userService: UserService,
-    tokenBlacklistService?: TokenBlacklistService
-  ) {
-    // If tokenBlacklistService is not provided, create a new instance
-    this.tokenBlacklistService = tokenBlacklistService || new TokenBlacklistService(new PrismaClient());
-  }
 
   /**
-   * User login endpoint
-   * POST /api/auth/login
+   * Creates an instance of AuthController
+   * @param {UserService} userService - Service for user-related operations
+   * @param {TokenBlacklistService} tokenBlacklistService - Service for token blacklist management (required)
+   */
+  constructor(
+    private userService: UserService,
+    private tokenBlacklistService: TokenBlacklistService
+  ) { }
+
+  /**
+   * User login endpoint handler
+   * 
+   * Authenticates a user with email and password credentials, validates account status,
+   * generates JWT token pair, and updates last login timestamp. Implements security
+   * measures including input validation and comprehensive logging.
+   * 
+   * @method login
+   * @param {Request} req - Express request object containing login credentials in body
+   * @param {Response} res - Express response object for sending authentication response
+   * @returns {Promise<void>} Resolves when login process completes successfully
+   * @throws {AppError} When credentials are invalid, user not found, or account is inactive
+   * 
+   * @example
+   * // POST /api/auth/login
+   * // Request body: { email: "user@example.com", password: "SecurePass123!" }
+   * // Response: { success: true, data: { user: {...}, tokens: {...} } }
    */
   login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for login attempts to prevent brute force attacks.
-    // Risk: Attackers could attempt multiple login combinations rapidly without throttling.
-    // Suggestion: Add rate limiting middleware (e.g., express-rate-limit) to limit login attempts per IP/user.
-    
     // Validate request body
     const validatedData = LoginSchema.parse(req.body);
     const { email, password } = validatedData;
 
     logger.info('Login attempt', { email });
 
-    // SECURITY_AUDIT_TODO: Consider implementing account lockout after multiple failed attempts to prevent brute force attacks.
-    // Risk: Attackers could continuously attempt login with different passwords for the same email.
-    // Suggestion: Lock account temporarily after N failed attempts within a time window.
-    
     // Verify user credentials
     const user = await this.userService.verifyUserByEmail(email, password);
     if (!user) {
-      // SECURITY_AUDIT_TODO: Consider using constant-time comparison and generic error messages to prevent user enumeration.
-      // Risk: Different response times or messages could reveal whether an email exists in the system.
-      // Suggestion: Use the same response time and message for both invalid email and invalid password.
       logger.warn('Login failed - invalid credentials', { email });
       throw new AppError(
         'Invalid email or password',
@@ -161,14 +233,24 @@ export class AuthController {
   });
 
   /**
-   * Refresh token endpoint
-   * POST /api/auth/refresh
+   * Token refresh endpoint handler
+   * 
+   * Validates and refreshes JWT tokens using a valid refresh token. Checks token blacklist,
+   * verifies user account status, and generates a new token pair. Implements security
+   * measures to prevent token reuse and unauthorized access.
+   * 
+   * @method refresh
+   * @param {Request} req - Express request object containing refresh token in body
+   * @param {Response} res - Express response object for sending new tokens
+   * @returns {Promise<void>} Resolves when token refresh completes successfully
+   * @throws {AppError} When refresh token is invalid, expired, revoked, or user is inactive
+   * 
+   * @example
+   * // POST /api/auth/refresh
+   * // Request body: { refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+   * // Response: { success: true, data: { tokens: { accessToken: "...", refreshToken: "..." } } }
    */
   refresh = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for token refresh to prevent token abuse.
-    // Risk: Attackers could rapidly refresh tokens to maintain persistent access or overwhelm the system.
-    // Suggestion: Add rate limiting specific to refresh token endpoints.
-    
     // Validate request body
     const validatedData = RefreshTokenSchema.parse(req.body);
     const { refreshToken } = validatedData;
@@ -242,8 +324,22 @@ export class AuthController {
   });
 
   /**
-   * Logout endpoint
-   * POST /api/auth/logout
+   * User logout endpoint handler
+   * 
+   * Securely logs out a user by revoking their refresh token and adding it to the blacklist.
+   * Requires authentication via access token. Provides graceful handling when refresh token
+   * is not provided in the request body.
+   * 
+   * @method logout
+   * @param {Request} req - Express request object with authenticated user and optional refresh token in body
+   * @param {Response} res - Express response object for sending logout confirmation
+   * @returns {Promise<void>} Resolves when logout process completes
+   * 
+   * @example
+   * // POST /api/auth/logout
+   * // Headers: { Authorization: "Bearer <access_token>" }
+   * // Request body: { refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+   * // Response: { success: true, data: { message: "Logged out successfully..." } }
    */
   logout = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userId = req.user?.sub;
@@ -273,35 +369,44 @@ export class AuthController {
   });
 
   /**
-   * User registration endpoint
-   * POST /api/auth/register
+   * User registration endpoint handler
+   * 
+   * Creates a new user account with email, password, and optional profile information.
+   * Validates input data, creates user with hashed password, assigns default role,
+   * and automatically logs in the user by generating JWT tokens.
+   * 
+   * @method register
+   * @param {Request} req - Express request object containing registration data in body
+   * @param {Response} res - Express response object for sending registration response
+   * @returns {Promise<void>} Resolves when registration and auto-login complete successfully
+   * @throws {AppError} When email already exists, validation fails, or user creation fails
+   * 
+   * @example
+   * // POST /api/auth/register
+   * // Request body: { 
+   * //   email: "newuser@example.com", 
+   * //   password: "SecurePass123!", 
+   * //   username: "newuser",
+   * //   country_code: "US"
+   * // }
+   * // Response: { success: true, data: { user: {...}, tokens: {...} } }
    */
   register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    // SECURITY_AUDIT_TODO: Consider implementing rate limiting for registration to prevent spam account creation.
-    // Risk: Attackers could create numerous fake accounts to overwhelm the system or for malicious purposes.
-    // Suggestion: Add rate limiting and consider email verification for new registrations.
-    
     // Validate request body
     const validatedData = RegisterSchema.parse(req.body);
     const { email, password, username, country_code, profile_picture_url } = validatedData;
 
     logger.info('Registration attempt', { email });
 
-    // SECURITY_AUDIT_TODO: Using 'any' type bypasses TypeScript safety checks for user data.
-    // Risk: Could allow unexpected properties to be passed to user creation, potentially causing data corruption.
-    // Suggestion: Define a proper interface for user creation data instead of using 'any'.
-    
-    // Create user with hashed password
-    const userData: any = {
+    // Create user with hashed password using strongly typed interface
+    const userData: CreateUserDto & { password: string } = {
       email,
       password,
-      role: 'student' as const
+      role: 'student' as const,
+      ...(username !== undefined && { username }),
+      ...(country_code !== undefined && { country_code }),
+      ...(profile_picture_url !== undefined && { profile_picture_url })
     };
-
-    // Only add optional fields if they are defined
-    if (username !== undefined) userData.username = username;
-    if (country_code !== undefined) userData.country_code = country_code;
-    if (profile_picture_url !== undefined) userData.profile_picture_url = profile_picture_url;
 
     const user = await this.userService.createUserWithPassword(userData);
 
@@ -338,8 +443,30 @@ export class AuthController {
   });
 
   /**
-   * Get current user info
-   * GET /api/auth/me
+   * Get current authenticated user information endpoint handler
+   * 
+   * Retrieves comprehensive profile information for the currently authenticated user.
+   * Requires valid authentication via access token. Returns detailed user data including
+   * profile information, registration details, and account status.
+   * 
+   * @method me
+   * @param {Request} req - Express request object with authenticated user information
+   * @param {Response} res - Express response object for sending user profile data
+   * @returns {Promise<void>} Resolves when user information is successfully retrieved and sent
+   * @throws {AppError} When user is not authenticated or user record is not found
+   * 
+   * @example
+   * // GET /api/auth/me
+   * // Headers: { Authorization: "Bearer <access_token>" }
+   * // Response: { 
+   * //   success: true, 
+   * //   data: { 
+   * //     user: { 
+   * //       id: "uuid", email: "user@example.com", username: "user", 
+   * //       role: "student", is_active: true, created_at: "2024-01-01T00:00:00Z" 
+   * //     } 
+   * //   } 
+   * // }
    */
   me = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {

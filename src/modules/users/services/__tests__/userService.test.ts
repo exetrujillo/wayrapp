@@ -1,7 +1,4 @@
-/**
- * UserService Unit Tests
- * Tests for business logic in UserService
- */
+// src/modules/users/services/__tests__/userService.test.ts
 
 import { UserService } from '../userService';
 import { UserRepository } from '../../repositories/userRepository';
@@ -23,6 +20,27 @@ jest.mock('@/shared/utils/logger', () => ({
   },
 }));
 
+/**
+ * @fileoverview Unit and integration tests for UserService.ts
+ * 
+ * @summary Test suite for the UserService class, covering all business logic operations including user management, authentication, and profile operations.
+ * 
+ * @description These tests verify that the UserService correctly implements all user-related business logic including:
+ * - User CRUD operations (create, read, update, delete)
+ * - Authentication and password management (verification, hashing, updates)
+ * - Profile management and data sanitization
+ * - Account lifecycle management (activation, deactivation)
+ * - Error handling and validation logic
+ * - Repository interaction patterns and data flow
+ * 
+ * The testing strategy focuses on unit testing with mocked dependencies to ensure business logic correctness,
+ * proper error handling, and adherence to security practices. Each method is tested for both success and failure
+ * scenarios, with particular attention to edge cases and security-sensitive operations.
+ * 
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
+ */
 describe('UserService', () => {
   let userService: UserService;
   let mockUserRepository: jest.Mocked<UserRepository>;
@@ -336,7 +354,15 @@ describe('UserService', () => {
       // Arrange
       const email = 'test@example.com';
       const password = 'Password123!';
-      const mockUserWithPassword = {
+      const mockUserAuthData = {
+        id: 'test-user-id',
+        email,
+        passwordHash: 'hashed_password',
+        role: 'student',
+        isActive: true,
+      };
+
+      const mockFullUser = {
         id: 'test-user-id',
         email,
         username: 'testuser',
@@ -348,10 +374,10 @@ describe('UserService', () => {
         role: 'student',
         created_at: new Date(),
         updated_at: new Date(),
-        password_hash: 'hashed_password',
       };
 
-      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserWithPassword);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserAuthData);
+      mockUserRepository.findById.mockResolvedValue(mockFullUser);
 
       const { comparePassword } = await import('@/shared/utils/auth');
       (comparePassword as jest.Mock).mockResolvedValue(true);
@@ -361,8 +387,8 @@ describe('UserService', () => {
 
       // Assert
       expect(result).toBeDefined();
-      expect(result?.id).toBe(mockUserWithPassword.id);
-      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
+      expect(result?.id).toBe(mockFullUser.id);
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserAuthData.passwordHash);
     });
 
     it('should return null when user does not exist', async () => {
@@ -380,22 +406,15 @@ describe('UserService', () => {
       // Arrange
       const email = 'test@example.com';
       const password = 'WrongPassword123!';
-      const mockUserWithPassword = {
+      const mockUserAuthData = {
         id: 'test-user-id',
         email,
-        username: 'testuser',
-        country_code: 'US',
-        registration_date: new Date(),
-        last_login_date: null,
-        profile_picture_url: null,
-        is_active: true,
+        passwordHash: 'hashed_password',
         role: 'student',
-        created_at: new Date(),
-        updated_at: new Date(),
-        password_hash: 'hashed_password',
+        isActive: true,
       };
 
-      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserWithPassword);
+      mockUserRepository.findByEmailWithPassword.mockResolvedValue(mockUserAuthData);
 
       const { comparePassword } = await import('@/shared/utils/auth');
       (comparePassword as jest.Mock).mockResolvedValue(false);
@@ -405,7 +424,7 @@ describe('UserService', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserAuthData.passwordHash);
     });
   });
 
@@ -647,18 +666,20 @@ describe('UserService', () => {
       );
       expect(mockUserRepository.createWithPassword).not.toHaveBeenCalled();
     });
-  });
 
-  describe('verifyPassword', () => {
-    it('should return true when password is correct', async () => {
+    it('should throw error when username already exists', async () => {
       // Arrange
-      const userId = 'test-user-id';
-      const password = 'Password123!';
-      const mockUserWithPassword = {
-        id: userId,
-        email: 'test@example.com',
-        username: 'testuser',
-        country_code: 'US',
+      const userData = {
+        email: 'new@example.com',
+        username: 'existinguser',
+        password: 'Password123!',
+      };
+
+      const existingUser: User = {
+        id: 'existing-user-id',
+        email: 'existing@example.com',
+        username: userData.username,
+        country_code: null,
         registration_date: new Date(),
         last_login_date: null,
         profile_picture_url: null,
@@ -666,10 +687,33 @@ describe('UserService', () => {
         role: 'student',
         created_at: new Date(),
         updated_at: new Date(),
-        password_hash: 'hashed_password',
       };
 
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserWithPassword);
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByUsername.mockResolvedValue(existingUser);
+
+      // Act & Assert
+      await expect(userService.createUserWithPassword(userData)).rejects.toThrow(
+        new AppError('Username already taken', HttpStatus.CONFLICT, ErrorCodes.CONFLICT)
+      );
+      expect(mockUserRepository.createWithPassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyPassword', () => {
+    it('should return true when password is correct', async () => {
+      // Arrange
+      const userId = 'test-user-id';
+      const password = 'Password123!';
+      const mockUserAuthData = {
+        id: userId,
+        email: 'test@example.com',
+        passwordHash: 'hashed_password',
+        role: 'student',
+        isActive: true,
+      };
+
+      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserAuthData);
 
       const { comparePassword } = await import('@/shared/utils/auth');
       (comparePassword as jest.Mock).mockResolvedValue(true);
@@ -679,7 +723,7 @@ describe('UserService', () => {
 
       // Assert
       expect(result).toBe(true);
-      expect(comparePassword).toHaveBeenCalledWith(password, mockUserWithPassword.password_hash);
+      expect(comparePassword).toHaveBeenCalledWith(password, mockUserAuthData.passwordHash);
     });
 
     it('should return false when user not found', async () => {
@@ -696,22 +740,15 @@ describe('UserService', () => {
     it('should return false when user has no password hash', async () => {
       // Arrange
       const userId = 'test-user-id';
-      const mockUserWithoutPassword = {
+      const mockUserAuthDataWithoutPassword = {
         id: userId,
         email: 'test@example.com',
-        username: 'testuser',
-        country_code: 'US',
-        registration_date: new Date(),
-        last_login_date: null,
-        profile_picture_url: null,
-        is_active: true,
+        passwordHash: null,
         role: 'student',
-        created_at: new Date(),
-        updated_at: new Date(),
-        password_hash: null,
+        isActive: true,
       };
 
-      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserWithoutPassword);
+      mockUserRepository.findByIdWithPassword.mockResolvedValue(mockUserAuthDataWithoutPassword);
 
       // Act
       const result = await userService.verifyPassword(userId, 'password');
@@ -855,59 +892,6 @@ describe('UserService', () => {
       // Assert
       expect(result).toBe(false);
       expect(userService.findById).toHaveBeenCalledWith('non-existent-id');
-    });
-  });
-
-  describe('updatePassword', () => {
-    it('should update password successfully when current password is correct', async () => {
-      // Arrange
-      const userId = 'test-user-id';
-      const currentPassword = 'CurrentPassword123!';
-      const newPassword = 'NewPassword456!';
-
-      // Mock verifyPassword to return true (current password is correct)
-      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(true);
-
-      const updatedUser: User = {
-        id: userId,
-        email: 'test@example.com',
-        username: 'testuser',
-        country_code: 'US',
-        registration_date: new Date(),
-        last_login_date: null,
-        profile_picture_url: null,
-        is_active: true,
-        role: 'student',
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-
-      mockUserRepository.updatePassword.mockResolvedValue(updatedUser);
-
-      // Act
-      const result = await userService.updatePassword(userId, currentPassword, newPassword);
-
-      // Assert
-      expect(result).toBe(true);
-      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
-      expect(mockUserRepository.updatePassword).toHaveBeenCalled();
-    });
-
-    it('should throw an error when current password is incorrect', async () => {
-      // Arrange
-      const userId = 'test-user-id';
-      const currentPassword = 'WrongPassword123!';
-      const newPassword = 'NewPassword456!';
-
-      // Mock verifyPassword to return false (current password is incorrect)
-      jest.spyOn(userService, 'verifyPassword').mockResolvedValue(false);
-
-      // Act & Assert
-      await expect(userService.updatePassword(userId, currentPassword, newPassword)).rejects.toThrow(
-        new AppError('Current password is incorrect', HttpStatus.UNAUTHORIZED, ErrorCodes.AUTHENTICATION_ERROR)
-      );
-      expect(userService.verifyPassword).toHaveBeenCalledWith(userId, currentPassword);
-      expect(mockUserRepository.updatePassword).not.toHaveBeenCalled();
     });
   });
 

@@ -48,6 +48,13 @@
 import { DatabaseOptimizer, BatchOperations, monitorQuery } from '../optimization';
 import { PrismaClient } from '@prisma/client';
 
+// Mock the TokenBlacklistService
+jest.mock('@/modules/users/services/tokenBlacklistService', () => ({
+  TokenBlacklistService: jest.fn().mockImplementation(() => ({
+    cleanupExpiredTokens: jest.fn(),
+  })),
+}));
+
 /**
  * Mock Prisma Client for Database Optimization Tests
  * 
@@ -337,22 +344,20 @@ describe('DatabaseOptimizer', () => {
      * records are properly removed, followed by statistics updates.
      */
     it('should clean up expired tokens and old lesson completions', async () => {
-      const mockExpiredTokensResult = { count: 5 };
+      const mockCleanedTokensCount = 5;
       const mockOldCompletionsResult = { count: 10 };
 
-      (mockPrisma.revokedToken.deleteMany as jest.Mock).mockResolvedValue(mockExpiredTokensResult);
+      // Mock the TokenBlacklistService cleanup method
+      const mockTokenBlacklistService = (optimizer as any).tokenBlacklistService;
+      mockTokenBlacklistService.cleanupExpiredTokens.mockResolvedValue(mockCleanedTokensCount);
+
       (mockPrisma.lessonCompletion.deleteMany as jest.Mock).mockResolvedValue(mockOldCompletionsResult);
       (mockPrisma.$executeRaw as jest.Mock).mockResolvedValue(undefined);
 
       await optimizer.cleanupExpiredData();
 
-      expect(mockPrisma.revokedToken.deleteMany).toHaveBeenCalledWith({
-        where: {
-          expiresAt: {
-            lt: expect.any(Date),
-          },
-        },
-      });
+      // Verify that the TokenBlacklistService cleanup method was called
+      expect(mockTokenBlacklistService.cleanupExpiredTokens).toHaveBeenCalled();
 
       expect(mockPrisma.lessonCompletion.deleteMany).toHaveBeenCalledWith({
         where: {
@@ -373,7 +378,8 @@ describe('DatabaseOptimizer', () => {
      * and continues to maintain platform stability.
      */
     it('should handle cleanup failures gracefully', async () => {
-      (mockPrisma.revokedToken.deleteMany as jest.Mock).mockRejectedValue(new Error('Cleanup failed'));
+      const mockTokenBlacklistService = (optimizer as any).tokenBlacklistService;
+      mockTokenBlacklistService.cleanupExpiredTokens.mockRejectedValue(new Error('Token cleanup failed'));
 
       await expect(optimizer.cleanupExpiredData()).resolves.not.toThrow();
     });

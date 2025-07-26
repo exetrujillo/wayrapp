@@ -1,6 +1,42 @@
+// src/modules/users/repositories/userRepository.ts
+
 /**
- * User Repository
- * Data access layer for user operations using Prisma
+ * @fileoverview User Repository - Data access layer for user operations using Prisma ORM
+ * 
+ * @summary Provides comprehensive data access operations for user management including CRUD operations, authentication queries, and pagination.
+ * 
+ * @description This repository serves as the data access layer for all user-related database operations in the application.
+ * It encapsulates all Prisma database interactions for the User entity, providing a clean abstraction layer between
+ * the business logic (UserService) and the database. The repository handles user creation, retrieval, updates, and
+ * soft deletion operations, along with specialized methods for authentication workflows including password management
+ * and login tracking. It implements proper error handling, logging, and data mapping between Prisma models and
+ * application domain objects. The repository supports advanced querying capabilities including pagination, filtering,
+ * and sorting for user management interfaces.
+ * 
+ * Security Features:
+ * - Authentication methods return minimal data (UserAuthData) to reduce exposure of sensitive information
+ * - Password hashes are only retrieved when explicitly needed for authentication
+ * - Type-safe operations eliminate unsafe type assertions and improve code reliability
+ * - Selective field querying using Prisma's select reduces database payload and improves performance
+ * 
+ * @exports {class} UserRepository - Main repository class providing all user data access operations
+ * @exports {interface} UserAuthData - Minimal user object for secure authentication workflows
+ * @exports {function} create - Creates a new user without password authentication
+ * @exports {function} createWithPassword - Creates a new user with password hash for authentication
+ * @exports {function} findById - Retrieves a user by their unique identifier
+ * @exports {function} findByIdWithPassword - Retrieves minimal user auth data by ID for authentication
+ * @exports {function} findByEmail - Retrieves a user by their email address
+ * @exports {function} findByEmailWithPassword - Retrieves minimal user auth data by email for authentication
+ * @exports {function} findByUsername - Retrieves a user by their username
+ * @exports {function} update - Updates existing user information with validation
+ * @exports {function} delete - Performs soft delete by deactivating user account
+ * @exports {function} findAll - Retrieves paginated list of users with filtering and sorting
+ * @exports {function} updatePassword - Updates user password hash securely
+ * @exports {function} updateLastLogin - Updates user's last login timestamp for tracking
+ * 
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -9,11 +45,74 @@ import { AppError } from '@/shared/middleware/errorHandler';
 import { ErrorCodes, HttpStatus, QueryOptions, PaginatedResult } from '@/shared/types';
 import { logger } from '@/shared/utils/logger';
 
+/**
+ * Minimal user object for authentication purposes
+ * 
+ * @interface UserAuthData
+ * @description Contains only essential fields needed for authentication workflows to minimize
+ * data exposure and improve security. This interface is used by password-related methods
+ * to ensure that sensitive operations only access the minimum required user data.
+ * 
+ * @property {string} id - User's unique identifier (UUID)
+ * @property {string} email - User's email address for identification
+ * @property {string | null} passwordHash - Hashed password for authentication (null if no password set)
+ * @property {string} role - User's role in the system (student, content_creator, admin)
+ * @property {boolean} isActive - Whether the user account is active and can authenticate
+ * 
+ * @example
+ * ```typescript
+ * const authData = await userRepository.findByEmailWithPassword('user@example.com');
+ * if (authData && authData.isActive && authData.passwordHash) {
+ *   // Proceed with password verification
+ *   const isValid = await comparePassword(password, authData.passwordHash);
+ * }
+ * ```
+ */
+export interface UserAuthData {
+  id: string;
+  email: string;
+  passwordHash: string | null;
+  role: string;
+  isActive: boolean;
+}
+
+/**
+ * UserRepository - Data access layer for user operations using Prisma ORM
+ * 
+ * @class UserRepository
+ * @description Provides comprehensive data access operations for user management including CRUD operations,
+ * authentication queries, and pagination. Acts as the data access layer between the business logic service
+ * and the PostgreSQL database through Prisma ORM.
+ */
 export class UserRepository {
-  constructor(private prisma: PrismaClient) {}
+  /**
+   * Creates a new UserRepository instance
+   * 
+   * @param {PrismaClient} prisma - Prisma client instance for database operations
+   */
+  constructor(private prisma: PrismaClient) { }
 
   /**
-   * Create a new user
+   * Creates a new user without password authentication
+   * 
+   * @param {CreateUserDto} userData - User data for creation
+   * @param {string} userData.email - User's email address (required, unique)
+   * @param {string} [userData.username] - User's username (optional, unique if provided)
+   * @param {string} [userData.country_code] - Two-letter country code (optional)
+   * @param {string} [userData.profile_picture_url] - URL to user's profile picture (optional)
+   * @param {UserRole} [userData.role='student'] - User's role in the system (defaults to 'student')
+   * @returns {Promise<User>} Promise resolving to the created user object
+   * @throws {AppError} Throws CONFLICT error if email or username already exists
+   * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
+   * 
+   * @example
+   * const userData = {
+   *   email: 'user@example.com',
+   *   username: 'johndoe',
+   *   country_code: 'US',
+   *   role: 'student'
+   * };
+   * const user = await userRepository.create(userData);
    */
   async create(userData: CreateUserDto): Promise<User> {
     try {
@@ -43,27 +142,33 @@ export class UserRepository {
   }
 
   /**
-   * Create a new user with password
+   * Creates a new user with password hash for authentication
+   * 
+   * @param {CreateUserDto & { passwordHash: string }} userData - User data including password hash
+   * @param {string} userData.email - User's email address (required, unique)
+   * @param {string} [userData.username] - User's username (optional, unique if provided)
+   * @param {string} [userData.country_code] - Two-letter country code (optional)
+   * @param {string} [userData.profile_picture_url] - URL to user's profile picture (optional)
+   * @param {UserRole} [userData.role='student'] - User's role in the system (defaults to 'student')
+   * @param {string} userData.passwordHash - Hashed password for authentication
+   * @returns {Promise<User>} Promise resolving to the created user object
+   * @throws {AppError} Throws CONFLICT error if email or username already exists
+   * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
+   * 
+   * @security Uses type-safe Prisma operations without unsafe type assertions, ensuring
+   * data integrity and compile-time type checking for all user creation operations.
    */
   async createWithPassword(userData: CreateUserDto & { passwordHash: string }): Promise<User> {
     try {
-      // Create the data object with type safety
-      const data: Prisma.UserCreateInput = {
-        email: userData.email,
-        username: userData.username ?? null,
-        countryCode: userData.country_code ?? null,
-        profilePictureUrl: userData.profile_picture_url ?? null,
-        role: userData.role || 'student',
-      };
-      
-      // Add passwordHash using type assertion
-      const userDataWithPassword = {
-        ...data,
-        passwordHash: userData.passwordHash
-      } as Prisma.UserCreateInput;
-
       const user = await this.prisma.user.create({
-        data: userDataWithPassword
+        data: {
+          email: userData.email,
+          username: userData.username ?? null,
+          countryCode: userData.country_code ?? null,
+          profilePictureUrl: userData.profile_picture_url ?? null,
+          role: userData.role || 'student',
+          passwordHash: userData.passwordHash,
+        },
       });
 
       return this.mapPrismaUserToUser(user);
@@ -82,7 +187,11 @@ export class UserRepository {
   }
 
   /**
-   * Find user by ID
+   * Retrieves a user by their unique identifier
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @returns {Promise<User | null>} Promise resolving to user object or null if not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    */
   async findById(id: string): Promise<User | null> {
     try {
@@ -98,23 +207,38 @@ export class UserRepository {
   }
 
   /**
-   * Find user by ID with password hash
+   * Retrieves minimal user data with password hash by their unique identifier for authentication
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @returns {Promise<UserAuthData | null>} Promise resolving to minimal user auth data or null if not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
+   * 
+   * @security This method uses Prisma's select to fetch only essential authentication fields,
+   * reducing data exposure and improving performance. The returned UserAuthData contains only
+   * the minimum information needed for password verification workflows.
+   * 
+   * @example
+   * ```typescript
+   * const authData = await userRepository.findByIdWithPassword('user-123');
+   * if (authData && authData.passwordHash) {
+   *   const isValid = await comparePassword(plainPassword, authData.passwordHash);
+   * }
+   * ```
    */
-  async findByIdWithPassword(id: string): Promise<(User & { password_hash: string | null }) | null> {
+  async findByIdWithPassword(id: string): Promise<UserAuthData | null> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          role: true,
+          isActive: true,
+        },
       });
 
-      if (!user) return null;
-
-      // Use type assertion to access the passwordHash property
-      const userWithPassword = user as unknown as { passwordHash: string | null };
-
-      return {
-        ...this.mapPrismaUserToUser(user),
-        password_hash: userWithPassword.passwordHash,
-      };
+      return user;
     } catch (error) {
       logger.error('Error finding user with password by ID', { error, userId: id });
       throw new AppError('Failed to find user', HttpStatus.INTERNAL_SERVER_ERROR, ErrorCodes.DATABASE_ERROR);
@@ -122,7 +246,11 @@ export class UserRepository {
   }
 
   /**
-   * Find user by email
+   * Retrieves a user by their email address
+   * 
+   * @param {string} email - User's email address
+   * @returns {Promise<User | null>} Promise resolving to user object or null if not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    */
   async findByEmail(email: string): Promise<User | null> {
     try {
@@ -138,23 +266,42 @@ export class UserRepository {
   }
 
   /**
-   * Find user by email with password hash
+   * Retrieves minimal user data with password hash by their email address for authentication
+   * 
+   * @param {string} email - User's email address
+   * @returns {Promise<UserAuthData | null>} Promise resolving to minimal user auth data or null if not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
+   * 
+   * @security This method uses Prisma's select to fetch only essential authentication fields,
+   * reducing data exposure and improving performance. The returned UserAuthData contains only
+   * the minimum information needed for login workflows.
+   * 
+   * @example
+   * ```typescript
+   * const authData = await userRepository.findByEmailWithPassword('user@example.com');
+   * if (authData && authData.isActive && authData.passwordHash) {
+   *   const isValid = await comparePassword(plainPassword, authData.passwordHash);
+   *   if (isValid) {
+   *     // Authentication successful, fetch full user data if needed
+   *     const fullUser = await userRepository.findById(authData.id);
+   *   }
+   * }
+   * ```
    */
-  async findByEmailWithPassword(email: string): Promise<(User & { password_hash: string | null }) | null> {
+  async findByEmailWithPassword(email: string): Promise<UserAuthData | null> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email },
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          role: true,
+          isActive: true,
+        },
       });
 
-      if (!user) return null;
-
-      // Use type assertion to access the passwordHash property
-      const userWithPassword = user as unknown as { passwordHash: string | null };
-
-      return {
-        ...this.mapPrismaUserToUser(user),
-        password_hash: userWithPassword.passwordHash,
-      };
+      return user;
     } catch (error) {
       logger.error('Error finding user with password by email', { error, email });
       throw new AppError('Failed to find user', HttpStatus.INTERNAL_SERVER_ERROR, ErrorCodes.DATABASE_ERROR);
@@ -162,7 +309,11 @@ export class UserRepository {
   }
 
   /**
-   * Find user by username
+   * Retrieves a user by their username
+   * 
+   * @param {string} username - User's username
+   * @returns {Promise<User | null>} Promise resolving to user object or null if not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    */
   async findByUsername(username: string): Promise<User | null> {
     try {
@@ -178,7 +329,18 @@ export class UserRepository {
   }
 
   /**
-   * Update user
+   * Updates existing user information with validation
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @param {UpdateUserDto} updates - Object containing fields to update
+   * @param {string} [updates.username] - New username (optional, must be unique if provided)
+   * @param {string} [updates.country_code] - New country code (optional)
+   * @param {string} [updates.profile_picture_url] - New profile picture URL (optional)
+   * @param {boolean} [updates.is_active] - New active status (optional)
+   * @returns {Promise<User>} Promise resolving to the updated user object
+   * @throws {AppError} Throws NOT_FOUND error if user doesn't exist
+   * @throws {AppError} Throws CONFLICT error if username already exists
+   * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
    */
   async update(id: string, updates: UpdateUserDto): Promise<User> {
     const dataToUpdate: Prisma.UserUpdateInput = {};
@@ -231,7 +393,11 @@ export class UserRepository {
   }
 
   /**
-   * Delete user (soft delete by deactivating)
+   * Performs soft delete by deactivating user account
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @returns {Promise<boolean>} Promise resolving to true if successful, false if user not found
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    */
   async delete(id: string): Promise<boolean> {
     try {
@@ -253,7 +419,19 @@ export class UserRepository {
   }
 
   /**
-   * Find all users with pagination
+   * Retrieves paginated list of users with filtering and sorting capabilities
+   * 
+   * @param {QueryOptions} [options={}] - Query options for pagination, filtering, and sorting
+   * @param {number} [options.page=1] - Page number for pagination
+   * @param {number} [options.limit=20] - Number of items per page
+   * @param {string} [options.sortBy='created_at'] - Field to sort by
+   * @param {'asc' | 'desc'} [options.sortOrder='desc'] - Sort order
+   * @param {object} [options.filters={}] - Filters to apply
+   * @param {string} [options.filters.role] - Filter by user role
+   * @param {boolean} [options.filters.is_active] - Filter by active status
+   * @param {string} [options.filters.search] - Search in email and username fields
+   * @returns {Promise<PaginatedResult<User>>} Promise resolving to paginated result with users and pagination metadata
+   * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    */
   async findAll(options: QueryOptions = {}): Promise<PaginatedResult<User>> {
     try {
@@ -307,16 +485,22 @@ export class UserRepository {
   }
 
   /**
-   * Update user password
+   * Updates user password hash securely
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @param {string} passwordHash - New hashed password
+   * @returns {Promise<User>} Promise resolving to the updated user object
+   * @throws {AppError} Throws NOT_FOUND error if user doesn't exist
+   * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
+   * 
+   * @security Uses type-safe Prisma operations without unsafe type assertions,
+   * ensuring secure password updates with proper type checking and validation.
    */
   async updatePassword(id: string, passwordHash: string): Promise<User> {
     try {
-      // Use type assertion for the data object
-      const updateData = { passwordHash } as unknown as Prisma.UserUpdateInput;
-      
       const user = await this.prisma.user.update({
         where: { id },
-        data: updateData,
+        data: { passwordHash },
       });
 
       return this.mapPrismaUserToUser(user);
@@ -335,16 +519,22 @@ export class UserRepository {
   }
 
   /**
-   * Update user's last login timestamp
+   * Updates user's last login timestamp for tracking purposes
+   * 
+   * @param {string} id - User's unique identifier (UUID)
+   * @param {Date} [date=new Date()] - Login timestamp (defaults to current date/time)
+   * @returns {Promise<User>} Promise resolving to the updated user object
+   * @throws {AppError} Throws NOT_FOUND error if user doesn't exist
+   * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
+   * 
+   * @security Uses type-safe Prisma operations without unsafe type assertions,
+   * ensuring reliable timestamp updates with proper type validation.
    */
   async updateLastLogin(id: string, date: Date = new Date()): Promise<User> {
     try {
-      // Use type assertion for the data object
-      const updateData = { lastLoginDate: date } as unknown as Prisma.UserUpdateInput;
-      
       const user = await this.prisma.user.update({
         where: { id },
-        data: updateData,
+        data: { lastLoginDate: date },
       });
 
       return this.mapPrismaUserToUser(user);
@@ -363,7 +553,11 @@ export class UserRepository {
   }
 
   /**
-   * Map Prisma user object to User interface
+   * Maps Prisma user object to application User interface
+   * 
+   * @private
+   * @param {any} prismaUser - Prisma user object from database
+   * @returns {User} Mapped user object conforming to application interface
    */
   private mapPrismaUserToUser(prismaUser: any): User {
     return {

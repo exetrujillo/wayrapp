@@ -3,7 +3,7 @@
 /**
  * Middleware Index Barrel Export Test Suite
  * 
- * Comprehensive test suite that validates the middleware coordination hub's barrel export
+ * Test suite that validates the middleware coordination hub's barrel export
  * functionality. This test suite ensures that all middleware components from specialized
  * modules are properly exported through the centralized index file, maintaining the
  * architectural pattern that supports the distributed node infrastructure.
