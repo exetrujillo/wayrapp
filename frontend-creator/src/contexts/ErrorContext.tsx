@@ -1,46 +1,131 @@
+// frontend-creator/src/contexts/ErrorContext.tsx
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Toast } from '../components/ui/Feedback';
 
+/**
+ * Context value interface for global error handling and toast notification system.
+ * 
+ * Provides methods for displaying different types of toast notifications throughout
+ * the application with consistent styling and behavior.
+ */
 interface ErrorContextValue {
+  /** Display an error toast with optional retry functionality */
   showError: (message: string, options?: ErrorOptions) => void;
+  /** Display a success toast notification */
   showSuccess: (message: string, options?: SuccessOptions) => void;
+  /** Display a warning toast notification */
   showWarning: (message: string, options?: WarningOptions) => void;
+  /** Display an informational toast notification */
   showInfo: (message: string, options?: InfoOptions) => void;
+  /** Clear all currently displayed toast notifications */
   clearAllToasts: () => void;
 }
 
+/**
+ * Base configuration options for toast notifications.
+ */
 interface ToastOptions {
+  /** Duration in milliseconds before auto-dismissal (0 = no auto-dismiss) */
   duration?: number;
+  /** Screen position for the toast notification */
   position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  /** Whether to display an icon with the toast */
   showIcon?: boolean;
 }
 
+/**
+ * Extended options for error toast notifications with retry functionality.
+ */
 interface ErrorOptions extends ToastOptions {
+  /** Function to execute when retry button is clicked */
   retryAction?: () => void;
+  /** Custom label for the retry button */
   retryLabel?: string;
 }
 
-interface SuccessOptions extends ToastOptions {}
-interface WarningOptions extends ToastOptions {}
-interface InfoOptions extends ToastOptions {}
+/** Options for success toast notifications */
+interface SuccessOptions extends ToastOptions { }
+/** Options for warning toast notifications */
+interface WarningOptions extends ToastOptions { }
+/** Options for informational toast notifications */
+interface InfoOptions extends ToastOptions { }
 
+/**
+ * Internal representation of a toast notification item.
+ */
 interface ToastItem {
+  /** Unique identifier for the toast */
   id: string;
+  /** Visual type determining styling and icon */
   type: 'error' | 'success' | 'warning' | 'info';
+  /** Text content to display */
   message: string;
+  /** Configuration options for display behavior */
   options: ToastOptions;
+  /** Optional retry function for error toasts */
   retryAction?: () => void;
+  /** Optional custom retry button label */
   retryLabel?: string;
 }
 
 const ErrorContext = createContext<ErrorContextValue | undefined>(undefined);
 
+/**
+ * Props for the ErrorProvider component.
+ */
 interface ErrorProviderProps {
+  /** Child components that will have access to the error context */
   children: ReactNode;
 }
 
 /**
- * Error context provider for global error handling and toast notifications
+ * Global error handling and toast notification provider for the creator application.
+ * 
+ * This provider manages all toast notifications throughout the application, providing
+ * a centralized system for displaying errors, success messages, warnings, and info
+ * notifications. It handles automatic dismissal, positioning, retry functionality for
+ * errors, and maintains a queue of active toasts. The provider is used in App.tsx
+ * as part of the application's provider hierarchy and is consumed by various hooks
+ * like useApiErrorHandler, useCourses, and useApiOperation for consistent error
+ * handling across the application.
+ * 
+ * Features:
+ * - Automatic toast dismissal with configurable duration
+ * - Multiple toast types (error, success, warning, info)
+ * - Retry functionality for error toasts
+ * - Configurable positioning and styling
+ * - Queue management for multiple simultaneous toasts
+ * - Network-aware error handling
+ * 
+ * @param {ErrorProviderProps} props - Component props
+ * @param {ReactNode} props.children - Child components that will have access to error context
+ * @returns {JSX.Element} Provider component with toast rendering system
+ * 
+ * @example
+ * // Used in App.tsx as part of the provider hierarchy
+ * <QueryClientProvider client={queryClient}>
+ *   <ErrorProvider>
+ *     <Router>
+ *       <AppRoutes />
+ *     </Router>
+ *   </ErrorProvider>
+ * </QueryClientProvider>
+ * 
+ * @example
+ * // Consumed by components through useErrorContext hook
+ * const { showError, showSuccess } = useErrorContext();
+ * 
+ * const handleSubmit = async () => {
+ *   try {
+ *     await submitData();
+ *     showSuccess('Data saved successfully!');
+ *   } catch (error) {
+ *     showError('Failed to save data', { 
+ *       retryAction: handleSubmit,
+ *       retryLabel: 'Try Again' 
+ *     });
+ *   }
+ * };
  */
 export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -113,7 +198,7 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   return (
     <ErrorContext.Provider value={value}>
       {children}
-      
+
       {/* Render toasts */}
       <div className="fixed inset-0 pointer-events-none z-50">
         {toasts.map((toast) => (
@@ -134,7 +219,31 @@ export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
 };
 
 /**
- * Hook to use the error context
+ * Hook to access the error context for displaying toast notifications.
+ * 
+ * Provides access to all toast notification methods (showError, showSuccess, showWarning,
+ * showInfo, clearAllToasts) for components that need to display user feedback. This hook
+ * must be used within an ErrorProvider component tree.
+ * 
+ * @returns {ErrorContextValue} Object containing toast notification methods
+ * @throws {Error} When used outside of ErrorProvider
+ * 
+ * @example
+ * // Basic usage in a component
+ * const MyComponent = () => {
+ *   const { showError, showSuccess } = useErrorContext();
+ *   
+ *   const handleAction = async () => {
+ *     try {
+ *       await performAction();
+ *       showSuccess('Action completed successfully!');
+ *     } catch (error) {
+ *       showError('Action failed. Please try again.');
+ *     }
+ *   };
+ *   
+ *   return <button onClick={handleAction}>Perform Action</button>;
+ * };
  */
 export const useErrorContext = (): ErrorContextValue => {
   const context = useContext(ErrorContext);
@@ -145,7 +254,59 @@ export const useErrorContext = (): ErrorContextValue => {
 };
 
 /**
- * Hook for handling API errors with toast notifications
+ * Specialized hook for handling API errors with intelligent error parsing and toast notifications.
+ * 
+ * This hook provides comprehensive API error handling capabilities including network error detection,
+ * HTTP status code interpretation, automatic retry suggestions, and user-friendly error messages.
+ * It's extensively used throughout the application by hooks like useCourses, useApiOperation, and
+ * useEnhancedErrorHandling to provide consistent error handling behavior.
+ * 
+ * Features:
+ * - Network error detection and handling
+ * - HTTP status code interpretation with appropriate messages
+ * - Automatic retry functionality for recoverable errors
+ * - Offline detection and warnings
+ * - Context-aware error logging
+ * - Configurable toast durations based on error type
+ * 
+ * @returns {Object} Object containing error handling methods and utilities
+ * @returns {Function} returns.handleError - Main error handling function with retry support
+ * @returns {Function} returns.handleSuccess - Success message handler
+ * @returns {Function} returns.handleWarning - Warning message handler
+ * @returns {Function} returns.handleNetworkError - Specialized network error handler
+ * @returns {Function} returns.isNetworkError - Utility to check if error is network-related
+ * @returns {Function} returns.getErrorMessage - Extract user-friendly message from error
+ * 
+ * @example
+ * // Used in API hooks for consistent error handling
+ * const { handleError, handleSuccess } = useApiErrorHandler();
+ * 
+ * const createCourse = useMutation({
+ *   mutationFn: courseService.createCourse,
+ *   onSuccess: (data) => {
+ *     handleSuccess('Course created successfully!');
+ *   },
+ *   onError: (error) => {
+ *     handleError(error, () => createCourse.mutate(), 'Course Creation');
+ *   }
+ * });
+ * 
+ * @example
+ * // Network-specific error handling
+ * const { handleNetworkError, isNetworkError } = useApiErrorHandler();
+ * 
+ * const fetchData = async () => {
+ *   try {
+ *     const data = await apiCall();
+ *     return data;
+ *   } catch (error) {
+ *     if (isNetworkError(error)) {
+ *       handleNetworkError(error, fetchData);
+ *     } else {
+ *       handleError(error);
+ *     }
+ *   }
+ * };
  */
 export const useApiErrorHandler = () => {
   const { showError, showSuccess, showWarning } = useErrorContext();
@@ -221,7 +382,7 @@ export const useApiErrorHandler = () => {
   const handleError = useCallback((error: any, retryAction?: () => void, context?: string) => {
     const message = getErrorMessage(error);
     const isNetwork = isNetworkError(error);
-    
+
     // Log error for debugging
     console.error(`API Error${context ? ` (${context})` : ''}:`, error);
 
@@ -250,7 +411,7 @@ export const useApiErrorHandler = () => {
         duration: 0, // Don't auto-dismiss offline warnings
       });
     }
-    
+
     handleError(error, retryAction, 'Network');
   }, [handleError, showWarning]);
 

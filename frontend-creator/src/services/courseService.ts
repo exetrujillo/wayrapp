@@ -1,3 +1,4 @@
+// frontend-creator/src/services/courseService.ts
 import apiClient from './api';
 import { API_ENDPOINTS } from '../utils/constants';
 import {
@@ -8,12 +9,62 @@ import {
   PaginationParams
 } from '../utils/types';
 
+/**
+ * Service class for managing course-related API operations in the language learning platform.
+ * 
+ * This service acts as the primary interface between the frontend application and the backend
+ * course management API. It handles all CRUD operations for courses, including creation, retrieval,
+ * updates, deletion, and packaging for offline use. The service is designed to work seamlessly
+ * with React Query hooks and provides comprehensive error handling with user-friendly messages.
+ * 
+ * The CourseService is used throughout the application in components like CoursesPage for listing
+ * courses, CourseForm for creating/editing courses, and various hooks (useCourses.ts) that provide
+ * React Query integration. It supports pagination, filtering, and bulk operations for course management.
+ * 
+ * Key architectural patterns:
+ * - Singleton pattern: Exported as a single instance for consistent state
+ * - Data transformation layer: Handles conversion between frontend and API data formats
+ * - Comprehensive error handling: Provides specific error messages based on HTTP status codes
+ * - Type safety: Full TypeScript integration with proper type definitions
+ * 
+ * @example
+ * // Basic usage in a React component
+ * import { courseService } from '../services/courseService';
+ * 
+ * // Fetch paginated courses
+ * const courses = await courseService.getCourses({ page: 1, limit: 10 });
+ * 
+ * // Create a new course
+ * const newCourse = await courseService.createCourse({
+ *   id: 'spanish-basics',
+ *   name: 'Spanish Basics',
+ *   source_language: 'en',
+ *   target_language: 'es',
+ *   is_public: true,
+ *   description: 'Learn basic Spanish vocabulary and grammar'
+ * });
+ * 
+ * // Get a specific course
+ * const course = await courseService.getCourse('spanish-basics');
+ * 
+ * // Update course details
+ * const updatedCourse = await courseService.updateCourse('spanish-basics', {
+ *   name: 'Spanish Fundamentals',
+ *   description: 'Updated description'
+ * });
+ */
 class CourseService {
   /**
-   * Transform course data from API format to frontend format if needed
-   * This method can be used to handle any data transformation between backend and frontend
-   * @param apiCourse Course data from API
-   * @returns Transformed course data
+   * Transforms course data from API response format to frontend-compatible format.
+   * 
+   * This private method provides a centralized location for handling any data structure
+   * differences between the backend API and frontend expectations. Currently, the types
+   * are aligned, but this method serves as a future-proofing mechanism for handling
+   * field name changes, data type conversions, or additional processing.
+   * 
+   * @private
+   * @param {any} apiCourse - Raw course data received from the API
+   * @returns {Course} Course object formatted for frontend consumption
    */
   private transformCourseFromApi(apiCourse: any): Course {
     // Currently, our types are aligned with the backend, so no transformation needed
@@ -22,9 +73,16 @@ class CourseService {
   }
 
   /**
-   * Transform course data from frontend format to API format if needed
-   * @param courseData Course data from frontend
-   * @returns Transformed course data for API
+   * Transforms course data from frontend format to API-compatible format.
+   * 
+   * This private method handles the conversion of course data from the frontend
+   * representation to the format expected by the backend API. It provides a
+   * centralized location for handling field name transformations, data type
+   * conversions, and any other formatting requirements.
+   * 
+   * @private
+   * @param {CreateCourseRequest | UpdateCourseRequest} courseData - Course data from frontend forms
+   * @returns {any} Course data formatted for API consumption
    */
   private transformCourseToApi(courseData: CreateCourseRequest | UpdateCourseRequest): any {
     // Currently, our types are aligned with the backend, so no transformation needed
@@ -32,13 +90,38 @@ class CourseService {
     return courseData;
   }
   /**
-   * Get paginated list of courses
-   * @param params Pagination parameters
-   * @returns Paginated list of courses
+   * Retrieves a paginated list of courses with optional filtering and sorting.
+   * 
+   * This method is the primary way to fetch courses for display in lists, dashboards,
+   * and course management interfaces. It supports pagination, search functionality,
+   * and filtering by visibility (public/private). The response includes both the
+   * course data and pagination metadata for building user interfaces.
+   * 
+   * @param {PaginationParams} [params] - Optional pagination and filtering parameters
+   * @param {number} [params.page=1] - Page number to retrieve (1-based)
+   * @param {number} [params.limit=20] - Number of courses per page
+   * @param {string} [params.search] - Search query to filter courses by name
+   * @param {string} [params.sort] - Field to sort by
+   * @param {'asc'|'desc'} [params.order] - Sort order
+   * @param {boolean} [params.is_public] - Filter by course visibility
+   * @returns {Promise<PaginatedResponse<Course>>} Promise resolving to paginated course data
+   * @throws {Error} When API request fails or returns invalid data
+   * 
+   * @example
+   * // Get first page of courses
+   * const firstPage = await courseService.getCourses();
+   * 
+   * // Get courses with search and pagination
+   * const searchResults = await courseService.getCourses({
+   *   page: 2,
+   *   limit: 5,
+   *   search: 'spanish',
+   *   is_public: true
+   * });
    */
   async getCourses(params?: PaginationParams): Promise<PaginatedResponse<Course>> {
     try {
-      const response = await apiClient.get<{data: Course[], success: boolean, timestamp: string}>(API_ENDPOINTS.COURSES.BASE, { params });
+      const response = await apiClient.get<{ data: Course[], success: boolean, timestamp: string }>(API_ENDPOINTS.COURSES.BASE, { params });
 
       // Validate response structure
       if (!response || !response.data || !Array.isArray(response.data)) {
@@ -72,9 +155,29 @@ class CourseService {
   }
 
   /**
-   * Get a single course by ID
-   * @param id Course ID
-   * @returns Course details
+   * Retrieves detailed information for a specific course by its unique identifier.
+   * 
+   * This method is used throughout the application to fetch individual course details
+   * for display in course detail pages, edit forms, and anywhere specific course
+   * information is needed. It includes comprehensive error handling for common
+   * scenarios like missing courses and permission issues.
+   * 
+   * @param {string} id - The unique identifier of the course to retrieve
+   * @returns {Promise<Course>} Promise resolving to the complete course object
+   * @throws {Error} When course ID is invalid, course not found, access denied, or API fails
+   * 
+   * @example
+   * // Get course details for display
+   * try {
+   *   const course = await courseService.getCourse('spanish-basics');
+   *   console.log(`Course: ${course.name} (${course.sourceLanguage} → ${course.targetLanguage})`);
+   * } catch (error) {
+   *   if (error.message.includes('not found')) {
+   *     // Handle course not found
+   *   } else if (error.message.includes('permission')) {
+   *     // Handle access denied
+   *   }
+   * }
    */
   async getCourse(id: string): Promise<Course> {
     if (!id || typeof id !== 'string') {
@@ -111,12 +214,35 @@ class CourseService {
   }
 
   /**
-   * Create a new course
-   * @param courseData Course creation data
-   * @returns Created course
+   * Creates a new course with the provided course data.
+   * 
+   * This method is primarily used by the CourseForm component and course creation
+   * workflows. It validates required fields, handles data transformation between
+   * frontend and API formats, and provides detailed error messages for various
+   * failure scenarios. The created course is immediately available for use.
+   * 
+   * @param {CreateCourseRequest} courseData - The course data for creation
+   * @param {string} courseData.id - Unique course identifier (max 20 characters)
+   * @param {string} courseData.name - Display name for the course (max 100 characters)
+   * @param {string} courseData.source_language - BCP 47 language code for source language
+   * @param {string} courseData.target_language - BCP 47 language code for target language
+   * @param {boolean} courseData.is_public - Whether the course should be publicly visible
+   * @param {string} [courseData.description] - Optional course description (max 255 characters)
+   * @returns {Promise<Course>} Promise resolving to the newly created course object
+   * @throws {Error} When required fields are missing, course ID already exists, or API fails
+   * 
+   * @example
+   * // Create a new public Spanish course
+   * const newCourse = await courseService.createCourse({
+   *   id: 'spanish-intermediate',
+   *   name: 'Intermediate Spanish',
+   *   source_language: 'en',
+   *   target_language: 'es',
+   *   is_public: true,
+   *   description: 'Build on your Spanish basics with intermediate grammar and vocabulary'
+   * });
    */
   async createCourse(courseData: CreateCourseRequest): Promise<Course> {
-    // Validate required fields
     if (!courseData.name || !courseData.source_language || !courseData.target_language) {
       throw new Error('Course name, source language, and target language are required');
     }
@@ -131,7 +257,7 @@ class CourseService {
       // The API returns a wrapped response with the course data inside a 'data' property
       // Extract the actual course object from response.data
       const actualCourseData = response.data || response;
-      
+
       // Validate that the course data has the expected structure
       if (actualCourseData && actualCourseData.id) {
         return this.transformCourseFromApi(actualCourseData);
@@ -161,10 +287,32 @@ class CourseService {
   }
 
   /**
-   * Update an existing course
-   * @param id Course ID
-   * @param courseData Course update data
-   * @returns Updated course
+   * Updates an existing course with the provided data.
+   * 
+   * This method allows partial updates to course properties and is used in edit
+   * forms and bulk operations. Only the provided fields will be updated, leaving
+   * other course properties unchanged. It includes validation to ensure at least
+   * one field is being updated and handles various error scenarios.
+   * 
+   * @param {string} id - The unique identifier of the course to update
+   * @param {UpdateCourseRequest} courseData - Object containing fields to update
+   * @param {string} [courseData.name] - New display name for the course
+   * @param {string} [courseData.description] - New course description
+   * @param {boolean} [courseData.isPublic] - New visibility setting
+   * @returns {Promise<Course>} Promise resolving to the updated course object
+   * @throws {Error} When course ID is invalid, course not found, no fields provided, or API fails
+   * 
+   * @example
+   * // Update course visibility and description
+   * const updatedCourse = await courseService.updateCourse('spanish-basics', {
+   *   isPublic: false,
+   *   description: 'Updated course description with new content'
+   * });
+   * 
+   * // Bulk publish operation
+   * const publishedCourse = await courseService.updateCourse('spanish-basics', {
+   *   isPublic: true
+   * });
    */
   async updateCourse(id: string, courseData: UpdateCourseRequest): Promise<Course> {
     if (!id || typeof id !== 'string') {
@@ -215,8 +363,31 @@ class CourseService {
   }
 
   /**
-   * Delete a course
-   * @param id Course ID
+   * Permanently deletes a course and all its associated data.
+   * 
+   * This method removes a course from the system entirely. It's used in course
+   * management interfaces and bulk delete operations. The operation is irreversible
+   * and will fail if the course has associated content that prevents deletion.
+   * Proper error handling helps users understand why deletion might fail.
+   * 
+   * @param {string} id - The unique identifier of the course to delete
+   * @returns {Promise<void>} Promise that resolves when deletion is complete
+   * @throws {Error} When course ID is invalid, course not found, permission denied, or course has dependencies
+   * 
+   * @example
+   * // Delete a course with error handling
+   * try {
+   *   await courseService.deleteCourse('old-course-id');
+   *   console.log('Course deleted successfully');
+   * } catch (error) {
+   *   if (error.message.includes('associated content')) {
+   *     // Handle case where course has lessons/exercises
+   *     alert('Cannot delete course with existing content');
+   *   } else if (error.message.includes('permission')) {
+   *     // Handle permission error
+   *     alert('You do not have permission to delete this course');
+   *   }
+   * }
    */
   async deleteCourse(id: string): Promise<void> {
     if (!id || typeof id !== 'string') {
@@ -250,9 +421,29 @@ class CourseService {
   }
 
   /**
-   * Get packaged course content for offline use
-   * @param id Course ID
-   * @returns Complete course package with all related content
+   * Retrieves a complete course package containing all course content for offline use.
+   * 
+   * This method fetches a comprehensive package that includes the course metadata,
+   * all levels, sections, lessons, exercises, and associated media files. It's designed
+   * for offline functionality and content distribution. The package format allows
+   * the application to function without network connectivity.
+   * 
+   * @param {string} id - The unique identifier of the course to package
+   * @returns {Promise<any>} Promise resolving to the complete course package object
+   * @throws {Error} When course ID is invalid, package not found, not ready, or API fails
+   * 
+   * @example
+   * // Download course package for offline use
+   * try {
+   *   const coursePackage = await courseService.getCoursePackage('spanish-basics');
+   *   // Package contains: course, levels, sections, lessons, exercises, media
+   *   localStorage.setItem('offline-course', JSON.stringify(coursePackage));
+   * } catch (error) {
+   *   if (error.message.includes('not ready')) {
+   *     // Package is still being generated
+   *     setTimeout(() => retryPackageDownload(), 5000);
+   *   }
+   * }
    */
   async getCoursePackage(id: string): Promise<any> {
     if (!id || typeof id !== 'string') {
@@ -293,7 +484,20 @@ class CourseService {
   }
 }
 
-// Create and export course service instance
+/**
+ * Singleton instance of the CourseService for use throughout the application.
+ * 
+ * This exported instance ensures consistent state management and provides a
+ * single point of access for all course-related API operations. Import this
+ * instance in components, hooks, and other services that need course functionality.
+ * 
+ * @example
+ * // Import and use in a React component
+ * import { courseService } from '../services/courseService';
+ * 
+ * // Import and use in a custom hook
+ * import courseService from '../services/courseService';
+ */
 export const courseService = new CourseService();
 
 export default courseService;

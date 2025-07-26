@@ -24,6 +24,10 @@
     "test:unit": "jest --config jest.config.js",
     "test:integration": "jest --config jest.integration.config.js",
     "test:backend": "npm run test:unit && npm run test:integration",
+    "db:test": "ts-node --project tsconfig.build.json -r tsconfig-paths/register src/shared/database/testConnection.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
+    "db:studio": "prisma studio",
     "deploy:vercel": "vercel --prod"
   },
   "keywords": [

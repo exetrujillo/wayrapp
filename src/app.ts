@@ -1,9 +1,51 @@
+// src/app.ts
+
 /**
- * WayrApp Backend API
- * Open-source language learning platform
- *
+ * WayrApp Express Application Instance
+ * 
+ * Main Express application configuration for the WayrApp language learning platform backend API.
+ * This file serves as the central application setup, configuring all middleware, security measures,
+ * API routes, and error handling for the entire backend service. The application follows a modular
+ * architecture with versioned API endpoints and comprehensive security hardening.
+ * 
+ * Currently serverless-compatible (Vercel) but designed as a deployment-agnostic Express application
+ * that can run in both traditional server environments and serverless functions. The architecture
+ * is being evolved toward a decentralized system with distributed nodes, where this app instance
+ * will serve as a foundational node in the network while maintaining backward compatibility.
+ * 
+ * The app implements a hierarchical content structure (Course → Level → Section → Module → Lesson → Exercise)
+ * and provides comprehensive authentication, user management, content management, and progress tracking
+ * capabilities. Its modular design facilitates the transition to a distributed architecture where
+ * different services can be deployed independently across multiple nodes.
+ * 
+ * This application instance serves as the main server entry point and is imported by all integration
+ * tests for API testing. It forms the foundation for the backend infrastructure, handling requests
+ * from multiple frontend clients (web creator, mobile app) and preparing for future node-to-node
+ * communication in the decentralized architecture.
+ * 
  * @author Exequiel Trujillo
  * @version 1.0.0
+ * @since 1.0.0
+ * 
+ * @example
+ * // Used in integration tests for API testing
+ * import request from 'supertest';
+ * import app from '../../app';
+ * 
+ * describe('API Tests', () => {
+ *   it('should return API info', async () => {
+ *     const response = await request(app).get('/api');
+ *     expect(response.status).toBe(200);
+ *   });
+ * });
+ * 
+ * @example
+ * // The app provides versioned API endpoints ready for distributed deployment
+ * // GET /api - API information and node capabilities
+ * // GET /api/docs - Complete OpenAPI documentation
+ * // POST /api/v1/auth/login - User authentication (future: distributed auth)
+ * // GET /api/v1/courses - List available courses (future: federated content)
+ * // GET /api/v1/progress - User progress tracking (future: distributed state)
  */
 
 import express from "express";
@@ -109,9 +151,9 @@ app.get("/api/docs", (_req, res) => {
       version: "1.0.0",
       description: "Open-source language learning platform backend API",
       contact: {
-        name: "WayrApp Team",
-        url: "https://github.com/wayrapp/backend",
-        email: "support@wayrapp.com",
+        name: "Exequiel Trujillo Escobar",
+        url: "https://github.com/wayrapp/",
+        email: "exequiel.trujillo@ug.uchile.cl",
       },
       license: {
         name: "MIT",

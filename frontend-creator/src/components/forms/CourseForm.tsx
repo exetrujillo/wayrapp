@@ -1,3 +1,4 @@
+// frontend-creator/src/components/forms/CourseForm.tsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
@@ -16,10 +17,85 @@ interface CourseFormProps {
   onCancel?: () => void;
 }
 
+/**
+ * A comprehensive form component for creating new language learning courses in the content creator interface.
+ * 
+ * This component provides a complete course creation workflow with real-time validation, internationalization support,
+ * and integrated error handling. It manages the entire course creation process from form input validation to API
+ * submission, transforming form data to match backend API requirements (converting camelCase to snake_case field names).
+ * The form includes fields for course identification, naming, language selection with BCP 47 compliance, optional
+ * descriptions, and visibility settings.
+ * 
+ * The component integrates with the application's form validation system using Zod schemas, provides comprehensive
+ * error handling for various HTTP status codes, and offers real-time feedback to users during the creation process.
+ * It follows the application's design patterns by using the FormWrapper component for consistent styling and behavior
+ * across all forms in the creator interface.
+ * 
+ * @param {CourseFormProps} props - The component props
+ * @param {(course: any) => void} [props.onSuccess] - Optional callback function invoked when course creation succeeds. Receives the newly created course object as a parameter. Typically used by parent components to handle navigation or state updates after successful creation.
+ * @param {() => void} [props.onCancel] - Optional callback function invoked when the user cancels the form. Usually handles navigation back to the previous page or closes a modal. If not provided, the cancel button functionality is disabled.
+ * 
+ * @example
+ * // Basic usage in a course creation page
+ * import { CourseForm } from '../components/forms/CourseForm';
+ * import { useNavigate } from 'react-router-dom';
+ * 
+ * const CreateCoursePage = () => {
+ *   const navigate = useNavigate();
+ * 
+ *   const handleCourseCreated = (newCourse) => {
+ *     console.log('Course created:', newCourse);
+ *     navigate(`/courses/${newCourse.id}`);
+ *   };
+ * 
+ *   const handleCancel = () => {
+ *     navigate('/courses');
+ *   };
+ * 
+ *   return (
+ *     <div className="max-w-2xl mx-auto p-6">
+ *       <h1 className="text-2xl font-bold mb-6">Create New Course</h1>
+ *       <CourseForm 
+ *         onSuccess={handleCourseCreated}
+ *         onCancel={handleCancel}
+ *       />
+ *     </div>
+ *   );
+ * };
+ * 
+ * @example
+ * // Usage in a modal dialog
+ * import { CourseForm } from '../components/forms/CourseForm';
+ * import { Modal } from '../components/ui/Modal';
+ * 
+ * const CourseCreationModal = ({ isOpen, onClose, onCourseCreated }) => {
+ *   return (
+ *     <Modal isOpen={isOpen} onClose={onClose} title="Create New Course">
+ *       <CourseForm 
+ *         onSuccess={(course) => {
+ *           onCourseCreated(course);
+ *           onClose();
+ *         }}
+ *         onCancel={onClose}
+ *       />
+ *     </Modal>
+ *   );
+ * };
+ * 
+ * @example
+ * // Minimal usage without callbacks (form handles its own state)
+ * const SimpleCourseCreation = () => {
+ *   return (
+ *     <div className="container">
+ *       <CourseForm />
+ *     </div>
+ *   );
+ * };
+ */
 export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) => {
   const { t } = useTranslation();
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  
+
   const createCourseMutation = useCreateCourseMutation();
 
   const {
@@ -71,7 +147,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
       },
       onError: (error: any) => {
         let errorMessage = t('common.messages.error', 'An error occurred');
-        
+
         // Handle different types of errors
         if (error?.response?.status === 409) {
           errorMessage = t('creator.forms.course.errors.duplicate', 'A course with this ID already exists');
@@ -84,7 +160,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
         } else if (error?.message) {
           errorMessage = error.message;
         }
-        
+
         setFeedback({
           type: 'error',
           message: errorMessage,
@@ -102,13 +178,12 @@ export const CourseForm: React.FC<CourseFormProps> = ({ onSuccess, onCancel }) =
 
   return (
     <FormWrapper
-      title={t('creator.forms.course.title', 'Create Course')}
       onSubmit={handleSubmit(onSubmit)}
       onCancel={handleCancel}
       isSubmitting={createCourseMutation.isPending}
       isValid={isValid}
-      submitText={createCourseMutation.isPending 
-        ? t('creator.forms.course.submitting', 'Creating Course...') 
+      submitText={createCourseMutation.isPending
+        ? t('creator.forms.course.submitting', 'Creating Course...')
         : t('creator.forms.course.submit', 'Create Course')
       }
       cancelText={t('common.buttons.cancel', 'Cancel')}

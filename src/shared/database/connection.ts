@@ -1,23 +1,129 @@
+// src/shared/database/connection.ts
+
 /**
- * Database Connection Manager
- * Singleton pattern for Prisma client with logging, connection pooling, and performance monitoring
+ * Database Connection Manager for a WayrApp Sovereign Node
  *
+ * This module serves as the foundational database access layer for a single, autonomous
+ * WayrApp instance. It implements the Singleton pattern with Prisma ORM to provide
+ * optimized connection pooling, comprehensive performance monitoring, and robust error
+ * handling for a community-owned language learning platform.
+ *
+ * ## ARCHITECTURAL VISION - SOVEREIGN NODES
+ * 
+ * WayrApp's "decentralization" means empowering communities worldwide to deploy and own
+ * their complete, independent instances of the platform:
+ * 
+ * - **Sovereign Deployment**: A Quechua community in Peru, a Basque school in Euskal Herria, or
+ *   a university department can each download and deploy the entire WayrApp codebase
+ * - **Data Sovereignty**: Each node maintains its own private, isolated database with
+ *   complete control over user data, courses, and educational content
+ * - **Zero Dependencies**: No central authority, no shared databases, no inter-node
+ *   communication - each instance is a complete, self-contained universe
+ * 
+ * ## SINGLE-NODE ARCHITECTURE
+ * 
+ * This connection manager is the database heart of ONE sovereign node. It provides:
+ * - Optimized connection pooling for the node's private database
+ * - Performance monitoring and health checks for operational reliability
+ * - Graceful shutdown handling for deployment flexibility
+ * - Comprehensive error logging for community administrators
+ * 
+ * The robust design ensures that each community's educational platform can operate
+ * independently and reliably, regardless of other nodes' status or existence.
+ * 
  * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
+ *
+ * @example
+ * // Basic usage in repositories and services
+ * import { prisma } from '@/shared/database/connection';
+ * 
+ * // Each query operates on this node's private database only
+ * const users = await prisma.user.findMany();
+ * const courses = await prisma.course.findMany({ where: { is_public: true } });
+ *
+ * @example
+ * // Dependency injection pattern used throughout the application
+ * import { prisma } from '@/shared/database/connection';
+ * 
+ * // Routes receive the node's database connection
+ * app.use(API_BASE, createContentRoutes(prisma));
+ * app.use(API_BASE, createProgressRoutes(prisma));
+ *
+ * @example
+ * // Health monitoring for node administrators
+ * import { prisma } from '@/shared/database/connection';
+ * 
+ * const health = await DatabaseConnection.healthCheck();
+ * const metrics = DatabaseConnection.getMetrics();
+ * 
+ * // Community administrators can monitor their node's database performance
+ * console.log(`Node database latency: ${health.latency}ms`);
+ * console.log(`Total queries processed: ${metrics.totalQueries}`);
+ *
+ * @example
+ * // Integration testing for node development
+ * import { prisma } from '@/shared/database/connection';
+ * 
+ * describe('Node Database Tests', () => {
+ *   beforeEach(async () => {
+ *     // Clean the node's test database
+ *     await prisma.user.deleteMany();
+ *     await prisma.course.deleteMany();
+ *   });
+ * });
  */
 
 import { PrismaClient } from "@prisma/client";
 import { logger } from "@/shared/utils/logger";
 
-// Database performance metrics
+/**
+ * Database Performance Metrics Interface
+ * 
+ * Performance metrics collection for monitoring a single sovereign node's database health.
+ * These metrics help community administrators understand their node's performance and
+ * optimize their deployment for their specific user base and content volume.
+ * 
+ * Unlike distributed systems, these metrics represent the complete picture of database
+ * performance for this autonomous node - there are no external dependencies or shared
+ * resources to consider.
+ * 
+ * @interface DatabaseMetrics
+ */
 interface DatabaseMetrics {
+  /** Total number of database queries executed since this node started */
   totalQueries: number;
+  /** Number of queries that exceeded the slow query threshold (>1000ms) */
   slowQueries: number;
+  /** Rolling average query execution time in milliseconds (last 1000 queries) */
   averageQueryTime: number;
+  /** Maximum number of concurrent database connections configured for this node */
   connectionPoolSize: number;
+  /** Current number of active database connections (requires additional monitoring) */
   activeConnections: number;
 }
 
-// Singleton pattern for Prisma client with enhanced configuration
+/**
+ * Database Connection Singleton Class
+ * 
+ * Manages the single Prisma client instance for this sovereign WayrApp node with
+ * comprehensive monitoring, health checking, and performance optimization capabilities.
+ * 
+ * This class ensures that the node's private database connection is robust, efficient,
+ * and well-monitored, enabling community administrators to maintain a reliable
+ * educational platform for their users without external dependencies.
+ * 
+ * Key responsibilities:
+ * - Singleton pattern ensures single connection pool per node
+ * - Performance monitoring for query optimization
+ * - Health checking for operational reliability
+ * - Graceful error handling and logging
+ * - Environment-specific configuration management
+ * 
+ * @class DatabaseConnection
+ * @static
+ */
 class DatabaseConnection {
   private static instance: PrismaClient;
   private static metrics: DatabaseMetrics = {
@@ -29,6 +135,22 @@ class DatabaseConnection {
   };
   private static queryTimes: number[] = [];
 
+  /**
+   * Get Singleton Prisma Client Instance
+   * 
+   * Returns the single, optimized Prisma client instance for this sovereign node.
+   * Initializes the client on first access with environment-specific configuration,
+   * connection pooling, and comprehensive performance monitoring.
+   * 
+   * The client is configured for the node's private database with:
+   * - Environment-appropriate logging levels
+   * - Optimized connection pooling
+   * - Query performance monitoring middleware
+   * - Automatic slow query detection and logging
+   * 
+   * @returns {PrismaClient} Fully configured Prisma client instance for this node
+   * @static
+   */
   public static getInstance(): PrismaClient {
     if (!DatabaseConnection.instance) {
       // Configure Prisma client with optimized connection pooling
@@ -120,6 +242,15 @@ class DatabaseConnection {
     });
   }
 
+  /**
+   * Disconnect Database Connection
+   * 
+   * Gracefully closes the database connection for the. Used during
+   * application shutdown to ensure clean termination and prevent connection leaks.
+   * Essential for proper node lifecycle management in community deployments.
+   * 
+   * @static
+   */
   public static async disconnect(): Promise<void> {
     if (DatabaseConnection.instance) {
       await DatabaseConnection.instance.$disconnect();
@@ -127,6 +258,22 @@ class DatabaseConnection {
     }
   }
 
+  /**
+   * Database Health Check
+   * 
+   * Performs a comprehensive health check of this node's database connection,
+   * measuring response latency and collecting performance metrics. Essential for
+   * community administrators to monitor their node's operational health.
+   * 
+   * This health check is completely self-contained - it only tests this node's
+   * private database connection and does not depend on any external services
+   * or other nodes.
+   * 
+   * @returns {Promise<{status: string, latency: number, metrics: DatabaseMetrics}>}
+   *   Complete health status including connection state, response latency in ms,
+   *   and comprehensive performance metrics for this node
+   * @static
+   */
   public static async healthCheck(): Promise<{
     status: string;
     latency: number;
@@ -166,6 +313,17 @@ class DatabaseConnection {
     }
   }
 
+  /**
+   * Get Current Database Metrics
+   * 
+   * Returns current performance metrics for this sovereign node's database.
+   * Useful for community administrators to monitor performance, identify
+   * optimization opportunities, and ensure their node operates efficiently
+   * for their user base.
+   * 
+   * @returns {DatabaseMetrics} Current database performance metrics for this node
+   * @static
+   */
   public static getMetrics(): DatabaseMetrics {
     return {
       ...DatabaseConnection.metrics,
@@ -174,6 +332,15 @@ class DatabaseConnection {
     };
   }
 
+  /**
+   * Reset Database Metrics
+   * 
+   * Resets all performance metrics to their initial state. Useful for testing
+   * environments or when community administrators want to start fresh metrics
+   * collection after node maintenance or optimization changes.
+   * 
+   * @static
+   */
   public static resetMetrics(): void {
     DatabaseConnection.metrics = {
       totalQueries: 0,
@@ -186,9 +353,28 @@ class DatabaseConnection {
   }
 }
 
+/**
+ * Primary Prisma Client Export
+ * 
+ * The main database client instance for this sovereign WayrApp node. This is the
+ * single point of access to the node's private database, used throughout the
+ * application by repositories, services, route handlers, and tests.
+ * 
+ * Every database operation in this node goes through this client, ensuring
+ * consistent connection management, performance monitoring, and error handling
+ * for the community's educational platform.
+ * 
+ * @constant {PrismaClient} prisma - Configured Prisma client singleton for this node
+ */
 export const prisma = DatabaseConnection.getInstance();
 
-// Graceful shutdown
+/**
+ * Graceful Shutdown Handlers
+ * 
+ * Ensures the node's database connection is properly closed when the application
+ * receives termination signals. Critical for community deployments to prevent
+ * connection leaks and ensure clean shutdown in various hosting environments.
+ */
 process.on("SIGINT", async () => {
   logger.info("Received SIGINT, closing database connection...");
   await DatabaseConnection.disconnect();

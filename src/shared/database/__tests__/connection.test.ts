@@ -1,114 +1,245 @@
-import { ensureJestMock } from '@/shared/test/utils/testUtils';
-import prisma from '../connection';
+/**
+ * Database Connection Tests for WayrApp Sovereign Nodes
+ * 
+ * Test suite for the database connection module exports.
+ * Tests the actual exported functionality that other modules use,
+ * ensuring the sovereign node's database connection works correctly.
+ * 
+ * @author Exequiel Trujillo
+ * @version 1.0.0
+ * @since 1.0.0
+ * 
+ * Note: This tests the exported prisma client, not internal implementation details.
+ */
 
-// Mock the prisma connection module
-jest.mock('../connection', () => {
-  const mockClient = {
-    $connect: jest.fn().mockResolvedValue(undefined),
-    $disconnect: jest.fn().mockResolvedValue(undefined),
-  };
-  return mockClient;
-});
+import { PrismaClient } from '@prisma/client';
 
-describe('Database Connection', () => {
+// Mock PrismaClient methods
+const mockDisconnect = jest.fn().mockResolvedValue(undefined);
+const mockQueryRaw = jest.fn().mockResolvedValue([{ result: 1 }]);
+const mockUse = jest.fn();
+
+const mockPrismaClient = {
+  $disconnect: mockDisconnect,
+  $queryRaw: mockQueryRaw,
+  $use: mockUse,
+} as unknown as PrismaClient;
+
+const mockPrismaConstructor = jest.fn().mockImplementation(() => mockPrismaClient);
+
+// Mock PrismaClient constructor
+jest.mock('@prisma/client', () => ({
+  PrismaClient: mockPrismaConstructor,
+}));
+
+// Mock the logger to avoid console output during tests
+const mockLogger = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+};
+
+jest.mock('@/shared/utils/logger', () => ({
+  logger: mockLogger,
+}));
+
+describe('Database Connection Module', () => {
   beforeEach(() => {
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
-  describe('connectDatabase', () => {
-    it('should connect to the database successfully', async () => {
-      // Act
-      await connectDatabase();
-
-      // Assert
-      expect((prisma as any).$connect).toHaveBeenCalledTimes(1);
+  describe('Exported Prisma Client', () => {
+    it('should export a prisma client instance', () => {
+      const prisma = require('../connection').default;
+      
+      expect(prisma).toBeDefined();
+      expect(typeof prisma).toBe('object');
+      expect(prisma).toBe(mockPrismaClient);
     });
 
-    it('should handle connection errors', async () => {
-      // Arrange
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const mockError = new Error('Connection failed');
-
-      // Ensure the mock has the required methods
-      const connectMock = ensureJestMock((prisma as any).$connect);
-      connectMock.mockRejectedValueOnce(mockError);
-
-      // Act & Assert
-      await expect(connectDatabase()).rejects.toThrow(
-        'Failed to connect to database'
-      );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Database connection error:',
-        mockError
-      );
-
-      // Cleanup
-      consoleErrorSpy.mockRestore();
+    it('should export the same instance as named export', () => {
+      const connectionModule = require('../connection');
+      
+      expect(connectionModule.prisma).toBeDefined();
+      expect(connectionModule.default).toBe(connectionModule.prisma);
     });
   });
 
-  describe('disconnectDatabase', () => {
-    it('should disconnect from the database successfully', async () => {
-      // Act
-      await disconnectDatabase();
-
-      // Assert
-      expect((prisma as any).$disconnect).toHaveBeenCalledTimes(1);
+  describe('Module Initialization', () => {
+    it('should create PrismaClient instance on module load', () => {
+      // Clear previous calls
+      mockPrismaConstructor.mockClear();
+      
+      // Re-import to trigger initialization
+      jest.resetModules();
+      require('../connection');
+      
+      expect(mockPrismaConstructor).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle disconnection errors', async () => {
-      // Arrange
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const mockError = new Error('Disconnection failed');
-
-      // Ensure the mock has the required methods
-      const disconnectMock = ensureJestMock((prisma as any).$disconnect);
-      disconnectMock.mockRejectedValueOnce(mockError);
-
-      // Act & Assert
-      await expect(disconnectDatabase()).rejects.toThrow(
-        'Failed to disconnect from database'
+    it('should configure PrismaClient with datasource', () => {
+      // Clear previous calls
+      mockPrismaConstructor.mockClear();
+      
+      // Re-import to trigger initialization
+      jest.resetModules();
+      require('../connection');
+      
+      expect(mockPrismaConstructor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasources: {
+            db: {
+              url: expect.any(String),
+            },
+          },
+        })
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error disconnecting from database:',
-        mockError
-      );
+    });
 
-      // Cleanup
-      consoleErrorSpy.mockRestore();
+    it('should configure logging', () => {
+      // Clear previous calls
+      mockPrismaConstructor.mockClear();
+      
+      // Re-import to trigger initialization
+      jest.resetModules();
+      require('../connection');
+      
+      expect(mockPrismaConstructor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          log: expect.any(Array),
+        })
+      );
+    });
+
+    it('should set up query monitoring middleware', () => {
+      // Clear previous calls
+      mockUse.mockClear();
+      
+      // Re-import to trigger initialization
+      jest.resetModules();
+      require('../connection');
+      
+      expect(mockUse).toHaveBeenCalled();
+    });
+
+    it('should log successful initialization', () => {
+      // Clear previous calls
+      mockLogger.info.mockClear();
+      
+      // Re-import to trigger initialization
+      jest.resetModules();
+      require('../connection');
+      
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Database connection initialized with optimized pooling',
+        expect.objectContaining({
+          connectionLimit: expect.any(String),
+          poolTimeout: expect.any(String),
+          environment: expect.any(String),
+        })
+      );
     });
   });
 
-  describe('prisma instance', () => {
-    it('should be a singleton', () => {
-      // Act
-      const prismaInstance1 = prisma;
-      const prismaInstance2 = prisma;
+  describe('Database Operations', () => {
+    let prisma: any;
 
-      // Assert
-      expect(prismaInstance1).toBe(prismaInstance2);
+    beforeEach(() => {
+      jest.resetModules();
+      prisma = require('../connection').default;
+    });
+
+    it('should support raw database queries', async () => {
+      const result = await prisma.$queryRaw`SELECT 1`;
+      
+      expect(result).toEqual([{ result: 1 }]);
+      expect(mockQueryRaw).toHaveBeenCalled();
+    });
+
+    it('should support database disconnection', async () => {
+      await prisma.$disconnect();
+      
+      expect(mockDisconnect).toHaveBeenCalled();
+    });
+
+    it('should maintain singleton pattern', () => {
+      const prisma2 = require('../connection').default;
+      
+      expect(prisma).toBe(prisma2);
+      expect(mockPrismaConstructor).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Graceful Shutdown', () => {
+    let originalProcessOn: any;
+    let mockProcessOn: jest.Mock;
+
+    beforeEach(() => {
+      // Mock process.on to capture event handlers
+      originalProcessOn = process.on;
+      mockProcessOn = jest.fn();
+      process.on = mockProcessOn;
+    });
+
+    afterEach(() => {
+      // Restore original process.on
+      process.on = originalProcessOn;
+    });
+
+    it('should register SIGINT handler', () => {
+      jest.resetModules();
+      require('../connection');
+
+      expect(mockProcessOn).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+    });
+
+    it('should register SIGTERM handler', () => {
+      jest.resetModules();
+      require('../connection');
+
+      expect(mockProcessOn).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+    });
+  });
+
+  describe('Sovereign Node Characteristics', () => {
+    it('should provide a single database connection for the community node', () => {
+      jest.resetModules();
+      const prisma = require('../connection').default;
+      
+      // Verify we get a single, consistent connection
+      expect(prisma).toBeDefined();
+      expect(mockPrismaConstructor).toHaveBeenCalledTimes(1);
+    });
+
+    it('should initialize with appropriate configuration for community deployment', () => {
+      jest.resetModules();
+      require('../connection');
+      
+      // Verify configuration suitable for community hosting
+      expect(mockPrismaConstructor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasources: expect.objectContaining({
+            db: expect.objectContaining({
+              url: expect.any(String),
+            }),
+          }),
+          log: expect.any(Array),
+        })
+      );
+    });
+
+    it('should set up monitoring for community administrators', () => {
+      jest.resetModules();
+      require('../connection');
+      
+      // Verify monitoring setup
+      expect(mockUse).toHaveBeenCalled();
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Database connection initialized'),
+        expect.any(Object)
+      );
     });
   });
 });
-
-// Mock implementation of connectDatabase function
-async function connectDatabase() {
-  try {
-    await (prisma as any).$connect();
-    console.log('Database connected successfully');
-  } catch (error) {
-    console.error('Database connection error:', error);
-    throw new Error('Failed to connect to database');
-  }
-}
-
-// Mock implementation of disconnectDatabase function
-async function disconnectDatabase() {
-  try {
-    await (prisma as any).$disconnect();
-    console.log('Database disconnected successfully');
-  } catch (error) {
-    console.error('Error disconnecting from database:', error);
-    throw new Error('Failed to disconnect from database');
-  }
-}

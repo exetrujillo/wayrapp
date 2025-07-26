@@ -1,3 +1,6 @@
+// tailwind.config.js
+const designTokens = require('../frontend-shared/design-tokens.js');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -6,54 +9,45 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        ...designTokens.colors,
+      },
+      fontFamily: {
+        sans: designTokens.typography.fontFamily.primary.split(', '),
+        mono: designTokens.typography.fontFamily.monospace.split(', '),
+      },
       fontSize: {
+        ...designTokens.typography.fontSize,
+        // Keep existing heading sizes for compatibility
         'h1': ['2.25rem', { lineHeight: '2.5rem' }],
         'h2': ['1.875rem', { lineHeight: '2.25rem' }],
         'h3': ['1.5rem', { lineHeight: '2rem' }],
       },
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+      fontWeight: designTokens.typography.fontWeight,
+      lineHeight: designTokens.typography.lineHeight,
+      letterSpacing: designTokens.typography.letterSpacing,
+      spacing: designTokens.spacing,
+      borderRadius: {
+        ...designTokens.borderRadius,
+        component: designTokens.borderRadius.DEFAULT, // Create a specific utility for component radius
+      },
+      boxShadow: designTokens.shadows,
+      zIndex: designTokens.zIndex,
+      // Define keyframes for animations
+      keyframes: {
+        fadeInDown: {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        secondary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-        },
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
-        neutral: {
-          50: '#fafafa',
-          100: '#f5f5f5',
-          200: '#e5e5e5',
-          300: '#d4d4d4',
-          400: '#a3a3a3',
-          500: '#737373',
-          600: '#525252',
-          700: '#404040',
-          800: '#262626',
-          900: '#171717',
+        fadeOutUp: {
+          '0%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-10px)' },
         },
       },
-      borderRadius: {
-        'component': '0.375rem',
+      // Define animation utilities
+      animation: {
+        'fade-in-down': 'fadeInDown 0.3s ease-out forwards',
+        'fade-out-up': 'fadeOutUp 0.3s ease-in forwards',
       },
     },
   },
