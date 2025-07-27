@@ -409,6 +409,9 @@ npm run build
 
 # Vercel deployment build
 npm run build:vercel
+
+# Verify Vercel build requirements
+npm run verify:vercel
 ```
 
 ### Database Schema

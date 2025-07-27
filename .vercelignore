@@ -1,10 +1,11 @@
-# Source files (only need compiled dist)
-src/
-*.ts
+# Test files (exclude test files but keep source)
 *.test.js
 *.test.ts
 *.spec.js
 *.spec.ts
+**/__tests__/
+src/shared/test/
+src/__tests__/
 
 # Development files
 .env.example
@@ -12,7 +13,6 @@ src/
 .env.test.example
 
 # Test files and coverage
-__tests__/
 coverage/
 jest.config.js
 jest.integration.config.js
@@ -38,10 +38,11 @@ node_modules/
 # Frontend workspaces (not needed for API)
 frontend-creator/
 frontend-mobile/
-frontend-shared/
+#frontend-shared/
 
-# Scripts
-scripts/
+# Scripts (keep verify script)
+scripts/setup-test-db.js
+scripts/check-test-config.js
 
 # Git
 .git/
