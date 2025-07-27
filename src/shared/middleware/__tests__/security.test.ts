@@ -447,11 +447,11 @@ describe('Security Middleware', () => {
 
       const directives = helmetOptions.contentSecurityPolicy.directives;
       expect(directives.defaultSrc).toEqual(["'self'"]);
-      expect(directives.styleSrc).toEqual(["'self'", "'unsafe-inline'"]);
-      expect(directives.scriptSrc).toEqual(["'self'"]);
-      expect(directives.imgSrc).toEqual(["'self'", "data:", "https:"]);
+      expect(directives.styleSrc).toEqual(["'self'", "'unsafe-inline'", "https://unpkg.com/swagger-ui-dist@5.9.0/"]);
+      expect(directives.scriptSrc).toEqual(["'self'", "'unsafe-inline'", "https://unpkg.com/swagger-ui-dist@5.9.0/"]);
+      expect(directives.imgSrc).toEqual(["'self'", "data:", "https:", "https://unpkg.com/swagger-ui-dist@5.9.0/"]);
       expect(directives.connectSrc).toEqual(["'self'"]);
-      expect(directives.fontSrc).toEqual(["'self'"]);
+      expect(directives.fontSrc).toEqual(["'self'", "https://unpkg.com/swagger-ui-dist@5.9.0/"]);
       expect(directives.objectSrc).toEqual(["'none'"]);
       expect(directives.mediaSrc).toEqual(["'self'"]);
       expect(directives.frameSrc).toEqual(["'none'"]);
@@ -466,6 +466,21 @@ describe('Security Middleware', () => {
 
     it('should disable Cross-Origin Embedder Policy for API compatibility', () => {
       expect(helmetOptions.crossOriginEmbedderPolicy).toBe(false);
+    });
+
+    it('should allow specific Swagger UI resources in CSP', () => {
+      const directives = helmetOptions.contentSecurityPolicy.directives;
+      const swaggerDomain = "https://unpkg.com/swagger-ui-dist@5.9.0/";
+      
+      // Verify Swagger UI resources are specifically allowed
+      expect(directives.styleSrc).toContain(swaggerDomain);
+      expect(directives.scriptSrc).toContain(swaggerDomain);
+      expect(directives.imgSrc).toContain(swaggerDomain);
+      expect(directives.fontSrc).toContain(swaggerDomain);
+      
+      // Verify it's specific to Swagger UI version, not all of unpkg.com
+      expect(directives.styleSrc).not.toContain("https://unpkg.com");
+      expect(directives.scriptSrc).not.toContain("https://unpkg.com");
     });
   });
 

@@ -287,6 +287,19 @@ export const authRateLimiter = createRateLimiter(
  * ensures secure connections in production environments. Some features like Cross-Origin
  * Embedder Policy are disabled to maintain API compatibility.
  * 
+ * Special allowances are made for Swagger UI documentation:
+ * - https://unpkg.com/swagger-ui-dist@5.9.0/ is allowed for specific Swagger UI resources
+ * - 'unsafe-inline' is permitted for scripts to enable Swagger UI functionality
+ * - This provides secure access to Swagger UI assets while maintaining CSP protection
+ */
+
+/**
+ * Swagger UI CDN configuration for Content Security Policy
+ */
+export const SWAGGER_UI_VERSION = "5.9.0";
+export const SWAGGER_UI_CDN = `https://unpkg.com/swagger-ui-dist@${SWAGGER_UI_VERSION}/`;
+
+/**
  * Configuration object for Helmet security middleware
  * @property {Object} contentSecurityPolicy - CSP directives for content loading restrictions
  * @property {boolean} crossOriginEmbedderPolicy - Disabled for API compatibility
@@ -301,7 +314,7 @@ export const authRateLimiter = createRateLimiter(
  * 
  * @example
  * // Headers set by this configuration:
- * // Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; ...
+ * // Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com/swagger-ui-dist@5.9.0/; script-src 'self' 'unsafe-inline' https://unpkg.com/swagger-ui-dist@5.9.0/; ...
  * // Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
  * // X-Content-Type-Options: nosniff
  * // X-Frame-Options: DENY
@@ -311,11 +324,11 @@ export const helmetOptions = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", SWAGGER_UI_CDN],
+      scriptSrc: ["'self'", "'unsafe-inline'", SWAGGER_UI_CDN],
+      imgSrc: ["'self'", "data:", "https:", SWAGGER_UI_CDN],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", SWAGGER_UI_CDN],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"]

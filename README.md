@@ -565,6 +565,7 @@ API endpoints are rate-limited to prevent abuse:
 - **Rate Limiting**: Configurable rate limits per endpoint
 - **CORS Protection**: Configurable CORS policies
 - **Security Headers**: Helmet.js for secure HTTP headers
+- **Content Security Policy**: Restrictive CSP with specific allowances for Swagger UI (unpkg.com/swagger-ui-dist@5.9.0/)
 - **Test Database Isolation**: Mandatory separate test database prevents production data loss
 
 ## 📊 Monitoring & Logging
