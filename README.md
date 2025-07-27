@@ -400,6 +400,7 @@ The project includes a specific TypeScript configuration for Vercel deployment:
 
 - `tsconfig.vercel.json` - Optimized for serverless deployment
 - Excludes project references that don't exist in Vercel
+- **Excludes test-related files** - No Jest dependencies in production
 - Uses CommonJS modules for Node.js compatibility
 - Disables source maps and declarations for faster builds
 

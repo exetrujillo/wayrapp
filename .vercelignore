@@ -6,6 +6,7 @@
 **/__tests__/
 src/shared/test/
 src/__tests__/
+src/testInfo.ts
 
 # Development files
 .env.example

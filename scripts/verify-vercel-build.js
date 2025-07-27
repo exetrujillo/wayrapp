@@ -58,6 +58,25 @@ try {
     console.log('  ❌ tsconfig.vercel.json missing src/**/* in include');
     allGood = false;
   }
+  
+  // Check that Jest types are not included
+  if (tsConfig.compilerOptions && tsConfig.compilerOptions.types) {
+    const types = tsConfig.compilerOptions.types;
+    if (types.includes('jest')) {
+      console.log('  ❌ tsconfig.vercel.json should not include jest types');
+      allGood = false;
+    } else {
+      console.log('  ✅ Jest types excluded from Vercel build');
+    }
+  }
+  
+  // Check exclusions
+  if (tsConfig.exclude && tsConfig.exclude.includes('src/testInfo.ts')) {
+    console.log('  ✅ Test-related files excluded');
+  } else {
+    console.log('  ❌ Test-related files not properly excluded');
+    allGood = false;
+  }
 } catch (error) {
   console.log('  ❌ Error reading tsconfig.vercel.json:', error.message);
   allGood = false;

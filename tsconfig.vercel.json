@@ -33,7 +33,9 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/shared/test",
-    "src/__tests__"
+    "src/shared/test/**/*",
+    "src/__tests__/**/*",
+    "**/__tests__/**/*",
+    "src/testInfo.ts"
   ]
 }
