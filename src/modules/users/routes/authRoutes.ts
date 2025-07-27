@@ -166,7 +166,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    * duplicate email detection. Upon successful registration, the user is automatically
    * authenticated and receives JWT tokens for immediate access to protected resources.
    * 
-   * @route POST /api/v1/auth/register
+   * @route POST /register
    * @access Public - No authentication required
    * @ratelimit 5 requests per 15 minutes per IP address
    * 
@@ -206,7 +206,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    *   }
    * }
    */
-  
+
   /**
    * @swagger
    * /api/v1/auth/register:
@@ -224,8 +224,6 @@ export function createAuthRoutes(authController: AuthController): Router {
    *             required:
    *               - email
    *               - password
-   *               - firstName
-   *               - lastName
    *             properties:
    *               email:
    *                 type: string
@@ -234,17 +232,22 @@ export function createAuthRoutes(authController: AuthController): Router {
    *               password:
    *                 type: string
    *                 minLength: 8
+   *                 pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$'
+   *                 description: Must contain uppercase, lowercase, number, and special character
    *                 example: SecurePassword123!
-   *               firstName:
+   *               username:
    *                 type: string
-   *                 example: John
-   *               lastName:
+   *                 minLength: 3
+   *                 example: learner123
+   *               country_code:
    *                 type: string
-   *                 example: Doe
-   *               role:
+   *                 minLength: 2
+   *                 maxLength: 2
+   *                 example: US
+   *               profile_picture_url:
    *                 type: string
-   *                 enum: [student, teacher, admin]
-   *                 default: student
+   *                 format: uri
+   *                 example: https://example.com/avatar.jpg
    *     responses:
    *       201:
    *         description: User successfully registered
@@ -293,7 +296,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    * comparison. Failed login attempts are logged for security monitoring, and successful
    * logins update the user's last login timestamp.
    * 
-   * @route POST /api/v1/auth/login
+   * @route POST /login
    * @access Public - No authentication required
    * @ratelimit 5 requests per 15 minutes per IP address
    * 
@@ -331,7 +334,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    *   }
    * }
    */
-  
+
   /**
    * @swagger
    * /api/v1/auth/login:
@@ -403,7 +406,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    * verification, and rate limiting. This allows clients to maintain authentication
    * state without storing long-lived credentials.
    * 
-   * @route POST /api/v1/auth/refresh
+   * @route POST /refresh
    * @access Public - No authentication required (uses refresh token)
    * @ratelimit 5 requests per 15 minutes per IP address
    * 
@@ -434,6 +437,53 @@ export function createAuthRoutes(authController: AuthController): Router {
    *   }
    * }
    */
+
+  /**
+   * @swagger
+   * /api/v1/auth/refresh:
+   *   post:
+   *     tags:
+   *       - Authentication
+   *     summary: Refresh access token
+   *     description: Generate new access and refresh tokens using a valid refresh token
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - refreshToken
+   *             properties:
+   *               refreshToken:
+   *                 type: string
+   *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   *     responses:
+   *       200:
+   *         description: Tokens refreshed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Tokens refreshed successfully
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     tokens:
+   *                       $ref: '#/components/schemas/AuthTokens'
+   *       400:
+   *         description: Invalid refresh token
+   *       401:
+   *         description: Refresh token expired or revoked
+   *       429:
+   *         description: Too many refresh attempts
+   */
   router.post(
     '/refresh',
     authRateLimiter,
@@ -453,7 +503,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    * provides graceful handling when refresh tokens are not provided and logs
    * security events for monitoring purposes.
    * 
-   * @route POST /api/v1/auth/logout
+   * @route POST /logout
    * @access Private - Requires valid JWT access token
    * @authentication Bearer token in Authorization header
    * 
@@ -484,6 +534,54 @@ export function createAuthRoutes(authController: AuthController): Router {
    *   }
    * }
    */
+
+  /**
+   * @swagger
+   * /api/v1/auth/logout:
+   *   post:
+   *     tags:
+   *       - Authentication
+   *     summary: User logout
+   *     description: Invalidate refresh token and logout user
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - refreshToken
+   *             properties:
+   *               refreshToken:
+   *                 type: string
+   *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   *     responses:
+   *       200:
+   *         description: Logout successful
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Logged out successfully
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: Logged out successfully. Please remove tokens from client storage.
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       400:
+   *         description: Invalid refresh token
+   */
   router.post(
     '/logout',
     authenticateToken,
@@ -507,7 +605,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    * for profile display, authorization decisions, and user interface customization.
    * All sensitive information is properly filtered and only user-owned data is returned.
    * 
-   * @route GET /api/v1/auth/me
+   * @route GET /me
    * @access Private - Requires valid JWT access token
    * @authentication Bearer token in Authorization header
    * 
@@ -544,6 +642,41 @@ export function createAuthRoutes(authController: AuthController): Router {
    *     }
    *   }
    * }
+   */
+
+  /**
+   * @swagger
+   * /api/v1/auth/me:
+   *   get:
+   *     tags:
+   *       - Authentication
+   *     summary: Get current user information
+   *     description: Retrieve detailed profile information for the authenticated user
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: User information retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: User information retrieved successfully
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     user:
+   *                       $ref: '#/components/schemas/User'
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       404:
+   *         description: User not found
    */
   router.get(
     '/me',
