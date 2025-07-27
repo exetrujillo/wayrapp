@@ -471,13 +471,13 @@ describe('Security Middleware', () => {
     it('should allow specific Swagger UI resources in CSP', () => {
       const directives = helmetOptions.contentSecurityPolicy.directives;
       const swaggerDomain = "https://unpkg.com/swagger-ui-dist@5.9.0/";
-      
+
       // Verify Swagger UI resources are specifically allowed
       expect(directives.styleSrc).toContain(swaggerDomain);
       expect(directives.scriptSrc).toContain(swaggerDomain);
       expect(directives.imgSrc).toContain(swaggerDomain);
       expect(directives.fontSrc).toContain(swaggerDomain);
-      
+
       // Verify it's specific to Swagger UI version, not all of unpkg.com
       expect(directives.styleSrc).not.toContain("https://unpkg.com");
       expect(directives.scriptSrc).not.toContain("https://unpkg.com");

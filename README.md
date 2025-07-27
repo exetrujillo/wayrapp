@@ -378,6 +378,22 @@ BCRYPT_ROUNDS=4
 
 **⚠️ WARNING**: Never use the same database for testing and production. Tests will delete all data during cleanup.
 
+### Vercel Configuration
+
+The `vercel.json` file is configured to handle both API and documentation routing:
+
+```json
+{
+  "rewrites": [
+    { "source": "/swagger", "destination": "/swagger.html" },
+    { "source": "/docs", "destination": "/docs-redirect.html" },
+    { "source": "/api/(.*)", "destination": "/api" }
+  ]
+}
+```
+
+**Important**: Uses `rewrites` instead of `routes` to avoid Vercel configuration conflicts.
+
 ### Database Schema
 
 The application uses a hierarchical content structure:
@@ -476,6 +492,7 @@ npm start
 The monorepo is configured for deployment on Vercel with the following setup:
 
 - **Backend API**: Deployed as Vercel Serverless Functions
+- **Interactive Documentation**: Static HTML files with API integration
 - **Content Creator**: Deployed as a static site
 - **Mobile App**: Deployed as a static web build
 
@@ -485,9 +502,13 @@ npm run deploy:vercel
 ```
 
 The `vercel.json` configuration handles:
-- API routes (`/api/*`) → Backend serverless functions
-- Static assets for frontend applications
-- Proper build commands for each workspace
+- **API routes** (`/api/*`) → Backend serverless functions
+- **Documentation routes**:
+  - `/swagger` → Interactive Swagger UI (`swagger.html`)
+  - `/docs` → Documentation disambiguation page (`docs-redirect.html`)
+  - `/` → Main landing page (`index.html`)
+- **CORS headers** for API endpoints
+- **Static assets** for frontend applications
 
 ### Docker Support
 
