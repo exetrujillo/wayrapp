@@ -1,0 +1,40 @@
+{
+    "entryPoints": ["./src"],
+    "entryPointStrategy": "expand",
+    "out": "./docs",
+    "name": "WayrApp Backend API Documentation",
+    "includeVersion": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeExternals": true,
+    "excludeNotDocumented": true,
+    "readme": "./README.md",
+    "tsconfig": "./tsconfig.json",
+    "exclude": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      "**/__tests__/**",
+      "**/node_modules/**",
+      "**/dist/**"
+    ],
+    "plugin": [
+      "typedoc-material-theme"
+    ],
+    "themeColor": "#50A8B1",
+    "darkHighlightTheme": "dark-plus",
+    "sort": ["source-order"],
+    "searchInComments": true,
+    "cleanOutputDir": true,
+    "highlightLanguages": [
+      "typescript","javascript","json","bash","sh","dockerfile"
+    ],
+    "navigation": {
+      "includeCategories": true,
+      "includeGroups": false,
+      "compactFolders": true,
+      "excludeReferences": true
+    },
+    "categorizeByGroup": false,
+    "defaultCategory": "Other"
+  }
+  

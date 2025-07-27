@@ -12,7 +12,7 @@
  * 
  * @fileoverview Unit tests for startup.ts - node initialization and health check utilities
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 

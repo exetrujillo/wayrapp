@@ -44,14 +44,9 @@
  * Used by the StartupManager during node initialization and for periodic maintenance
  * tasks, ensuring each community's educational platform maintains optimal performance
  * throughout its lifecycle.
- *
- * @exports {class} DatabaseOptimizer - Main database optimization class with performance tuning methods
- * @exports {function} monitorQuery - Decorator for monitoring database query performance
- * @exports {class} BatchOperations - Utility class for optimized bulk database operations
  * 
- * @fileoverview Database optimization utilities for WayrApp sovereign nodes
+ * @module Database Optimization
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  *
  * @example
@@ -588,7 +583,6 @@ export class DatabaseOptimizer {
  * 
  * @example
  * class CourseRepository {
- *   @monitorQuery
  *   async findCoursesByLanguage(language: string) {
  *     return await this.prisma.course.findMany({ where: { target_language: language } });
  *   }

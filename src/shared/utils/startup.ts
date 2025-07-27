@@ -10,12 +10,8 @@
  * orchestrates initialization sequences, sets up periodic maintenance tasks, and provides
  * health check capabilities essential for serverless and traditional deployment environments.
  * 
- * @exports {class} StartupManager - Main startup orchestration class with initialization and health management
- * @exports {StartupManager} startupManager - Singleton instance for application-wide startup management
- * 
- * @fileoverview Node initialization and health check utilities for WayrApp sovereign nodes
+ * @module StartupManager
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  */
 

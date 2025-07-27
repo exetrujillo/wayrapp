@@ -1,4 +1,6 @@
 /**
+ * @module __tests__/integration/auth.integration.test
+ * 
  * Authentication Integration Tests
  * Tests authentication flows, JWT handling, and security features
  */

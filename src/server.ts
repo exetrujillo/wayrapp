@@ -1,4 +1,6 @@
 /**
+ * @module server
+ * 
  * Server Entry Point
  * Serverless-compatible entry point for Vercel
  */

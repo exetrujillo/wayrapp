@@ -3,21 +3,20 @@
 /**
  * Authentication Controller Module
  * 
- * This module provides comprehensive user authentication functionality for the WayrApp platform.
+ * This module provides user authentication functionality for the WayrApp platform.
  * It serves as the primary controller layer for all authentication-related HTTP endpoints,
  * handling user registration, login, token refresh, logout, and user profile retrieval operations.
  * The controller integrates with the UserService for user management, TokenBlacklistService for
  * security token management, and implements robust validation, error handling, and security measures.
  * 
- * @exports {class} AuthController - Main authentication controller class with all endpoint handlers
- * @exports {interface} LoginRequest - Type definition for login request payload
- * @exports {interface} RefreshTokenRequest - Type definition for refresh token request payload  
- * @exports {interface} RegisterRequest - Type definition for user registration request payload
- * @exports {interface} AuthResponse - Type definition for authentication response structure
+ * Main authentication controller class with all endpoint handlers. Type definition for login request payload.
+ * Type definition for refresh token request payload. Type definition for user registration request payload.
+ * Type definition for authentication response structure.
  * 
- * @fileoverview Handles all authentication endpoints including registration, login, token refresh, logout, and user profile retrieval
+ * Handles all authentication endpoints including registration, login, token refresh, logout, and user profile retrieval.
+ * 
+ * @module AuthController
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  */
 
@@ -157,8 +156,6 @@ export class AuthController {
    * Authenticates a user with email and password credentials, validates account status,
    * generates JWT token pair, and updates last login timestamp. Implements security
    * measures including input validation and comprehensive logging.
-   * 
-   * @method login
    * @param {Request} req - Express request object containing login credentials in body
    * @param {Response} res - Express response object for sending authentication response
    * @returns {Promise<void>} Resolves when login process completes successfully
@@ -238,8 +235,6 @@ export class AuthController {
    * Validates and refreshes JWT tokens using a valid refresh token. Checks token blacklist,
    * verifies user account status, and generates a new token pair. Implements security
    * measures to prevent token reuse and unauthorized access.
-   * 
-   * @method refresh
    * @param {Request} req - Express request object containing refresh token in body
    * @param {Response} res - Express response object for sending new tokens
    * @returns {Promise<void>} Resolves when token refresh completes successfully
@@ -329,8 +324,6 @@ export class AuthController {
    * Securely logs out a user by revoking their refresh token and adding it to the blacklist.
    * Requires authentication via access token. Provides graceful handling when refresh token
    * is not provided in the request body.
-   * 
-   * @method logout
    * @param {Request} req - Express request object with authenticated user and optional refresh token in body
    * @param {Response} res - Express response object for sending logout confirmation
    * @returns {Promise<void>} Resolves when logout process completes
@@ -374,8 +367,6 @@ export class AuthController {
    * Creates a new user account with email, password, and optional profile information.
    * Validates input data, creates user with hashed password, assigns default role,
    * and automatically logs in the user by generating JWT tokens.
-   * 
-   * @method register
    * @param {Request} req - Express request object containing registration data in body
    * @param {Response} res - Express response object for sending registration response
    * @returns {Promise<void>} Resolves when registration and auto-login complete successfully
@@ -448,8 +439,6 @@ export class AuthController {
    * Retrieves comprehensive profile information for the currently authenticated user.
    * Requires valid authentication via access token. Returns detailed user data including
    * profile information, registration details, and account status.
-   * 
-   * @method me
    * @param {Request} req - Express request object with authenticated user information
    * @param {Response} res - Express response object for sending user profile data
    * @returns {Promise<void>} Resolves when user information is successfully retrieved and sent

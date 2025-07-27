@@ -1,55 +1,42 @@
 // src/shared/database/connection.ts
 
 /**
- * Database Connection Manager for a WayrApp Sovereign Node
+ * Manages the database connection for a single, independent WayrApp node.
+ * 
+ * This module utilizes the Singleton pattern with Prisma ORM to provide an optimized
+ * and centralized database access layer. It is the foundational component for all
+ * data persistence within a sovereign WayrApp instance.
  *
- * This module serves as the foundational database access layer for a single, autonomous
- * WayrApp instance. It implements the Singleton pattern with Prisma ORM to provide
- * optimized connection pooling, comprehensive performance monitoring, and robust error
- * handling for a community-owned language learning platform.
+ * ## Architectural Vision: Sovereign Nodes
  *
- * ## ARCHITECTURAL VISION - SOVEREIGN NODES
+ * The "decentralization" in WayrApp refers to empowering any community to deploy
+ * and own a complete, independent instance of the platform.
  * 
- * WayrApp's "decentralization" means empowering communities worldwide to deploy and own
- * their complete, independent instances of the platform:
+ * - **Sovereign Deployment:** Each instance (a "node") is self-hosted and fully autonomous.
+ * - **Data Sovereignty:** Each node maintains its own private, isolated database. There is **no**
+ *   data sharing, replication, or synchronization between nodes.
+ * - **Self-Contained:** This connection manager is the heart of a SINGLE node.
  * 
- * - **Sovereign Deployment**: A Quechua community in Peru, a Basque school in Euskal Herria, or
- *   a university department can each download and deploy the entire WayrApp codebase
- * - **Data Sovereignty**: Each node maintains its own private, isolated database with
- *   complete control over user data, courses, and educational content
- * - **Zero Dependencies**: No central authority, no shared databases, no inter-node
- *   communication - each instance is a complete, self-contained universe
- * 
- * ## SINGLE-NODE ARCHITECTURE
- * 
- * This connection manager is the database heart of ONE sovereign node. It provides:
- * - Optimized connection pooling for the node's private database
- * - Performance monitoring and health checks for operational reliability
- * - Graceful shutdown handling for deployment flexibility
- * - Comprehensive error logging for community administrators
- * 
- * The robust design ensures that each community's educational platform can operate
- * independently and reliably, regardless of other nodes' status or existence.
- * 
- * @exports {PrismaClient} prisma - Configured Prisma client singleton for database operations
- * @exports {PrismaClient} default - Default export of the Prisma client singleton
- * 
- * @fileoverview Database connection manager for WayrApp sovereign nodes
+ * @module Connection
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  *
- * @example
- * // Basic usage in repositories and services
+ * @example <caption>Basic Repository Usage</caption>
+ * // Each query operates on this node's private database only.
  * import { prisma } from '@/shared/database/connection';
- * 
- * // Each query operates on this node's private database only
  * const users = await prisma.user.findMany();
- * const courses = await prisma.course.findMany({ where: { is_public: true } });
  *
- * @example
- * // Dependency injection pattern used throughout the application
+ * @example <caption>Dependency Injection into Route Factories</caption>
+ * // The prisma instance is passed to route modules at application startup.
  * import { prisma } from '@/shared/database/connection';
+ * app.use(API_BASE, createContentRoutes(prisma));
+ *
+ * @example <caption>Integration Testing</caption>
+ * // Tests use the prisma instance to set up and tear down the test database.
+ * import { prisma } from '@/shared/database/connection';
+ * beforeEach(async () => {
+ *   await prisma.user.deleteMany();
+ * });
  * 
  * // Routes receive the node's database connection
  * app.use(API_BASE, createContentRoutes(prisma));
@@ -368,7 +355,7 @@ class DatabaseConnection {
  * consistent connection management, performance monitoring, and error handling
  * for the community's educational platform.
  * 
- * @constant {PrismaClient} prisma - Configured Prisma client singleton for this node
+ * Configured Prisma client singleton for this node
  */
 export const prisma = DatabaseConnection.getInstance();
 

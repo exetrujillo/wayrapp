@@ -25,7 +25,7 @@
  * 
  * @fileoverview Test suite for authentication and authorization middleware components
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  * 
  * @example

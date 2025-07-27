@@ -1,4 +1,6 @@
 /**
+ * @module __tests__/integration/database.integration.test
+ * 
  * Database Integration Tests
  * Tests database connections, transactions, and data integrity
  */

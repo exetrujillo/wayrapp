@@ -16,14 +16,8 @@
  * debugging and production monitoring scenarios, with Prometheus-compatible metrics export for
  * integration with monitoring infrastructure.
  * 
- * @exports {function} performanceMiddleware - Express middleware factory for automatic request performance tracking
- * @exports {class} QueryOptimizer - Database query analysis and optimization recommendation engine
- * @exports {PerformanceMonitor} performanceMonitor - Singleton performance monitoring instance
- * @exports {object} healthChecks - System health check utilities for monitoring and orchestration
- * 
- * @fileoverview Performance monitoring utilities providing request tracking, health checks, and optimization recommendations
+ * @module Performance
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example
@@ -81,7 +75,7 @@ import { cacheService } from './cache';
 import { prisma } from '@/shared/database/connection';
 
 // Performance metrics interfaces
-interface RequestMetrics {
+export interface RequestMetrics {
   totalRequests: number;
   averageResponseTime: number;
   slowRequests: number;
@@ -91,7 +85,7 @@ interface RequestMetrics {
   fastestResponseTime: number;
 }
 
-interface SystemMetrics {
+export interface SystemMetrics {
   uptime: number;
   memoryUsage: NodeJS.MemoryUsage;
   cpuUsage: number;
@@ -99,7 +93,7 @@ interface SystemMetrics {
   timestamp: number;
 }
 
-interface PerformanceReport {
+export interface PerformanceReport {
   system: SystemMetrics;
   requests: RequestMetrics;
   database: any; // Will be populated by database health check
@@ -130,7 +124,7 @@ interface PerformanceReport {
  * console.log(`Average response time: ${metrics.averageResponseTime}ms`);
  * console.log(`Error rate: ${metrics.errorRate}%`);
  */
-class PerformanceMonitor {
+export class PerformanceMonitor {
   private requestTimes: number[] = [];
   private requestCount = 0;
   private errorCount = 0;
@@ -442,7 +436,6 @@ export const performanceMiddleware = (monitor: PerformanceMonitor) => {
  * and indexing recommendations. Helps developers identify and resolve common database
  * performance issues before they impact production systems.
  * 
- * @class QueryOptimizer
  * @example
  * // Analyze individual query for optimization opportunities
  * const suggestions = QueryOptimizer.analyzeQuery('User', 'findMany', {

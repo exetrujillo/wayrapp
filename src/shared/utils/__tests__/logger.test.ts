@@ -10,7 +10,7 @@
  * 
  * @fileoverview Unit tests for logger.ts - environment-aware logging utility
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 

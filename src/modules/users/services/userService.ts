@@ -1,35 +1,18 @@
 // src/modules/users/services/userService.ts
 
 /**
- * @fileoverview User Service - Core business logic layer for user management and authentication operations
+ * User Service - Core business logic layer for user management and authentication operations
  * 
- * @summary Provides comprehensive user management functionality including CRUD operations, authentication, and profile management.
+ * Provides comprehensive user management functionality including CRUD operations, authentication, and profile management.
  * 
- * @description This service acts as the primary business logic layer for all user-related operations in the application.
+ * This service acts as the primary business logic layer for all user-related operations in the application.
  * It handles user creation, authentication, profile management, password operations, and account lifecycle management.
  * The service implements proper validation, error handling, and security measures including password hashing and 
  * duplicate checking. It serves as the bridge between the UserController (presentation layer) and UserRepository 
  * (data access layer), ensuring business rules are enforced and providing a clean API for user operations.
  * 
- * @exports {class} UserService - Main service class providing all user management operations
- * @exports {function} findById - Retrieves a user by their unique identifier
- * @exports {function} findByEmail - Retrieves a user by their email address
- * @exports {function} findByUsername - Retrieves a user by their username
- * @exports {function} createUser - Creates a new user account without password
- * @exports {function} updateUser - Updates existing user information
- * @exports {function} createUserWithPassword - Creates a new user account with hashed password
- * @exports {function} verifyPassword - Verifies a user's password against stored hash
- * @exports {function} verifyUserByEmail - Authenticates user by email and password combination
- * @exports {function} updateLastLogin - Updates user's last login timestamp
- * @exports {function} deactivateUser - Deactivates a user account
- * @exports {function} activateUser - Activates a user account
- * @exports {function} userExists - Checks if a user exists by ID
- * @exports {function} findAll - Retrieves paginated list of users with filtering
- * @exports {function} updatePassword - Updates user password with current password verification
- * @exports {function} getUserProfile - Retrieves user profile without sensitive data
- * 
+ * @module userService
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  */
 
@@ -43,11 +26,11 @@ import { logger } from '@/shared/utils/logger';
 /**
  * UserService - Core business logic service for user management operations
  * 
- * @class UserService
- * @description Provides comprehensive user management functionality including authentication,
+ * Provides comprehensive user management functionality including authentication,
  * profile management, and account lifecycle operations. Acts as the business logic layer
  * between controllers and the data repository.
  * 
+ * @class UserService
  * @example
  * ```typescript
  * const userRepository = new UserRepository(prisma);
@@ -373,7 +356,7 @@ export class UserService {
    * 
    * @param {string} userId - The unique user identifier
    * @returns {Promise<void>} Promise that resolves when update is complete
-   * @description This method is designed to be non-blocking and will not throw errors
+   * This method is designed to be non-blocking and will not throw errors
    * if the update fails, only logging warnings to prevent login flow interruption
    * 
    * @example
@@ -547,7 +530,7 @@ export class UserService {
    * @param {string} id - The unique user identifier
    * @returns {Promise<Omit<User, 'password_hash'> | null>} Promise resolving to user profile or null if not found
    * @throws {AppError} When database operation fails
-   * @description Returns user data safe for client consumption, excluding password hash and
+   * Returns user data safe for client consumption, excluding password hash and
    * normalizing null values to empty strings for optional fields
    * 
    * @example

@@ -6,7 +6,7 @@
  * ensuring the sovereign node's database connection works correctly.
  * 
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  * 
  * Note: This tests the exported prisma client, not internal implementation details.

@@ -24,18 +24,8 @@ import { ErrorCodes, HttpStatus } from '@/shared/types';
  * making it suitable for both monolithic deployments and distributed microservice architectures
  * where different nodes may require different security configurations.
  * 
- * @exports {object} corsOptions - CORS configuration with environment-based origin validation
- * @exports {function} createRateLimiter - Factory function for creating custom rate limiters
- * @exports {function} defaultRateLimiter - General purpose rate limiting middleware
- * @exports {function} authRateLimiter - Authentication-specific rate limiting middleware
- * @exports {object} helmetOptions - Security headers configuration for Helmet.js
- * @exports {function} sanitizeInput - Input sanitization middleware for removing malicious content
- * @exports {function} securityHeaders - Custom security headers middleware
- * @exports {function} requestSizeLimiter - Request size validation and limiting middleware
- * 
- * @fileoverview Security hardening middleware for Express.js applications
+ * @module securityMiddleware
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example
@@ -95,7 +85,7 @@ import { ErrorCodes, HttpStatus } from '@/shared/types';
  * against the CORS_ORIGIN environment variable. Failed CORS validations are logged
  * for security monitoring purposes.
  * 
- * @constant {Object} corsOptions - CORS configuration object for Express cors middleware
+ * CORS configuration object for Express cors middleware
  * @property {Function} origin - Dynamic origin validation function
  * @property {boolean} credentials - Allow credentials in cross-origin requests
  * @property {number} optionsSuccessStatus - Status code for successful OPTIONS requests
@@ -229,7 +219,7 @@ export const createRateLimiter = (windowMs: number = 15 * 60 * 1000, max: number
  * allowing normal usage patterns. Configuration values are read from environment
  * variables to allow deployment-specific tuning.
  * 
- * @constant {Function} defaultRateLimiter - Rate limiting middleware for general API usage
+ * Rate limiting middleware for general API usage
  * 
  * @example
  * // Usage in main application (automatically applied to all routes)
@@ -262,7 +252,7 @@ export const defaultRateLimiter = createRateLimiter(
  * authentication attempts. Failed authentication attempts are logged for security
  * monitoring and potential account lockout mechanisms.
  * 
- * @constant {Function} authRateLimiter - Strict rate limiting middleware for auth endpoints
+ * Strict rate limiting middleware for auth endpoints
  * 
  * @example
  * // Usage in authentication routes
@@ -295,7 +285,7 @@ export const authRateLimiter = createRateLimiter(
  * ensures secure connections in production environments. Some features like Cross-Origin
  * Embedder Policy are disabled to maintain API compatibility.
  * 
- * @constant {Object} helmetOptions - Configuration object for Helmet security middleware
+ * Configuration object for Helmet security middleware
  * @property {Object} contentSecurityPolicy - CSP directives for content loading restrictions
  * @property {boolean} crossOriginEmbedderPolicy - Disabled for API compatibility
  * @property {Object} hsts - HTTP Strict Transport Security configuration

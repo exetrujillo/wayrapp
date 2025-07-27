@@ -24,7 +24,7 @@
  * 
  * @fileoverview Test suite for middleware index barrel exports validation
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  * 
  * @example

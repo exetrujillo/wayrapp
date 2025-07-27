@@ -10,12 +10,8 @@
  * The logger supports multiple log levels (error, warn, info, http, debug) with colorized
  * console output and structured JSON file logging.
  * 
- * @exports {winston.Logger} logger - Configured Winston logger instance with environment-aware transports
- * @exports {winston.Logger} default - Default export of the Winston logger instance
- * 
- * @fileoverview Centralized logging utility with environment-aware transport configuration
+ * @module logger
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example

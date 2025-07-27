@@ -1,11 +1,11 @@
 // src/modules/users/services/tokenBlacklistService.ts
 
 /**
- * @fileoverview Token Blacklist Service - Secure JWT refresh token revocation and management
+ * Token Blacklist Service - Secure JWT refresh token revocation and management
  * 
- * @summary Manages revoked JWT refresh tokens to prevent reuse after logout and provides automated cleanup functionality.
+ * Manages revoked JWT refresh tokens to prevent reuse after logout and provides automated cleanup functionality.
  * 
- * @description This service acts as the core security component for JWT refresh token management in the authentication system.
+ * This service acts as the core security component for JWT refresh token management in the authentication system.
  * It provides secure token revocation functionality by maintaining a persistent blacklist of revoked refresh tokens in the database.
  * When users log out, their refresh tokens are added to this blacklist to prevent unauthorized reuse. The service integrates
  * with the authentication flow to check token validity during refresh operations and includes automated cleanup of expired
@@ -23,13 +23,13 @@
  * is the most critical security measure for long-term protection. This approach
  * represents a standard industry trade-off between absolute security and performance.
  * 
- * @exports {class} TokenBlacklistService - Main service class providing token revocation and validation functionality
- * @exports {function} revokeToken - Adds a refresh token to the blacklist to prevent reuse
- * @exports {function} isTokenRevoked - Checks if a refresh token has been revoked/blacklisted
- * @exports {function} cleanupExpiredTokens - Removes expired tokens from blacklist for maintenance
+ * Main service class providing token revocation and validation functionality.
+ * Adds a refresh token to the blacklist to prevent reuse.
+ * Checks if a refresh token has been revoked/blacklisted.
+ * Removes expired tokens from blacklist for maintenance.
  * 
+ * @module TokenBlacklistService
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  */
 
@@ -41,7 +41,7 @@ import { getTokenExpiration } from '@/shared/utils/auth';
  * TokenBlacklistService - Secure JWT refresh token revocation and management
  * 
  * @class TokenBlacklistService
- * @description Provides comprehensive refresh token blacklist management for secure authentication.
+ * Provides comprehensive refresh token blacklist management for secure authentication.
  * This service handles token revocation during logout, validation during refresh operations,
  * and automated cleanup of expired tokens. Designed with performance in mind, it focuses
  * on refresh token blacklisting while keeping access tokens short-lived for optimal security-performance balance.
@@ -80,7 +80,7 @@ export class TokenBlacklistService {
    * @returns {Promise<void>} Promise that resolves when token is successfully blacklisted
    * @throws {Error} Does not throw - errors are logged and handled gracefully to prevent logout failures
    * 
-   * @description This method extracts the expiration time from the JWT token and stores it in the
+   * This method extracts the expiration time from the JWT token and stores it in the
    * revoked_tokens table. If the token format is invalid or database operation fails, the error
    * is logged but not thrown to ensure logout operations don't fail. The token expiration is
    * stored to enable efficient cleanup of expired blacklisted tokens.
@@ -124,7 +124,7 @@ export class TokenBlacklistService {
    * @returns {Promise<boolean>} Promise resolving to true if token is revoked, false if valid or check fails
    * @throws {Error} Does not throw - errors are logged and method returns false to prevent blocking legitimate requests
    * 
-   * @description This method queries the revoked_tokens table to determine if a token has been blacklisted.
+   * This method queries the revoked_tokens table to determine if a token has been blacklisted.
    * Used during token refresh operations to validate that the refresh token is still valid. If the database
    * query fails, the method returns false (assumes token is valid) to prevent legitimate users from being
    * blocked due to temporary database issues. This fail-open approach prioritizes availability over security
@@ -160,7 +160,7 @@ export class TokenBlacklistService {
    * @returns {Promise<number>} Promise resolving to the number of expired tokens removed from the blacklist
    * @throws {Error} Does not throw - errors are logged and method returns 0 on failure
    * 
-   * @description This maintenance method removes expired tokens from the revoked_tokens table to prevent
+   * This maintenance method removes expired tokens from the revoked_tokens table to prevent
    * unbounded growth and maintain query performance. It deletes all tokens where the expiresAt timestamp
    * is less than the current time. This method is designed to be run periodically as part of automated
    * maintenance tasks. The DatabaseOptimizer calls this method every hour as part of the cleanup routine.

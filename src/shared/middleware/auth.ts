@@ -24,17 +24,8 @@
  * system is designed to be secure by default while providing flexibility for different
  * access control requirements.
  * 
- * @exports {function} authenticateToken - JWT token authentication middleware
- * @exports {function} requireRole - Role-based access control middleware
- * @exports {object} PERMISSIONS - Permission definitions for role-based access control
- * @exports {type} Permission - TypeScript type for permission strings
- * @exports {function} requirePermission - Permission-based authorization middleware
- * @exports {function} optionalAuth - Optional authentication middleware for public/private content
- * @exports {function} requireOwnership - Resource ownership validation middleware
- * 
- * @fileoverview JWT authentication and role-based authorization middleware for Express.js
+ * @module authMiddleware
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example
@@ -319,7 +310,7 @@ export const requireRole = (allowedRoles: UserRole | UserRole[]) => {
  * - Content Creators: Student permissions plus content creation and analytics
  * - Admins: All permissions including user management and system administration
  * 
- * @constant {Object} PERMISSIONS - Permission mappings for each user role
+ * Permission mappings for each user role
  * @property {string[]} student - Basic permissions for student users
  * @property {string[]} content_creator - Extended permissions for content creators
  * @property {string[]} admin - Full permissions for administrators

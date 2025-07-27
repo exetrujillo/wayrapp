@@ -29,7 +29,7 @@
  * enabling fast and reliable test execution in CI/CD environments.
  * 
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 

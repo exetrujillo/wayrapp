@@ -1,4 +1,6 @@
 /**
+ * @module __tests__/integration/content.integration.test
+ * 
  * Content Management Integration Tests
  * Tests content CRUD operations, hierarchical relationships, and authorization
  */

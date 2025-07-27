@@ -1,6 +1,12 @@
 /**
+ * @module __tests__/integration/globalSetup
+ * 
  * Global Setup for Integration Tests
  * Runs once before all integration tests
+ * 
+ * @author Exequiel Trujillo
+ * 
+ * @since 1.0.0
  */
 
 import { execSync } from 'child_process';

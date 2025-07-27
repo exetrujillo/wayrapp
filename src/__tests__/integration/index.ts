@@ -1,6 +1,12 @@
 /**
+ * @module __tests__/integration/index
+ * 
  * Integration Tests Index
  * Exports all integration test suites for organized test execution
+ * 
+ * @author Exequiel Trujillo
+ * 
+ * @since 1.0.0
  */
 
 // Import all integration test suites

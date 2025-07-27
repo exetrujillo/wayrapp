@@ -1,7 +1,7 @@
 // src/shared/middleware/errorHandler.ts
 
 /**
- * @fileoverview Global error handling middleware and utilities for WayrApp Backend API
+ * Global error handling middleware and utilities for WayrApp Backend API
  * 
  * This module provides comprehensive error handling capabilities for the WayrApp language learning platform,
  * including a custom error class, global error handler middleware, and async wrapper utility. It ensures
@@ -16,14 +16,9 @@
  * - Consistent error response format across the application
  * - Comprehensive error logging with request context
  * 
- * @exports {class} AppError - Custom error class for structured application errors
- * @exports {function} errorHandler - Global error handling middleware for Express applications
- * @exports {function} asyncHandler - Async wrapper utility for automatic error catching
- * 
- * @author Exequiel Trujillo
- * @version 1.0.0
- * @since 1.0.0
  * @module errorHandler
+ * @author Exequiel Trujillo
+ * @since 1.0.0
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -33,8 +28,6 @@ import { logger } from '@/shared/utils/logger';
 import { ApiError, ErrorCodes, HttpStatus } from '@/shared/types';
 
 /**
- * @namespace ErrorHandling
- * @description
  * This module provides a comprehensive error handling system for the WayrApp backend API.
  * It includes utilities for creating structured errors, handling different error types,
  * and providing consistent error responses to clients.
@@ -342,7 +335,6 @@ export class AppError extends Error {
  * // }
  * 
  * @function errorHandler
- * @middleware
  */
 export const errorHandler = (
   error: Error,
@@ -534,7 +526,6 @@ export const errorHandler = (
  * })); // Prisma errors automatically caught and handled
  * 
  * @function asyncHandler
- * @utility
  */
 export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {

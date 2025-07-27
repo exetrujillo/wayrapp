@@ -38,7 +38,7 @@ jest.mock('@/shared/utils/logger', () => ({
  * scenarios, with particular attention to edge cases and security-sensitive operations.
  * 
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 describe('UserService', () => {

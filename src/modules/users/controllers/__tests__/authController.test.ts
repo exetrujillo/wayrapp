@@ -19,7 +19,7 @@
  * 
  * @fileoverview Unit and integration tests for AuthController.ts
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 

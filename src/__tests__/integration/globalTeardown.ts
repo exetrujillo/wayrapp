@@ -1,6 +1,12 @@
 /**
+ * @module __tests__/integration/globalTeardown
+ * 
  * Global Teardown for Integration Tests
  * Runs once after all integration tests complete
+ * 
+ * @author Exequiel Trujillo
+ * 
+ * @since 1.0.0
  */
 
 export default async function globalTeardown() {

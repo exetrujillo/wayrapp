@@ -1,6 +1,10 @@
 /**
  * Repository Helper Utilities
  * Standardized utilities for pagination, filtering, and sorting across repositories
+ * 
+ * @module repositoriesHelpers
+ * @author Exequiel Trujillo
+ * @since 1.0.0
  */
 
 import { QueryOptions, PaginatedResult } from '../types';

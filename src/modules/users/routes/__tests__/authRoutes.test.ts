@@ -8,7 +8,7 @@
  * 
  * @fileoverview Integration tests for authRoutes factory function
  * @author Exequiel Trujillo
- * @version 1.0.0
+ 
  */
 
 import request from 'supertest';

@@ -21,11 +21,12 @@
  * The routes are mounted at `/api/v1/auth` in the main application and serve both web and
  * mobile client applications.
  * 
- * @exports {Function} createAuthRoutes - Factory function that creates authentication routes
+ * Factory function that creates authentication routes.
  * 
- * @fileoverview Express router configuration for user authentication endpoints
+ * Express router configuration for user authentication endpoints.
+ * 
+ * @module authRoutes
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example

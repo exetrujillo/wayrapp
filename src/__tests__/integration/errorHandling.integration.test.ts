@@ -1,4 +1,6 @@
 /**
+ * @module __tests__/integration/errorHandling.integration.test
+ * 
  * Error Handling Integration Tests
  * Tests error scenarios, edge cases, and error response consistency
  */

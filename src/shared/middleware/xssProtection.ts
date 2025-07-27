@@ -1,13 +1,9 @@
 // src/shared/middleware/xssProtection.ts
 
-import { Request, Response, NextFunction } from 'express';
-import xss from 'xss';
-import { logger } from '@/shared/utils/logger';
-
 /**
  * XSS Protection Middleware for Cross-Site Scripting Attack Prevention
  * 
- * This middleware provides comprehensive protection against Cross-Site Scripting (XSS) attacks
+ * This middleware provides protection against Cross-Site Scripting (XSS) attacks
  * by sanitizing user input using the industry-standard `xss` library. It recursively processes
  * request bodies, query parameters, and URL parameters to remove or neutralize potentially
  * malicious HTML and JavaScript content while preserving legitimate data.
@@ -26,11 +22,8 @@ import { logger } from '@/shared/utils/logger';
  * nested objects and arrays to handle complex request payloads. All XSS attempts are
  * logged with contextual information for security monitoring and incident response.
  * 
- * @exports {function} xssProtection - XSS protection middleware for sanitizing user input
- * 
- * @fileoverview XSS protection middleware using the xss library for comprehensive script injection prevention
+ * @module xssProtection
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @param {Request} req - Express request object containing user input to sanitize
@@ -74,6 +67,11 @@ import { logger } from '@/shared/utils/logger';
  * // - Client IP address for tracking
  * // - Timestamp for incident response
  */
+
+import { Request, Response, NextFunction } from 'express';
+import xss from 'xss';
+import { logger } from '@/shared/utils/logger';
+
 export const xssProtection = (req: Request, _res: Response, next: NextFunction): void => {
   /**
    * Recursive Object Sanitization Function

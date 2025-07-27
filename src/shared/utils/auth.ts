@@ -19,23 +19,8 @@
  * components throughout the application that require secure token handling and password
  * management capabilities.
  * 
- * @exports {interface} TokenPair - Interface for access and refresh token pairs
- * @exports {interface} TokenPayload - Interface for JWT token payload structure
- * @exports {function} generateAccessToken - Generates short-lived JWT access tokens
- * @exports {function} generateRefreshToken - Generates long-lived JWT refresh tokens
- * @exports {function} generateTokenPair - Generates both access and refresh tokens
- * @exports {function} verifyRefreshToken - Verifies and decodes refresh tokens
- * @exports {function} hashPassword - Hashes passwords using bcrypt with salt
- * @exports {function} comparePassword - Compares plaintext passwords with hashes
- * @exports {function} extractTokenFromHeader - Extracts Bearer tokens from Authorization headers
- * @exports {function} validateTokenFormat - Validates JWT token structure without verification
- * @exports {function} isTokenExpired - Checks if a token is expired without verification
- * @exports {function} getTokenExpiration - Extracts expiration date from token payload
- * @exports {function} generateSecureToken - Generates cryptographically secure random tokens
- * 
- * @fileoverview JWT token management and password security utilities for authentication
+ * @module Auth
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example
@@ -141,10 +126,7 @@ export interface TokenPayload {
  * (default 15 minutes) to minimize security risks if compromised. They contain user ID,
  * email, and role information needed for authentication and authorization middleware.
  * 
- * @param {TokenPayload} payload - User information to encode in the token
- * @param {string} payload.userId - Unique user identifier (becomes 'sub' claim)
- * @param {string} payload.email - User's email address
- * @param {UserRole} payload.role - User's role for authorization
+ * @param {TokenPayload} payload - User information to encode in the token containing userId, email, and role
  * @returns {string} Signed JWT access token string
  * 
  * @throws {Error} When JWT_SECRET environment variable is not configured
@@ -203,10 +185,7 @@ export const generateAccessToken = (payload: TokenPayload): string => {
  * They contain the same user information as access tokens but are designed for less
  * frequent use and longer validity periods to balance security with user experience.
  * 
- * @param {TokenPayload} payload - User information to encode in the refresh token
- * @param {string} payload.userId - Unique user identifier (becomes 'sub' claim)
- * @param {string} payload.email - User's email address
- * @param {UserRole} payload.role - User's role for authorization
+ * @param {TokenPayload} payload - User information to encode in the refresh token containing userId, email, and role
  * @returns {string} Signed JWT refresh token string
  * 
  * @throws {Error} When JWT_REFRESH_SECRET environment variable is not configured
@@ -258,10 +237,7 @@ export const generateRefreshToken = (payload: TokenPayload): string => {
  * a TokenPair object containing both tokens, ensuring consistency in token
  * generation and simplifying authentication workflows.
  * 
- * @param {TokenPayload} payload - User information to encode in both tokens
- * @param {string} payload.userId - Unique user identifier
- * @param {string} payload.email - User's email address
- * @param {UserRole} payload.role - User's role for authorization
+ * @param {TokenPayload} payload - User information to encode in both tokens containing userId, email, and role properties
  * @returns {TokenPair} Object containing both accessToken and refreshToken
  * 
  * @throws {Error} When JWT_SECRET or JWT_REFRESH_SECRET environment variables are not configured

@@ -35,7 +35,7 @@ jest.mock('@/shared/utils/auth', () => ({
  * that must not disrupt the authentication flow.
  * 
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 describe('TokenBlacklistService', () => {

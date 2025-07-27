@@ -51,7 +51,7 @@ jest.mock('../logger', () => ({
  * 
  * @fileoverview Unit and integration tests for authentication utilities
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 describe('Auth Utilities', () => {

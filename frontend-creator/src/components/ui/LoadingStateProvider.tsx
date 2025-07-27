@@ -1,8 +1,6 @@
 // frontend-creator/src/components/ui/LoadingStateProvider.tsx
 
 /**
- * @fileoverview State Management Layer - Loading State Context and Operations
- * 
  * This file provides the state management layer for loading operations throughout the
  * creator application. It manages the lifecycle of loading states, tracks concurrent
  * operations, and provides a context-based API for components to interact with loading
@@ -54,8 +52,8 @@
  * - Hook usage: const { withLoading, startLoading } = useLoadingState()
  * - Wrapper usage: <WithLoading isLoading={loading}><Content /></WithLoading>
  * - HOC usage: const LoadingComponent = withLoadingState(MyComponent)
- * 
- * @author Exequiel Trujillo
+ * @module LoadingStateProvider
+ * @author Exequiel Trujillo 
  * @since 1.0.0
  */
 

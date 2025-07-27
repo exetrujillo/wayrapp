@@ -1,4 +1,6 @@
 /**
+ * @module __tests__/integration/crossModule.integration.test
+ * 
  * Cross-Module Integration Tests
  * Tests interactions between different modules (users, content, progress)
  */

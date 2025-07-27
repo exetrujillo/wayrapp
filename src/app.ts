@@ -23,8 +23,8 @@
  * from multiple frontend clients (web creator, mobile app) and preparing for future node-to-node
  * communication in the decentralized architecture.
  * 
+ * @module Wayrapp Backend
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example

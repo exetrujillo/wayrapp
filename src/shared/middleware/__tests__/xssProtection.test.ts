@@ -37,7 +37,7 @@
  * 
  * @fileoverview Comprehensive test suite for XSS protection middleware security validation
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  * 
  * @example

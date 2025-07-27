@@ -37,7 +37,7 @@ jest.mock("@/shared/utils/logger", () => ({
  * - Type safety and proper TypeScript integration testing
  * 
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 describe("UserRepository", () => {

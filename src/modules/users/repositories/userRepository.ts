@@ -1,11 +1,11 @@
 // src/modules/users/repositories/userRepository.ts
 
 /**
- * @fileoverview User Repository - Data access layer for user operations using Prisma ORM
+ * User Repository - Data access layer for user operations using Prisma ORM
  * 
- * @summary Provides comprehensive data access operations for user management including CRUD operations, authentication queries, and pagination.
+ * Provides comprehensive data access operations for user management including CRUD operations, authentication queries, and pagination.
  * 
- * @description This repository serves as the data access layer for all user-related database operations in the application.
+ * This repository serves as the data access layer for all user-related database operations in the application.
  * It encapsulates all Prisma database interactions for the User entity, providing a clean abstraction layer between
  * the business logic (UserService) and the database. The repository handles user creation, retrieval, updates, and
  * soft deletion operations, along with specialized methods for authentication workflows including password management
@@ -19,23 +19,16 @@
  * - Type-safe operations eliminate unsafe type assertions and improve code reliability
  * - Selective field querying using Prisma's select reduces database payload and improves performance
  * 
- * @exports {class} UserRepository - Main repository class providing all user data access operations
- * @exports {interface} UserAuthData - Minimal user object for secure authentication workflows
- * @exports {function} create - Creates a new user without password authentication
- * @exports {function} createWithPassword - Creates a new user with password hash for authentication
- * @exports {function} findById - Retrieves a user by their unique identifier
- * @exports {function} findByIdWithPassword - Retrieves minimal user auth data by ID for authentication
- * @exports {function} findByEmail - Retrieves a user by their email address
- * @exports {function} findByEmailWithPassword - Retrieves minimal user auth data by email for authentication
- * @exports {function} findByUsername - Retrieves a user by their username
- * @exports {function} update - Updates existing user information with validation
- * @exports {function} delete - Performs soft delete by deactivating user account
- * @exports {function} findAll - Retrieves paginated list of users with filtering and sorting
- * @exports {function} updatePassword - Updates user password hash securely
- * @exports {function} updateLastLogin - Updates user's last login timestamp for tracking
+ * Main repository class providing all user data access operations. Minimal user object for secure authentication workflows.
+ * Creates a new user without password authentication. Creates a new user with password hash for authentication.
+ * Retrieves a user by their unique identifier. Retrieves minimal user auth data by ID for authentication.
+ * Retrieves a user by their email address. Retrieves minimal user auth data by email for authentication.
+ * Retrieves a user by their username. Updates existing user information with validation.
+ * Performs soft delete by deactivating user account. Retrieves paginated list of users with filtering and sorting.
+ * Updates user password hash securely. Updates user's last login timestamp for tracking.
  * 
+ * @module  UserRepository
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  */
 
@@ -49,7 +42,7 @@ import { logger } from '@/shared/utils/logger';
  * Minimal user object for authentication purposes
  * 
  * @interface UserAuthData
- * @description Contains only essential fields needed for authentication workflows to minimize
+ * Contains only essential fields needed for authentication workflows to minimize
  * data exposure and improve security. This interface is used by password-related methods
  * to ensure that sensitive operations only access the minimum required user data.
  * 
@@ -80,7 +73,7 @@ export interface UserAuthData {
  * UserRepository - Data access layer for user operations using Prisma ORM
  * 
  * @class UserRepository
- * @description Provides comprehensive data access operations for user management including CRUD operations,
+ * Provides comprehensive data access operations for user management including CRUD operations,
  * authentication queries, and pagination. Acts as the data access layer between the business logic service
  * and the PostgreSQL database through Prisma ORM.
  */
@@ -155,7 +148,7 @@ export class UserRepository {
    * @throws {AppError} Throws CONFLICT error if email or username already exists
    * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
    * 
-   * @security Uses type-safe Prisma operations without unsafe type assertions, ensuring
+   * Uses type-safe Prisma operations without unsafe type assertions, ensuring
    * data integrity and compile-time type checking for all user creation operations.
    */
   async createWithPassword(userData: CreateUserDto & { passwordHash: string }): Promise<User> {
@@ -213,7 +206,7 @@ export class UserRepository {
    * @returns {Promise<UserAuthData | null>} Promise resolving to minimal user auth data or null if not found
    * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    * 
-   * @security This method uses Prisma's select to fetch only essential authentication fields,
+   * This method uses Prisma's select to fetch only essential authentication fields,
    * reducing data exposure and improving performance. The returned UserAuthData contains only
    * the minimum information needed for password verification workflows.
    * 
@@ -272,7 +265,7 @@ export class UserRepository {
    * @returns {Promise<UserAuthData | null>} Promise resolving to minimal user auth data or null if not found
    * @throws {AppError} Throws DATABASE_ERROR for database-related failures
    * 
-   * @security This method uses Prisma's select to fetch only essential authentication fields,
+   * This method uses Prisma's select to fetch only essential authentication fields,
    * reducing data exposure and improving performance. The returned UserAuthData contains only
    * the minimum information needed for login workflows.
    * 
@@ -493,7 +486,7 @@ export class UserRepository {
    * @throws {AppError} Throws NOT_FOUND error if user doesn't exist
    * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
    * 
-   * @security Uses type-safe Prisma operations without unsafe type assertions,
+   * Uses type-safe Prisma operations without unsafe type assertions,
    * ensuring secure password updates with proper type checking and validation.
    */
   async updatePassword(id: string, passwordHash: string): Promise<User> {
@@ -527,7 +520,7 @@ export class UserRepository {
    * @throws {AppError} Throws NOT_FOUND error if user doesn't exist
    * @throws {AppError} Throws DATABASE_ERROR for other database-related failures
    * 
-   * @security Uses type-safe Prisma operations without unsafe type assertions,
+   * Uses type-safe Prisma operations without unsafe type assertions,
    * ensuring reliable timestamp updates with proper type validation.
    */
   async updateLastLogin(id: string, date: Date = new Date()): Promise<User> {

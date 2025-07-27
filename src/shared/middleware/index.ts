@@ -24,44 +24,10 @@
  * it forms the foundation of the request processing pipeline, handling everything from CORS
  * configuration and rate limiting to JWT authentication and input sanitization.
  * 
- * @exports {function} errorHandler - Global error handling middleware for Express applications
- * @exports {class} AppError - Custom error class for structured application errors
- * @exports {function} asyncHandler - Async wrapper utility for automatic error catching
- * @exports {function} requestLogger - Request logging middleware for monitoring
- * @exports {function} validate - Validation middleware factory for Zod schema validation
- * @exports {function} validateBody - Request body validation middleware
- * @exports {function} validateParams - Request parameters validation middleware
- * @exports {function} validateQuery - Query parameters validation middleware
- * @exports {object} corsOptions - CORS configuration for cross-origin requests
- * @exports {function} createRateLimiter - Rate limiter factory function
- * @exports {function} defaultRateLimiter - Default rate limiting middleware
- * @exports {function} authRateLimiter - Authentication-specific rate limiting
- * @exports {object} helmetOptions - Security headers configuration
- * @exports {function} sanitizeInput - Input sanitization middleware
- * @exports {function} securityHeaders - Custom security headers middleware
- * @exports {function} requestSizeLimiter - Request size validation middleware
- * @exports {function} xssProtection - XSS protection middleware
- * @exports {function} authenticateToken - JWT token authentication middleware
- * @exports {function} requireRole - Role-based access control middleware
- * @exports {function} requirePermission - Permission-based authorization middleware
- * @exports {function} optionalAuth - Optional authentication middleware
- * @exports {function} requireOwnership - Resource ownership validation middleware
- * @exports {object} PERMISSIONS - Permission definitions for role-based access
- * @exports {type} Permission - TypeScript type for permission strings
- * @exports {interface} PaginationOptions - Pagination configuration interface
- * @exports {function} paginationMiddleware - Pagination middleware factory
- * @exports {function} addPaginationHeaders - Pagination headers utility
- * @exports {function} createPaginationMeta - Pagination metadata helper
- * @exports {function} getPaginationParams - Database pagination parameters helper
- * @exports {function} getSortParams - Database sorting parameters helper
- * @exports {function} buildTextSearchFilter - Text search filter builder
- * @exports {function} buildRangeFilter - Range filter builder for dates/numbers
- * @exports {function} buildEnumFilter - Enum filter builder
- * @exports {function} buildCursorPagination - Cursor-based pagination helper
+ * Centralized middleware exports for distributed node architecture.
  * 
- * @fileoverview Centralized middleware exports for distributed node architecture
+ * @module MiddlewareCoordinationHub
  * @author Exequiel Trujillo
- * @version 1.0.0
  * @since 1.0.0
  * 
  * @example

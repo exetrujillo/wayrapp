@@ -240,7 +240,7 @@ curl http://localhost:3000/health
 
 Create a `.env` file based on `.env.example`:
 
-```env
+```bash
 # Database
 DATABASE_URL="postgresql://username:password@...?sslmode=require"
 

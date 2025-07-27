@@ -2,7 +2,9 @@
  * Health Check and Monitoring Routes
  * Comprehensive system health monitoring and performance metrics
  * 
+ * @module HealthCheckRoutes
  * @author Exequiel Trujillo
+ * @since 1.0.0
  */
 
 import { Router } from 'express';

@@ -46,7 +46,7 @@
  * - Use real error instances (ZodError, PrismaError) for authentic testing
  * @fileoverview Test suite for the Error Handler Middleware
  * @author Exequiel Trujillo
- * @version 1.0.0
+  * 
  * @since 1.0.0
  */
 import { Request, Response, NextFunction } from 'express';
