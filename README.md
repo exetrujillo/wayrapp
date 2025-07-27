@@ -186,11 +186,21 @@ Common utilities, types, and components shared between frontend applications.
 ## 📖 Documentation
 
 ### 🌐 Live Documentation
-- **[Complete Backend & Ecosystem Docs](https://exetrujillo.github.io/wayrapp/)** - GitHub Pages hosted documentation
+
+**Two complementary documentation systems:**
+
+#### 📚 Complete Technical Documentation (GitHub Pages)
+- **[Backend & Ecosystem Docs](https://exetrujillo.github.io/wayrapp/)** - Complete technical documentation, architecture, and guides
 - **[Testing Guide](https://exetrujillo.github.io/wayrapp/modules/TestInfo.html)** - Comprehensive testing setup and best practices
+- **Generated from code** - TypeDoc automatically generates from source code comments
+
+#### 🔍 Interactive API Documentation (Vercel Deployment)
+- **Live API testing interface** - Test endpoints directly in your browser
+- **Always up-to-date** - Reflects the current deployed API
+- **Styled with WayrApp design tokens** - Consistent branding
 - **Interactive API Documentation** (when server is running):
-  - `GET /docs` - **Interactive Swagger UI** - Test API endpoints directly in your browser (styled with WayrApp design tokens)
-  - `GET /api-docs` - Alternative Swagger UI interface
+  - `GET /swagger` - **Interactive Swagger UI** - Test API endpoints directly in your browser (styled with WayrApp design tokens)
+  - `GET /api-docs` - Alternative Swagger UI interface  
   - `GET /api/swagger.json` - OpenAPI 3.0 specification (JSON)
   - `GET /api/docs/overview` - Comprehensive API overview
   - `GET /api/status` - API status and health check
@@ -215,7 +225,7 @@ When running the server locally, you can access comprehensive backend API docume
 
 ```bash
 # Interactive API Documentation (open in browser)
-open http://localhost:3000/docs
+open http://localhost:3000/swagger
 
 # Get OpenAPI specification
 curl http://localhost:3000/api/swagger.json

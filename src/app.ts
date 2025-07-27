@@ -673,9 +673,14 @@ app.get('/api/swagger.json', (_req, res) => {
   res.send(swaggerSpec);
 });
 
-// Serve custom Swagger UI
-app.get('/docs', (_req, res) => {
+// Serve custom Swagger UI (avoid conflict with GitHub Pages /docs)
+app.get('/swagger', (_req, res) => {
   res.sendFile(path.join(__dirname, '../public/swagger.html'));
+});
+
+// Serve documentation disambiguation page (explains the difference between docs)
+app.get('/docs', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/docs-redirect.html'));
 });
 
 // Serve Swagger UI assets (fallback)

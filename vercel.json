@@ -1,9 +1,44 @@
 {
   "buildCommand": "npm run build",
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "destination": "/api"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/docs",
+      "dest": "/swagger.html"
+    },
+    {
+      "src": "/api-docs",
+      "dest": "/api"
+    },
+    {
+      "src": "/api/swagger.json",
+      "dest": "/api"
+    },
+    {
+      "src": "/health",
+      "dest": "/api"
+    },
+    {
+      "src": "/api/status",
+      "dest": "/api"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
