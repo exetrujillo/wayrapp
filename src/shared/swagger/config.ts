@@ -23,10 +23,12 @@ const baseSpec = {
   },
   servers: [
     {
-      url: process.env['NODE_ENV'] === 'production'
-        ? process.env['VERCEL_URL'] ? `https://${process.env['VERCEL_URL']}` : 'https://wayrapp.vercel.app'
-        : 'http://localhost:3000',
-      description: process.env['NODE_ENV'] === 'production' ? 'Production server' : 'Development server'
+      url: `${process.env['PUBLIC_API_URL'] || 'https://wayrapp.vercel.app'}/api/v1`,
+      description: "Production Server"
+    },
+    {
+      url: "http://localhost:3000/api/v1",
+      description: "Local Development Server"
     }
   ],
   components: {
@@ -55,6 +57,13 @@ const baseSpec = {
  * Falls back to base spec if file scanning fails (e.g., in serverless environments)
  */
 function generateSwaggerSpec() {
+  // --- DIAGNOSTIC LOGS ---
+  console.log('[DEBUG] Generating Swagger spec in config.ts');
+  console.log(`[DEBUG] PUBLIC_API_URL in swagger config:`, process.env['PUBLIC_API_URL']);
+  console.log(`[DEBUG] NODE_ENV:`, process.env['NODE_ENV']);
+  console.log(`[DEBUG] VERCEL_URL (for comparison):`, process.env['VERCEL_URL']);
+  // --- END DIAGNOSTIC LOGS ---
+
   try {
     const options: swaggerJSDoc.Options = {
       definition: baseSpec,
