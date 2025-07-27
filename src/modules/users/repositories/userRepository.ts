@@ -28,6 +28,8 @@
  * Updates user password hash securely. Updates user's last login timestamp for tracking.
  * 
  * @module  UserRepository
+ * @category Users
+ * @category Repositories
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

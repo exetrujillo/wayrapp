@@ -11,6 +11,7 @@
  * health check capabilities essential for serverless and traditional deployment environments.
  * 
  * @module StartupManager
+ * @category Utilities
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

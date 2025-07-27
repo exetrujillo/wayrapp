@@ -17,6 +17,8 @@
  * - Comprehensive error logging with request context
  * 
  * @module errorHandler
+ * @category Middleware
+ * @category Error Handling
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

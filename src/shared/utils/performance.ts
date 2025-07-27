@@ -17,6 +17,8 @@
  * integration with monitoring infrastructure.
  * 
  * @module Performance
+ * @category Performance
+ * @category Utilities
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

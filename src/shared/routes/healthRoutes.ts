@@ -1,10 +1,56 @@
+// src/shared/routes/healthRoutes.ts
+
 /**
- * Health Check and Monitoring Routes
- * Comprehensive system health monitoring and performance metrics
+ * Comprehensive system health monitoring, performance metrics, and observability endpoints.
  * 
- * @module HealthCheckRoutes
+ * This module provides a complete observability and monitoring solution for the WayrApp language
+ * learning platform backend, implementing comprehensive health checks, performance metrics collection,
+ * and operational management endpoints. The routes support both development debugging and production
+ * monitoring scenarios, with integration capabilities for container orchestration and external
+ * monitoring systems.
+ * 
+ * The module implements multiple health check endpoints ranging from basic system status to detailed
+ * component-specific diagnostics. It provides Kubernetes-compatible readiness and liveness probes
+ * for container orchestration, Prometheus-compatible metrics export for monitoring infrastructure,
+ * and operational endpoints for cache management and performance monitoring controls.
+ * 
+ * Key features include comprehensive system health monitoring (database, cache, memory, system),
+ * Kubernetes-compatible readiness and liveness probes, Prometheus metrics export for monitoring
+ * integration, detailed performance metrics with request tracking, operational cache management
+ * endpoints, database-specific health diagnostics with table counts and connection pool status,
+ * and comprehensive error handling with appropriate HTTP status codes.
+ * 
+ * The health check endpoints are designed to provide actionable insights for both automated
+ * monitoring systems and human operators. All endpoints include proper error handling and return
+ * structured JSON responses with timestamps and detailed component status information.
+ * 
+ * @module HealthRoutes
+ * @category Routes
+ * @category Monitoring
  * @author Exequiel Trujillo
  * @since 1.0.0
+ * 
+ * @example
+ * // Mount health routes in main application
+ * import healthRoutes from '@/shared/routes/healthRoutes';
+ * app.use(healthRoutes);
+ * 
+ * @example
+ * // Available health check endpoints:
+ * // GET /health - Basic system health check
+ * // GET /health/detailed - Comprehensive health report
+ * // GET /health/database - Database-specific diagnostics
+ * // GET /health/cache - Cache system diagnostics
+ * // GET /ready - Kubernetes readiness probe
+ * // GET /live - Kubernetes liveness probe
+ * 
+ * @example
+ * // Monitoring and metrics endpoints:
+ * // GET /metrics - Performance metrics in JSON format
+ * // GET /metrics/prometheus - Prometheus-compatible metrics
+ * // POST /metrics/reset - Reset performance counters
+ * // POST /cache/clear - Clear application cache
+ * // POST /cache/cleanup - Cleanup expired cache entries
  */
 
 import { Router } from 'express';
@@ -13,9 +59,23 @@ import { cacheService } from '@/shared/utils/cache';
 import { prisma } from '@/shared/database/connection';
 import { logger } from '@/shared/utils/logger';
 
+/**
+ * Express router configured with comprehensive health monitoring and observability endpoints.
+ * 
+ * @type {Router}
+ */
 const router = Router();
 
-// Basic health check endpoint
+/**
+ * Basic system health check endpoint.
+ * 
+ * Provides a quick overview of system health status including uptime, environment,
+ * version, and basic component status. Returns HTTP 200 for healthy systems and
+ * HTTP 503 for unhealthy systems.
+ * 
+ * @route GET /health
+ * @returns {Object} Basic health status with system information
+ */
 router.get('/health', async (_req, res) => {
   try {
     const health = await healthChecks.system();
@@ -40,7 +100,16 @@ router.get('/health', async (_req, res) => {
   }
 });
 
-// Detailed health check with all components
+/**
+ * Comprehensive health check with detailed component analysis.
+ * 
+ * Provides in-depth health information for all system components including
+ * database, cache, memory, system resources, performance metrics, and
+ * environment configuration. Useful for detailed system diagnostics.
+ * 
+ * @route GET /health/detailed
+ * @returns {Object} Detailed health report with all component diagnostics
+ */
 router.get('/health/detailed', async (_req, res) => {
   try {
     const [database, cache, memory, system] = await Promise.all([
@@ -84,7 +153,16 @@ router.get('/health/detailed', async (_req, res) => {
   }
 });
 
-// Database-specific health check
+/**
+ * Database-specific health check and diagnostics.
+ * 
+ * Provides detailed database health information including connection status,
+ * table counts, sample da, connection pool configuration, and database
+ * metrics. Useful for database-specific troubleshooting and monitoring.
+ * 
+ * @route GET /health/database
+ * @returns {Object} Database health status with detailed diagnost
+ */
 router.get('/health/database', async (_req, res) => {
   try {
     const dbHealth = await healthChecks.database();
@@ -139,7 +217,16 @@ router.get('/health/database', async (_req, res) => {
   }
 });
 
-// Cache-specific health check
+/**
+ * Cache system health check and statistics.
+ * 
+ * Provides cache system health information including hit rates, size statistics,
+ * configuration details, and performance metrics. Useful for cache optimization
+ * and troubleshooting.
+ * 
+ * @route GET /health/cache
+ * @returns {Object} Cache health status with detailed statistics
+ */
 router.get('/health/cache', async (_req, res) => {
   try {
     const cacheHealth = await healthChecks.cache();
@@ -163,7 +250,16 @@ router.get('/health/cache', async (_req, res) => {
   }
 });
 
-// Performance metrics endpoint
+/**
+ * Performance metrics endpoint in JSON format.
+ * 
+ * Provides comprehensive performance metrics including request statistics,
+ * response times, error rates, system resource usage, and performance
+ * recommendations. Useful for performance analysis and optimization.
+ * 
+ * @route GET /metrics
+ * @returns {Object} Performance metrics and system statistics
+ */
 router.get('/metrics', async (_req, res) => {
   try {
     const performanceReport = await performanceMonitor.generateReport();
@@ -186,7 +282,16 @@ router.get('/metrics', async (_req, res) => {
   }
 });
 
-// Performance metrics in Prometheus format (for monitoring tools)
+/**
+ * Performance metrics in Prometheus format for monitoring integration.
+ * 
+ * Exports performance metrics in Prometheus-compatible format for integration
+ * with monitoring systems like Grafana, Prometheus, and other observability
+ * platforms. Returns metrics as plain text in Prometheus exposition format.
+ * 
+ * @route GET /metrics/prometheus
+ * @returns {string} Prometheus-formatted metrics
+ */
 router.get('/metrics/prometheus', async (_req, res) => {
   try {
     const report = await performanceMonitor.generateReport();
@@ -298,7 +403,16 @@ router.post('/metrics/reset', async (_req, res) => {
   }
 });
 
-// Readiness probe (for Kubernetes/container orchestration)
+/**
+ * Kubernetes readiness probe endpoint.
+ * 
+ * Determines if the application is ready to receive traffic by checking
+ * essential services like database connectivity. Returns HTTP 200 when ready
+ * and HTTP 503 when not ready. Used by Kubernetes for traffic routing decisions.
+ * 
+ * @route GET /ready
+ * @returns {Object} Readiness status for container orchestration
+ */
 router.get('/ready', async (_req, res) => {
   try {
     // Check if essential services are ready
@@ -325,7 +439,16 @@ router.get('/ready', async (_req, res) => {
   }
 });
 
-// Liveness probe (for Kubernetes/container orchestration)
+/**
+ * Kubernetes liveness probe endpoint.
+ * 
+ * Simple liveness check that indicates if the application process is alive
+ * and responsive. Always returns HTTP 200 if the server can respond.
+ * Used by Kubernetes to determine if the container should be restarted.
+ * 
+ * @route GET /live
+ * @returns {Object} Liveness status with uptime information
+ */
 router.get('/live', (_req, res) => {
   // Simple liveness check - if the server can respond, it's alive
   res.status(200).json({

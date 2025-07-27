@@ -46,6 +46,7 @@
  * throughout its lifecycle.
  * 
  * @module Database Optimization
+ * @category Database
  * @author Exequiel Trujillo
  * @since 1.0.0
  *

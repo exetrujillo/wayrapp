@@ -1,12 +1,50 @@
+// src/modules/progress/services/progressService.ts
+
 /**
- * Progress Service
- * Business logic for progress tracking and experience points calculation
+ * Comprehensive progress tracking and gamification service for the WayrApp language learning platform.
+ * 
+ * This service manages all aspects of user progress including experience points calculation, lesson completion
+ * tracking, streak management, and offline synchronization. It serves as the central business logic layer
+ * for the progress tracking system, handling complex scenarios like performance-based experience multipliers,
+ * conflict resolution during offline sync, and gamification features such as lives and daily streaks.
+ * 
+ * The service integrates with the ProgressRepository for data persistence and provides comprehensive
+ * progress analytics for both users and administrators. It automatically initializes user progress
+ * when needed and maintains data consistency through transactional operations and proper error handling.
+ * 
+ * Key features include intelligent experience point calculation based on lesson difficulty and user
+ * performance, robust offline progress synchronization with duplicate detection, streak calculation
+ * based on daily activity patterns, and comprehensive progress summaries for dashboard displays.
+ * 
+ * @module ProgressService
+ * @category Progress
+ * @category Services
+ * @author Exequiel Trujillo
+ * @since 1.0.0
+ * 
+ * @example
+ * // Initialize service with dependencies
+ * const progressRepository = new ProgressRepository(prisma);
+ * const progressService = new ProgressService(progressRepository, prisma);
+ * 
+ * // Complete a lesson and update progress
+ * const result = await progressService.completeLesson('user-123', {
+ *   lesson_id: 'lesson-456',
+ *   score: 85,
+ *   time_spent_seconds: 120
+ * });
+ * 
+ * // Sync offline progress data
+ * const syncResult = await progressService.syncOfflineProgress('user-123', {
+ *   completions: [{ lesson_id: 'lesson-789', completed_at: '2025-01-01T10:00:00Z', score: 92 }],
+ *   last_sync_timestamp: '2025-01-01T09:00:00Z'
+ * });
  */
 
-import { 
-  UserProgress, 
-  LessonCompletion, 
-  UpdateProgressDto, 
+import {
+  UserProgress,
+  LessonCompletion,
+  UpdateProgressDto,
   OfflineProgressSync,
   ProgressSummary,
   UpdateUserProgressDto
@@ -17,18 +55,39 @@ import { ErrorCodes, HttpStatus, QueryOptions, PaginatedResult } from '@/shared/
 import { logger } from '@/shared/utils/logger';
 import { PrismaClient } from '@prisma/client';
 
+/**
+ * Progress tracking and gamification service for managing user learning progress.
+ * 
+ * @class ProgressService
+ */
 export class ProgressService {
+  /**
+   * Creates an instance of ProgressService.
+   * 
+   * @param {ProgressRepository} progressRepository - Repository for progress data operations
+   * @param {PrismaClient} prisma - Prisma client for direct database access
+   */
   constructor(
     private progressRepository: ProgressRepository,
     private prisma: PrismaClient
-  ) {}
+  ) { }
 
   /**
-   * Get user progress, creating it if it doesn't exist
+   * Retrieves user progress data, automatically creating initial progress record if none exists.
+   * 
+   * This method ensures every user has a progress record by creating one with default values
+   * (0 experience points, 5 lives, 0 streak) when no existing progress is found.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @returns {Promise<UserProgress>} Promise resolving to the user's progress data
+   * 
+   * @example
+   * const progress = await progressService.getUserProgress('user-123');
+   * console.log(`User has ${progress.experience_points} experience points`);
    */
   async getUserProgress(userId: string): Promise<UserProgress> {
     let progress = await this.progressRepository.findUserProgressByUserId(userId);
-    
+
     if (!progress) {
       // Create initial progress for user
       progress = await this.progressRepository.createUserProgress({
@@ -37,7 +96,7 @@ export class ProgressService {
         lives_current: 5,
         streak_current: 0,
       });
-      
+
       logger.info('Created initial progress for user', { userId });
     }
 
@@ -45,11 +104,16 @@ export class ProgressService {
   }
 
   /**
-   * Update user progress
+   * Updates specific fields of a user's progress record.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {UpdateUserProgressDto} updates - Object containing the fields to update
+   * @returns {Promise<UserProgress>} Promise resolving to the updated progress data
+   * @throws {AppError} When user progress is not found (404 NOT_FOUND)
    */
   async updateUserProgress(userId: string, updates: UpdateUserProgressDto): Promise<UserProgress> {
     const existingProgress = await this.progressRepository.findUserProgressByUserId(userId);
-    
+
     if (!existingProgress) {
       throw new AppError(
         'User progress not found',
@@ -62,7 +126,21 @@ export class ProgressService {
   }
 
   /**
-   * Complete a lesson and update progress
+   * Processes lesson completion, calculates experience points, and updates user progress.
+   * 
+   * This method handles the complete lesson completion workflow including duplicate prevention,
+   * experience calculation based on performance, streak updates, and progress tracking.
+   * Experience points are calculated using the lesson's base points with performance multipliers:
+   * - 90+ score: 20% bonus
+   * - 80-89 score: 10% bonus  
+   * - 60-79 score: no modifier
+   * - <60 score: 20% reduction
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {UpdateProgressDto} progressData - Lesson completion data including lesson_id, score, and time_spent
+   * @returns {Promise<{progress: UserProgress, completion: LessonCompletion, experienceGained: number}>} 
+   *   Promise resolving to updated progress, completion record, and experience points gained
+   * @throws {AppError} When lesson is already completed (409 CONFLICT) or lesson not found (404 NOT_FOUND)
    */
   async completeLesson(userId: string, progressData: UpdateProgressDto): Promise<{
     progress: UserProgress;
@@ -139,7 +217,16 @@ export class ProgressService {
   }
 
   /**
-   * Synchronize offline progress data
+   * Synchronizes offline lesson completions with the server, handling conflicts and duplicates.
+   * 
+   * This method processes multiple lesson completions from offline usage, automatically detecting
+   * and skipping duplicates while maintaining data integrity. Completions are processed in
+   * chronological order and experience points are accumulated and applied in a single update.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {OfflineProgressSync} syncData - Offline sync data containing completions and last sync timestamp
+   * @returns {Promise<{synced_completions: number, skipped_duplicates: number, updated_progress: UserProgress}>}
+   *   Promise resolving to sync statistics and updated progress
    */
   async syncOfflineProgress(userId: string, syncData: OfflineProgressSync): Promise<{
     synced_completions: number;
@@ -195,7 +282,7 @@ export class ProgressService {
               newTime: completionData.completed_at,
             });
           }
-          
+
           skippedCount++;
           continue;
         }
@@ -231,10 +318,10 @@ export class ProgressService {
     let updatedProgress = currentProgress;
     if (totalExperienceGained > 0) {
       const newExperiencePoints = currentProgress.experience_points + totalExperienceGained;
-      
+
       // Find the most recent lesson completion for last_completed_lesson_id
       const mostRecentCompletion = sortedCompletions[sortedCompletions.length - 1];
-      
+
       updatedProgress = await this.progressRepository.updateUserProgress(userId, {
         experience_points: newExperiencePoints,
         last_completed_lesson_id: mostRecentCompletion?.lesson_id ?? undefined,
@@ -257,11 +344,14 @@ export class ProgressService {
   }
 
   /**
-   * Get progress summary for a user
+   * Retrieves comprehensive progress summary including lessons and courses statistics.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @returns {Promise<ProgressSummary>} Promise resolving to detailed progress summary
    */
   async getProgressSummary(userId: string): Promise<ProgressSummary> {
     const summary = await this.progressRepository.getProgressSummary(userId);
-    
+
     if (!summary) {
       // Create initial progress and return summary
       await this.getUserProgress(userId);
@@ -272,7 +362,11 @@ export class ProgressService {
   }
 
   /**
-   * Get user's lesson completions with pagination
+   * Retrieves paginated list of user's lesson completions with sorting options.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {QueryOptions} [options={}] - Optional pagination and sorting parameters
+   * @returns {Promise<PaginatedResult<LessonCompletion>>} Promise resolving to paginated completion results
    */
   async getUserLessonCompletions(
     userId: string,
@@ -282,14 +376,22 @@ export class ProgressService {
   }
 
   /**
-   * Check if a lesson is completed by user
+   * Checks whether a specific lesson has been completed by the user.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {string} lessonId - The unique identifier of the lesson
+   * @returns {Promise<boolean>} Promise resolving to true if lesson is completed, false otherwise
    */
   async isLessonCompleted(userId: string, lessonId: string): Promise<boolean> {
     return this.progressRepository.isLessonCompleted(userId, lessonId);
   }
 
   /**
-   * Get lesson completion statistics (for analytics)
+   * Retrieves aggregated completion statistics for a specific lesson (analytics function).
+   * 
+   * @param {string} lessonId - The unique identifier of the lesson
+   * @returns {Promise<{total_completions: number, average_score: number | null, average_time_spent: number | null}>}
+   *   Promise resolving to lesson completion statistics
    */
   async getLessonCompletionStats(lessonId: string): Promise<{
     total_completions: number;
@@ -300,7 +402,12 @@ export class ProgressService {
   }
 
   /**
-   * Reset user progress (admin function)
+   * Resets user progress to initial state (administrative function).
+   * 
+   * This method resets experience points to 0, lives to 5, streak to 0, and clears the last completed lesson.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @returns {Promise<UserProgress>} Promise resolving to the reset progress data
    */
   async resetUserProgress(userId: string): Promise<UserProgress> {
     return this.progressRepository.updateUserProgress(userId, {
@@ -312,7 +419,12 @@ export class ProgressService {
   }
 
   /**
-   * Award bonus experience points
+   * Awards bonus experience points to a user for special achievements or events.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {number} bonusPoints - The number of bonus experience points to award
+   * @param {string} reason - Description of why the bonus was awarded (for logging)
+   * @returns {Promise<UserProgress>} Promise resolving to the updated progress data
    */
   async awardBonusExperience(userId: string, bonusPoints: number, reason: string): Promise<UserProgress> {
     const currentProgress = await this.getUserProgress(userId);
@@ -333,7 +445,13 @@ export class ProgressService {
   }
 
   /**
-   * Update user lives (for gamification)
+   * Updates user's current lives count for gamification features.
+   * 
+   * Lives are clamped between 0 and 10 to maintain game balance.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {number} livesChange - The change in lives (positive to add, negative to subtract)
+   * @returns {Promise<UserProgress>} Promise resolving to the updated progress data
    */
   async updateUserLives(userId: string, livesChange: number): Promise<UserProgress> {
     const currentProgress = await this.getUserProgress(userId);
@@ -345,7 +463,18 @@ export class ProgressService {
   }
 
   /**
-   * Calculate experience points based on lesson difficulty and performance
+   * Calculates experience points based on lesson difficulty and user performance.
+   * 
+   * Applies performance-based multipliers:
+   * - Score ≥90: 20% bonus (×1.2)
+   * - Score 80-89: 10% bonus (×1.1)  
+   * - Score 60-79: no modifier (×1.0)
+   * - Score <60: 20% reduction (×0.8)
+   * 
+   * @private
+   * @param {number} baseLessonPoints - Base experience points for the lesson
+   * @param {number} [score] - User's score on the lesson (0-100)
+   * @returns {number} Calculated experience points (minimum 1)
    */
   private calculateExperiencePoints(baseLessonPoints: number, score?: number): number {
     let experiencePoints = baseLessonPoints;
@@ -366,7 +495,16 @@ export class ProgressService {
   }
 
   /**
-   * Calculate streak based on last activity
+   * Calculates user's learning streak based on activity patterns.
+   * 
+   * Streak logic:
+   * - Same day or consecutive day activity: increment streak
+   * - Gap of more than 1 day: reset streak to 1
+   * 
+   * @private
+   * @param {UserProgress} currentProgress - Current user progress data
+   * @param {Date} completionDate - Date of the current lesson completion
+   * @returns {number} Updated streak count
    */
   private calculateStreak(currentProgress: UserProgress, completionDate: Date): number {
     const lastActivity = currentProgress.last_activity_date;

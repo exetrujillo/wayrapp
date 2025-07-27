@@ -27,6 +27,7 @@
  * Centralized middleware exports for distributed node architecture.
  * 
  * @module MiddlewareCoordinationHub
+ * @category Middleware
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

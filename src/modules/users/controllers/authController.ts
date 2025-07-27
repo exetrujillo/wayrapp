@@ -16,6 +16,9 @@
  * Handles all authentication endpoints including registration, login, token refresh, logout, and user profile retrieval.
  * 
  * @module AuthController
+ * @category Controllers
+ * @category Users
+ * @category Auth
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

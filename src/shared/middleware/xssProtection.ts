@@ -23,6 +23,8 @@
  * logged with contextual information for security monitoring and incident response.
  * 
  * @module xssProtection
+ * @category Middleware
+ * @category Security
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

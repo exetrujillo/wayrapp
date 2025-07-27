@@ -26,6 +26,8 @@
  * Express router configuration for user authentication endpoints.
  * 
  * @module authRoutes
+ * @category Routes
+ * @category Auth
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

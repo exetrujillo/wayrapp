@@ -29,6 +29,8 @@
  * Removes expired tokens from blacklist for maintenance.
  * 
  * @module TokenBlacklistService
+ * @category Security
+ * @category Auth
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

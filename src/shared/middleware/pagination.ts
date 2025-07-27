@@ -22,6 +22,8 @@
  * the entire application.
  * 
  * @module Pagination
+ * @category Pagination
+ * @category Middleware
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

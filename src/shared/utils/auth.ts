@@ -19,7 +19,9 @@
  * components throughout the application that require secure token handling and password
  * management capabilities.
  * 
- * @module Auth
+ * @module Auth Utilities
+ * @category Auth
+ * @category Utilities
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

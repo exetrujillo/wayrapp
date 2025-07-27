@@ -1,51 +1,67 @@
 // src/app.ts
 
 /**
- * WayrApp Express Application Instance
+ * Comprehensive Express application configuration for the WayrApp language learning platform backend API.
  * 
- * Main Express application configuration for the WayrApp language learning platform backend API.
- * This file serves as the central application setup, configuring all middleware, security measures,
+ * This module serves as the central application setup, configuring all middleware, security measures,
  * API routes, and error handling for the entire backend service. The application follows a modular
- * architecture with versioned API endpoints and comprehensive security hardening.
+ * architecture with versioned API endpoints and comprehensive security hardening designed for both
+ * traditional server deployments and serverless environments.
  * 
- * Currently serverless-compatible (Vercel) but designed as a deployment-agnostic Express application
- * that can run in both traditional server environments and serverless functions. The architecture
- * is being evolved toward a decentralized system with distributed nodes, where this app instance
- * will serve as a foundational node in the network while maintaining backward compatibility.
+ * The application implements a complete REST API with hierarchical content structure (Course → Level → 
+ * Section → Module → Lesson → Exercise) and provides comprehensive authentication, user management, 
+ * content management, and progress tracking capabilities. It features extensive security middleware 
+ * including Helmet security headers, CORS configuration, rate limiting, input sanitization, and XSS 
+ * protection.
  * 
- * The app implements a hierarchical content structure (Course → Level → Section → Module → Lesson → Exercise)
- * and provides comprehensive authentication, user management, content management, and progress tracking
- * capabilities. Its modular design facilitates the transition to a distributed architecture where
- * different services can be deployed independently across multiple nodes.
+ * Key architectural features include a dependency injection container for clean service instantiation,
+ * comprehensive OpenAPI documentation with interactive examples, performance monitoring middleware,
+ * request/response logging, and a global error handler. The application is designed to be deployment-
+ * agnostic, supporting both serverless functions (Vercel) and traditional server environments.
  * 
- * This application instance serves as the main server entry point and is imported by all integration
- * tests for API testing. It forms the foundation for the backend infrastructure, handling requests
- * from multiple frontend clients (web creator, mobile app) and preparing for future node-to-node
- * communication in the decentralized architecture.
+ * The modular design facilitates future evolution toward a decentralized architecture where different
+ * services can be deployed independently across multiple nodes while maintaining backward compatibility.
+ * All API endpoints are versioned and include comprehensive documentation accessible via built-in
+ * documentation endpoints.
  * 
- * @module Wayrapp Backend
+ * This application instance serves as the main server entry point, imported by server.ts for deployment
+ * and by integration tests for API testing. It forms the foundation for the backend infrastructure,
+ * handling requests from multiple frontend clients and preparing for future distributed deployment
+ * scenarios.
+ * 
+ * @module WayrappBackend
+ * @category .Wayrapp
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 
  * @example
- * // Used in integration tests for API testing
+ * // Used in integration tests for comprehensive API testing
  * import request from 'supertest';
  * import app from '../../app';
  * 
- * describe('API Tests', () => {
- *   it('should return API info', async () => {
+ * describe('API Integration Tests', () => {
+ *   it('should return API information', async () => {
  *     const response = await request(app).get('/api');
  *     expect(response.status).toBe(200);
+ *     expect(response.body.message).toBe('WayrApp API');
+ *   });
+ * 
+ *   it('should provide OpenAPI documentation', async () => {
+ *     const response = await request(app).get('/api/docs');
+ *     expect(response.status).toBe(200);
+ *     expect(response.body.openapi).toBe('3.0.0');
  *   });
  * });
  * 
  * @example
- * // The app provides versioned API endpoints ready for distributed deployment
- * // GET /api - API information and node capabilities
- * // GET /api/docs - Complete OpenAPI documentation
- * // POST /api/v1/auth/login - User authentication (future: distributed auth)
- * // GET /api/v1/courses - List available courses (future: federated content)
- * // GET /api/v1/progress - User progress tracking (future: distributed state)
+ * // The app provides comprehensive versioned API endpoints
+ * // GET /api - API information and capabilities
+ * // GET /api/docs - Complete OpenAPI 3.0 documentation
+ * // POST /api/v1/auth/register - User registration
+ * // POST /api/v1/auth/login - User authentication
+ * // GET /api/v1/courses - List available courses
+ * // GET /api/v1/progress - User progress tracking
+ * // GET /health - Health check endpoint
  */
 
 import express from "express";
@@ -69,6 +85,15 @@ import {
 // Load environment variables
 dotenv.config();
 
+/**
+ * Main Express application instance configured with comprehensive middleware stack.
+ * 
+ * This Express application is configured with security middleware, CORS, rate limiting,
+ * body parsing, input sanitization, performance monitoring, and comprehensive API routes.
+ * The application supports both serverless and traditional server deployments.
+ * 
+ * @type {express.Application}
+ */
 const app = express();
 
 // Trust proxy for Vercel deployment

@@ -25,6 +25,8 @@
  * access control requirements.
  * 
  * @module authMiddleware
+ * @category Middleware
+ * @category Auth
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

@@ -1,6 +1,47 @@
+// src/modules/users/controllers/userController.ts
+
 /**
- * User Controller
- * Handles user profile management endpoints
+ * Comprehensive HTTP API controller for user profile management and administrative operations.
+ * 
+ * This controller provides a complete REST API for managing user profiles, password updates,
+ * and administrative user operations in the WayrApp language learning platform. It handles
+ * all HTTP request/response operations for user-related functionality, including profile
+ * management, password changes, and administrative user listing and role management.
+ * 
+ * The controller implements proper authentication validation, comprehensive input validation
+ * using Zod schemas, structured error handling with appropriate HTTP status codes, and
+ * detailed logging for audit trails. It follows RESTful conventions and provides both
+ * user-facing endpoints for profile management and administrative endpoints with role-based
+ * access control.
+ * 
+ * Key features include automatic user authentication validation, comprehensive request/response
+ * validation, structured JSON responses with consistent formatting, proper HTTP status code
+ * usage, role-based authorization for administrative functions, and detailed logging for
+ * monitoring and security auditing purposes.
+ * 
+ * The controller serves as the presentation layer in the clean architecture pattern, handling
+ * HTTP concerns while delegating business logic to the UserService layer. All endpoints
+ * require authentication, with administrative endpoints requiring elevated permissions.
+ * 
+ * Note: This controller contains several security audit comments (SECURITY_AUDIT_TODO) that
+ * identify areas requiring security enhancements, including missing authorization checks,
+ * input validation improvements, and rate limiting implementations.
+ * 
+ * @module UserController
+ * @category Users
+ * @category Controllers
+ * @author Exequiel Trujillo
+ * @since 1.0.0
+ * 
+ * @example
+ * // Initialize controller with service dependency
+ * const userService = new UserService(userRepository);
+ * const userController = new UserController(userService);
+ * 
+ * // Register routes with Express router
+ * router.get('/profile', authenticateToken, userController.getProfile);
+ * router.put('/profile', authenticateToken, userController.updateProfile);
+ * router.get('/', authenticateToken, requireRole('admin'), userController.getAllUsers);
  */
 
 import { NextFunction, Request, Response } from 'express';
@@ -10,12 +51,42 @@ import { logger } from '@/shared/utils/logger';
 import { UserService } from '../services/userService';
 import { UpdateUserSchema, UpdatePasswordSchema, UpdateUserDto } from '../types';
 
+/**
+ * HTTP API controller for user profile management operations.
+ * 
+ * @class UserController
+ */
 export class UserController {
+  /**
+   * Creates an instance of UserController.
+   * 
+   * @param {UserService} userService - Service layer for user business logic
+   */
   constructor(private userService: UserService) { }
 
   /**
-   * Get user profile
-   * GET /api/users/profile
+   * Retrieves the current authenticated user's profile information.
+   * 
+   * Handles GET /api/users/profile endpoint. Requires authentication.
+   * 
+   * @param {Request} req - Express request object containing user authentication data
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
+   * 
+   * @example
+   * // Response format:
+   * {
+   *   "success": true,
+   *   "timestamp": "2025-01-01T10:00:00Z",
+   *   "data": {
+   *     "id": "user-123",
+   *     "email": "user@example.com",
+   *     "username": "johndoe",
+   *     "role": "student",
+   *     "is_active": true,
+   *     "registration_date": "2025-01-01T09:00:00Z"
+   *   }
+   * }
    */
   getProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
@@ -30,7 +101,7 @@ export class UserController {
     // Risk: Malformed user IDs from JWT could cause database errors or injection attacks.
     // Remediation: Validate userId format (UUID, length, allowed characters) before using in database queries.
     const userId = req.user.sub;
-    
+
     // Service will throw an error if user is not found
     const user = await this.userService.getUserProfile(userId);
 
@@ -44,8 +115,21 @@ export class UserController {
   });
 
   /**
-   * Update user profile
-   * PUT /api/users/profile
+   * Updates the current authenticated user's profile information.
+   * 
+   * Handles PUT /api/users/profile endpoint. Requires authentication.
+   * 
+   * @param {Request} req - Express request object with profile updates in body
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
+   * 
+   * @example
+   * // Request body:
+   * {
+   *   "username": "newusername",
+   *   "country_code": "US",
+   *   "profile_picture_url": "https://example.com/avatar.jpg"
+   * }
    */
   updateProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
@@ -64,7 +148,7 @@ export class UserController {
     // SECURITY_AUDIT_TODO: No check to prevent users from updating sensitive fields they shouldn't modify.
     // Risk: If UpdateUserDto includes fields like 'role', 'is_active', or 'created_at', users could modify their own privileges.
     // Remediation: Filter validatedData to only include user-modifiable fields (name, email, preferences) before service call.
-    
+
     // Service will throw an error if user is not found or update fails
     const updatedUser = await this.userService.updateUser(userId, validatedData as UpdateUserDto);
 
@@ -83,8 +167,20 @@ export class UserController {
   });
 
   /**
-   * Update user password
-   * PUT /api/users/password
+   * Updates the current authenticated user's password.
+   * 
+   * Handles PUT /api/users/password endpoint. Requires authentication and current password verification.
+   * 
+   * @param {Request} req - Express request object with password change data in body
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
+   * 
+   * @example
+   * // Request body:
+   * {
+   *   "current_password": "OldPassword123!",
+   *   "new_password": "NewPassword456!"
+   * }
    */
   updatePassword = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user) {
@@ -104,7 +200,7 @@ export class UserController {
     // SECURITY_AUDIT_TODO: No rate limiting specifically for password change attempts.
     // Risk: Attackers could brute force current passwords or cause account lockout through repeated attempts.
     // Remediation: Implement stricter rate limiting for password change endpoints (e.g., 3 attempts per hour per user).
-    
+
     // Service will throw an error if current password is incorrect or user is not found
     await this.userService.updatePassword(userId, current_password, new_password);
 
@@ -123,8 +219,18 @@ export class UserController {
   });
 
   /**
-   * Get all users (admin only)
-   * GET /api/users
+   * Retrieves paginated list of all users with filtering and sorting options (administrative function).
+   * 
+   * Handles GET /api/users endpoint. Requires admin role.
+   * Supports query parameters for pagination, filtering, and sorting.
+   * 
+   * @param {Request} req - Express request object with query parameters for filtering and pagination
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
+   * 
+   * @example
+   * // Query parameters:
+   * // ?page=1&limit=20&role=student&is_active=true&search=john&sortBy=created_at&sortOrder=desc
    */
   getAllUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // SECURITY_AUDIT_TODO: Missing authorization check for admin-only endpoint.
@@ -174,8 +280,13 @@ export class UserController {
   });
 
   /**
-   * Get user by ID (admin only)
-   * GET /api/users/:id
+   * Retrieves detailed information for a specific user by ID (administrative function).
+   * 
+   * Handles GET /api/users/:id endpoint. Requires admin role.
+   * 
+   * @param {Request} req - Express request object with user ID in params
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
    */
   getUserById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // SECURITY_AUDIT_TODO: Missing authorization check for admin-only endpoint.
@@ -191,11 +302,11 @@ export class UserController {
         ErrorCodes.VALIDATION_ERROR
       );
     }
-    
+
     // SECURITY_AUDIT_TODO: User ID parameter is not validated for format/type.
     // Risk: Malformed IDs could cause database errors or be used for injection attacks.
     // Remediation: Validate userId format (UUID, length, allowed characters) before database query.
-    
+
     // Service will throw an error if user is not found
     const user = await this.userService.getUserProfile(userId);
 
@@ -209,8 +320,19 @@ export class UserController {
   });
 
   /**
-   * Update user role (admin only)
-   * PUT /api/users/:id/role
+   * Updates a specific user's role (administrative function).
+   * 
+   * Handles PUT /api/users/:id/role endpoint. Requires admin role.
+   * 
+   * @param {Request} req - Express request object with user ID in params and role data in body
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>} Promise that resolves when response is sent
+   * 
+   * @example
+   * // Request body:
+   * {
+   *   "role": "content_creator"
+   * }
    */
   updateUserRole = asyncHandler(async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     // SECURITY_AUDIT_TODO: Missing authorization check for admin-only endpoint.

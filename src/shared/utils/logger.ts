@@ -11,6 +11,8 @@
  * console output and structured JSON file logging.
  * 
  * @module logger
+ * @category Utilities
+ * @category Logs
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

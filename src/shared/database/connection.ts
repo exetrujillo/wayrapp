@@ -18,6 +18,8 @@
  * - **Self-Contained:** This connection manager is the heart of a SINGLE node.
  * 
  * @module Connection
+ * @category Database
+ * @category Connection
  * @author Exequiel Trujillo
  * @since 1.0.0
  *

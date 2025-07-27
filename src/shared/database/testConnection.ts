@@ -7,6 +7,8 @@
  * specifically designed for community-owned WayrApp educational platform deployments.
  * 
  * @module DatabaseConnectionTest
+ * @category Database
+ * @category Connection
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

@@ -25,6 +25,8 @@ import { ErrorCodes, HttpStatus } from '@/shared/types';
  * where different nodes may require different security configurations.
  * 
  * @module securityMiddleware
+ * @category Middleware
+ * @category Security
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

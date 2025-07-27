@@ -1,6 +1,50 @@
+// src/modules/progress/repositories/progressRepository.ts
+
 /**
- * Progress Repository
- * Data access layer for progress operations using Prisma
+ * Comprehensive data access layer for progress tracking operations using Prisma ORM.
+ * 
+ * This repository provides a complete abstraction over the database layer for all progress-related
+ * data operations in the WayrApp language learning platform. It handles user progress tracking,
+ * lesson completion records, and analytics data with robust error handling and transaction support.
+ * 
+ * The repository implements the Repository pattern, providing a clean interface between the business
+ * logic layer and the database. It includes comprehensive Prisma error handling, automatic data
+ * mapping between database models and application interfaces, and optimized queries for performance.
+ * 
+ * Key features include atomic transaction support for batch operations, intelligent error mapping
+ * from Prisma errors to application-specific errors, pagination support for large datasets,
+ * aggregation queries for analytics, and comprehensive CRUD operations for both user progress
+ * and lesson completion entities.
+ * 
+ * The repository ensures data consistency through proper constraint handling, provides efficient
+ * upsert operations for progress updates, and includes specialized methods for offline synchronization
+ * scenarios with duplicate detection and conflict resolution.
+ * 
+ * @module ProgressRepository
+ * @category Progress
+ * @category Repositories
+ * @author Exequiel Trujillo
+ * @since 1.0.0
+ * 
+ * @example
+ * // Initialize repository with Prisma client
+ * const progressRepository = new ProgressRepository(prisma);
+ * 
+ * // Create user progress
+ * const progress = await progressRepository.createUserProgress({
+ *   user_id: 'user-123',
+ *   experience_points: 0,
+ *   lives_current: 5,
+ *   streak_current: 0
+ * });
+ * 
+ * // Record lesson completion
+ * const completion = await progressRepository.createLessonCompletion({
+ *   user_id: 'user-123',
+ *   lesson_id: 'lesson-456',
+ *   score: 85,
+ *   time_spent_seconds: 120
+ * });
  */
 
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -21,11 +65,25 @@ import {
 } from "@/shared/types";
 import { logger } from "@/shared/utils/logger";
 
+/**
+ * Data access layer for progress tracking operations.
+ * 
+ * @class ProgressRepository
+ */
 export class ProgressRepository {
+  /**
+   * Creates an instance of ProgressRepository.
+   * 
+   * @param {PrismaClient} prisma - Prisma client instance for database operations
+   */
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Create user progress record
+   * Creates a new user progress record in the database.
+   * 
+   * @param {CreateUserProgressDto} data - User progress data to create
+   * @returns {Promise<UserProgress>} Promise resolving to the created progress record
+   * @throws {AppError} When user progress already exists (409 CONFLICT) or user not found (404 NOT_FOUND)
    */
   async createUserProgress(data: CreateUserProgressDto): Promise<UserProgress> {
     try {
@@ -74,7 +132,11 @@ export class ProgressRepository {
   }
 
   /**
-   * Find user progress by user ID
+   * Retrieves user progress record by user ID.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @returns {Promise<UserProgress | null>} Promise resolving to user progress or null if not found
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async findUserProgressByUserId(userId: string): Promise<UserProgress | null> {
     try {
@@ -96,7 +158,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Update user progress
+   * Updates user progress record with specified changes.
+   * 
+   * Automatically updates the last activity date and handles lesson relationship updates.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {UpdateUserProgressDto} updates - Object containing fields to update
+   * @returns {Promise<UserProgress>} Promise resolving to the updated progress record
+   * @throws {AppError} When user progress not found (404 NOT_FOUND) or database operation fails
    */
   async updateUserProgress(
     userId: string,
@@ -152,7 +221,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Create or update user progress (upsert)
+   * Creates new user progress or updates existing record atomically (upsert operation).
+   * 
+   * This method provides atomic create-or-update functionality, ensuring data consistency
+   * when the existence of user progress is uncertain.
+   * 
+   * @param {CreateUserProgressDto} data - User progress data for creation or update
+   * @returns {Promise<UserProgress>} Promise resolving to the created or updated progress record
+   * @throws {AppError} When user not found (404 NOT_FOUND) or database operation fails
    */
   async upsertUserProgress(data: CreateUserProgressDto): Promise<UserProgress> {
     try {
@@ -211,7 +287,11 @@ export class ProgressRepository {
   }
 
   /**
-   * Create lesson completion record
+   * Creates a new lesson completion record in the database.
+   * 
+   * @param {CreateLessonCompletionDto} data - Lesson completion data to create
+   * @returns {Promise<LessonCompletion>} Promise resolving to the created completion record
+   * @throws {AppError} When lesson already completed (409 CONFLICT), user/lesson not found (404 NOT_FOUND), or database operation fails
    */
   async createLessonCompletion(
     data: CreateLessonCompletionDto,
@@ -261,7 +341,12 @@ export class ProgressRepository {
   }
 
   /**
-   * Find lesson completion by user and lesson ID
+   * Retrieves a specific lesson completion record by user and lesson ID.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {string} lessonId - The unique identifier of the lesson
+   * @returns {Promise<LessonCompletion | null>} Promise resolving to completion record or null if not found
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async findLessonCompletion(
     userId: string,
@@ -295,7 +380,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Find all lesson completions for a user
+   * Retrieves paginated list of lesson completions for a specific user.
+   * 
+   * Supports pagination, sorting, and filtering options for efficient data retrieval.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {QueryOptions} [options={}] - Query options including pagination and sorting parameters
+   * @returns {Promise<PaginatedResult<LessonCompletion>>} Promise resolving to paginated completion results
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async findUserLessonCompletions(
     userId: string,
@@ -353,7 +445,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Create multiple lesson completions (for offline sync)
+   * Creates multiple lesson completion records atomically within a transaction.
+   * 
+   * This method is optimized for offline synchronization scenarios, automatically
+   * skipping duplicate completions and ensuring data consistency through transaction handling.
+   * 
+   * @param {CreateLessonCompletionDto[]} completions - Array of lesson completion data to create
+   * @returns {Promise<LessonCompletion[]>} Promise resolving to array of successfully created completion records
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async createMultipleLessonCompletions(
     completions: CreateLessonCompletionDto[],
@@ -409,7 +508,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Get progress summary for a user
+   * Retrieves comprehensive progress summary with aggregated statistics.
+   * 
+   * Calculates lessons completed, courses started, and other analytics data by performing
+   * complex queries across multiple related tables.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @returns {Promise<ProgressSummary | null>} Promise resolving to progress summary or null if user progress not found
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async getProgressSummary(userId: string): Promise<ProgressSummary | null> {
     try {
@@ -481,7 +587,12 @@ export class ProgressRepository {
   }
 
   /**
-   * Check if lesson is completed by user
+   * Checks whether a specific lesson has been completed by the user.
+   * 
+   * @param {string} userId - The unique identifier of the user
+   * @param {string} lessonId - The unique identifier of the lesson
+   * @returns {Promise<boolean>} Promise resolving to true if lesson is completed, false otherwise
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async isLessonCompleted(userId: string, lessonId: string): Promise<boolean> {
     try {
@@ -510,7 +621,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Get lesson completion statistics
+   * Retrieves aggregated completion statistics for a specific lesson.
+   * 
+   * Calculates total completions, average score, and average time spent using database aggregation functions.
+   * 
+   * @param {string} lessonId - The unique identifier of the lesson
+   * @returns {Promise<{total_completions: number, average_score: number | null, average_time_spent: number | null}>}
+   *   Promise resolving to lesson completion statistics
+   * @throws {AppError} When database operation fails (500 INTERNAL_SERVER_ERROR)
    */
   async getLessonCompletionStats(lessonId: string): Promise<{
     total_completions: number;
@@ -546,7 +664,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Map Prisma UserProgress to UserProgress interface
+   * Maps Prisma UserProgress model to application UserProgress interface.
+   * 
+   * Transforms database field names to application interface field names for clean separation
+   * between database schema and application domain models.
+   * 
+   * @private
+   * @param {any} prismaProgress - Prisma UserProgress model instance
+   * @returns {UserProgress} Mapped UserProgress interface object
    */
   private mapPrismaUserProgressToUserProgress(
     prismaProgress: any,
@@ -563,7 +688,14 @@ export class ProgressRepository {
   }
 
   /**
-   * Map Prisma LessonCompletion to LessonCompletion interface
+   * Maps Prisma LessonCompletion model to application LessonCompletion interface.
+   * 
+   * Transforms database field names to application interface field names for clean separation
+   * between database schema and application domain models.
+   * 
+   * @private
+   * @param {any} prismaCompletion - Prisma LessonCompletion model instance
+   * @returns {LessonCompletion} Mapped LessonCompletion interface object
    */
   private mapPrismaLessonCompletionToLessonCompletion(
     prismaCompletion: any,

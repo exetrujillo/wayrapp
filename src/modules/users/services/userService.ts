@@ -12,6 +12,8 @@
  * (data access layer), ensuring business rules are enforced and providing a clean API for user operations.
  * 
  * @module userService
+ * @category Services
+ * @category Users
  * @author Exequiel Trujillo
  * @since 1.0.0
  */
