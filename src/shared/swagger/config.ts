@@ -234,13 +234,20 @@ function generateSwaggerSpec() {
   try {
     const options: swaggerJSDoc.Options = {
       definition: baseSpec,
-      apis: process.env['NODE_ENV'] === 'production'
-        ? [] // Don't scan files in production, use base spec
-        : [
-          './src/modules/*/routes/*.ts',
-          './src/shared/routes/*.ts',
-          './src/modules/*/controllers/*.ts'
-        ]
+      apis: [
+        // Scan compiled JavaScript files in production, TypeScript files in development
+        process.env['NODE_ENV'] === 'production'
+          ? [
+            './dist/modules/*/routes/*.js',
+            './dist/shared/routes/*.js',
+            './dist/modules/*/controllers/*.js'
+          ]
+          : [
+            './src/modules/*/routes/*.ts',
+            './src/shared/routes/*.ts',
+            './src/modules/*/controllers/*.ts'
+          ]
+      ].flat()
     };
 
     return swaggerJSDoc(options);
