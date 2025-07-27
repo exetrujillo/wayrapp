@@ -1,0 +1,47 @@
+# Source files (only need compiled dist)
+src/
+*.ts
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Development files
+.env.example
+.env.test
+.env.test.example
+
+# Test files and coverage
+__tests__/
+coverage/
+jest.config.js
+jest.integration.config.js
+
+# Documentation source
+docs/
+typedoc.json
+
+# Development dependencies
+.eslintrc.js
+.prettierrc
+tsconfig.json
+tsconfig.build.json
+
+# Logs
+logs/
+*.log
+
+# Node modules (Vercel handles this)
+node_modules/
+
+# Frontend workspaces (not needed for API)
+frontend-creator/
+frontend-mobile/
+frontend-shared/
+
+# Scripts
+scripts/
+
+# Git
+.git/
+.gitignore

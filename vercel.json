@@ -1,10 +1,7 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/swagger",

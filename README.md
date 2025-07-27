@@ -502,13 +502,13 @@ npm run deploy:vercel
 ```
 
 The `vercel.json` configuration handles:
-- **API routes** (`/api/*`) → Backend serverless functions
+- **API routes** (`/api/*`) → Backend serverless functions (`api/index.js`)
 - **Documentation routes**:
   - `/swagger` → Interactive Swagger UI (`swagger.html`)
   - `/docs` → Documentation disambiguation page (`docs-redirect.html`)
   - `/` → Main landing page (`index.html`)
 - **CORS headers** for API endpoints
-- **Static assets** for frontend applications
+- **Build optimization** with `.vercelignore` for faster deployments
 
 ### Docker Support
 
