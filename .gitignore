@@ -19,6 +19,9 @@ build/
 web-build/
 *.tsbuildinfo
 
+# Generated documentation
+docs/
+
 # Testing
 coverage/
 .coverage
