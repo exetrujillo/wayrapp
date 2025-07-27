@@ -4,7 +4,7 @@
   ],
   "entryPointStrategy": "expand",
   "out": "./docs",
-  "name": "WayrApp Backend API Documentation",
+  "name": "WayrApp Backend & Ecosystem Documentation",
   "includeVersion": true,
   "excludePrivate": true,
   "excludeProtected": true,
@@ -35,7 +35,8 @@
     "json",
     "bash",
     "sh",
-    "dockerfile"
+    "dockerfile",
+    "yaml"
   ],
   "navigation": {
     "includeCategories": true,

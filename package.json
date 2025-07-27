@@ -23,14 +23,18 @@
     "test": "jest --config jest.config.js",
     "test:unit": "jest --config jest.config.js",
     "test:integration": "jest --config jest.integration.config.js",
-    "test:backend": "npm run test:unit && npm run test:integration",
+    "test:integration:safe": "npm run test:db:setup && npm run test:integration",
+    "test:backend": "npm run test:unit && npm run test:integration:safe",
+    "test:db:setup": "node scripts/setup-test-db.js",
+    "test:db:check": "node scripts/check-test-config.js",
     "db:test": "ts-node --project tsconfig.build.json -r tsconfig-paths/register src/shared/database/testConnection.ts",
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "deploy:vercel": "vercel --prod",
     "docs": "typedoc",
-    "docs:serve": "typedoc && npx http-server docs -p 8080 -o"
+    "docs:serve": "typedoc && npx http-server docs -p 8080 -o",
+    "docs:swagger": "npm run dev"
   },
   "keywords": [
     "language-learning",
@@ -42,6 +46,7 @@
   ],
   "dependencies": {
     "@prisma/client": "^6.12.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -51,6 +56,8 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.11.0",
     "xss": "^1.0.15",
     "zod": "^3.22.4"
@@ -65,6 +72,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
     "@types/supertest": "^2.0.16",
+    "@types/swagger-jsdoc": "^6.0.4",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",

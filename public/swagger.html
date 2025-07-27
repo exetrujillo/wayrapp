@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WayrApp API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.9.0/favicon-32x32.png" sizes="32x32" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+            font-family: Lato, "Open Sans", Roboto, system-ui, sans-serif;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #F8F8F8; /* secondary.100 */
+            line-height: 1.5; /* lineHeight.normal */
+        }
+        
+        /* Swagger UI Customizations */
+        .swagger-ui .topbar {
+            background: linear-gradient(135deg, #50A8B1 0%, #3A8086 100%); /* primary.400 to primary.500 */
+        }
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            color: white;
+        }
+        .swagger-ui .topbar .download-url-wrapper input[type=text] {
+            border: 2px solid #50A8B1; /* primary.400 */
+            border-radius: 0.25rem; /* borderRadius.sm */
+        }
+        .swagger-ui .info .title {
+            color: #50A8B1; /* primary.400 */
+            font-family: Lato, "Open Sans", Roboto, system-ui, sans-serif;
+        }
+        .swagger-ui .btn.authorize {
+            background-color: #50A8B1; /* primary.400 */
+            border-color: #50A8B1;
+        }
+        .swagger-ui .btn.authorize:hover {
+            background-color: #3A8086; /* primary.500 */
+            border-color: #3A8086;
+        }
+        
+        /* Custom Header */
+        .custom-header {
+            background: linear-gradient(135deg, #50A8B1 0%, #3A8086 100%); /* primary.400 to primary.500 */
+            color: white;
+            padding: 2.5rem 1.25rem; /* spacing.10 spacing.5 */
+            text-align: center;
+            margin-bottom: 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadows.md */
+        }
+        .custom-header h1 {
+            margin: 0;
+            font-size: 3rem; /* fontSize.5xl */
+            font-weight: 600; /* fontWeight.semibold */
+            line-height: 1.25; /* lineHeight.tight */
+            letter-spacing: -0.025em; /* letterSpacing.tight */
+        }
+        .custom-header p {
+            margin: 0.5rem 0 0 0; /* spacing.2 */
+            opacity: 0.9;
+            font-size: 1.125rem; /* fontSize.lg */
+            line-height: 1.625; /* lineHeight.relaxed */
+            font-weight: 400; /* fontWeight.regular */
+        }
+        
+        /* Links Section */
+        .links-section {
+            background: white;
+            padding: 1rem 1.25rem; /* spacing.4 spacing.5 */
+            border-bottom: 1px solid #E8E8E8; /* secondary.200 */
+            text-align: center;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadows.DEFAULT */
+        }
+        .links-section a {
+            color: #50A8B1; /* primary.400 */
+            text-decoration: none;
+            margin: 0 1rem; /* spacing.4 */
+            font-weight: 500; /* fontWeight.medium */
+            font-size: 0.875rem; /* fontSize.sm */
+            padding: 0.5rem 0.75rem; /* spacing.2 spacing.3 */
+            border-radius: 0.25rem; /* borderRadius.sm */
+            transition: all 150ms ease;
+            display: inline-block;
+        }
+        .links-section a:hover {
+            color: #3A8086; /* primary.500 */
+            background-color: #E6F7F8; /* primary.50 */
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        .links-section a:active {
+            transform: translateY(0);
+            background-color: #B3E8EB; /* primary.100 */
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .custom-header {
+                padding: 1.5rem 1rem; /* spacing.6 spacing.4 */
+            }
+            .custom-header h1 {
+                font-size: 2.25rem; /* fontSize.4xl */
+            }
+            .custom-header p {
+                font-size: 1rem; /* fontSize.base */
+            }
+            .links-section a {
+                margin: 0.25rem; /* spacing.1 */
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <h1>WayrApp API</h1>
+        <p>Interactive API Documentation - Language Learning Platform Backend</p>
+    </div>
+    
+    <div class="links-section">
+        <a href="https://exetrujillo.github.io/wayrapp/" target="_blank">📚 Complete Documentation</a>
+        <a href="https://github.com/exetrujillo/wayrapp" target="_blank">🔗 GitHub Repository</a>
+        <a href="/health" target="_blank">💚 Health Check</a>
+        <a href="/api/status" target="_blank">📊 API Status</a>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: '/api/swagger.json',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                requestInterceptor: function(request) {
+                    // Add any custom headers or modifications here
+                    return request;
+                },
+                responseInterceptor: function(response) {
+                    // Handle responses here if needed
+                    return response;
+                }
+            });
+        };
+    </script>
+</body>
+</html>

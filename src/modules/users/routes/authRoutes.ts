@@ -206,6 +206,73 @@ export function createAuthRoutes(authController: AuthController): Router {
    *   }
    * }
    */
+  
+  /**
+   * @swagger
+   * /api/v1/auth/register:
+   *   post:
+   *     tags:
+   *       - Authentication
+   *     summary: Register a new user
+   *     description: Creates a new user account with email, password, and optional profile information
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *               - password
+   *               - firstName
+   *               - lastName
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: user@example.com
+   *               password:
+   *                 type: string
+   *                 minLength: 8
+   *                 example: SecurePassword123!
+   *               firstName:
+   *                 type: string
+   *                 example: John
+   *               lastName:
+   *                 type: string
+   *                 example: Doe
+   *               role:
+   *                 type: string
+   *                 enum: [student, teacher, admin]
+   *                 default: student
+   *     responses:
+   *       201:
+   *         description: User successfully registered
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: User registered successfully
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     user:
+   *                       $ref: '#/components/schemas/User'
+   *                     tokens:
+   *                       $ref: '#/components/schemas/AuthTokens'
+   *       400:
+   *         description: Invalid input data
+   *       409:
+   *         description: User already exists
+   *       429:
+   *         description: Too many registration attempts
+   */
   router.post(
     '/register',
     authRateLimiter,
@@ -263,6 +330,58 @@ export function createAuthRoutes(authController: AuthController): Router {
    *     }
    *   }
    * }
+   */
+  
+  /**
+   * @swagger
+   * /api/v1/auth/login:
+   *   post:
+   *     tags:
+   *       - Authentication
+   *     summary: User login
+   *     description: Authenticates user with email and password, returns JWT tokens
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *               - password
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: user@example.com
+   *               password:
+   *                 type: string
+   *                 example: SecurePassword123!
+   *     responses:
+   *       200:
+   *         description: Login successful
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Login successful
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     user:
+   *                       $ref: '#/components/schemas/User'
+   *                     tokens:
+   *                       $ref: '#/components/schemas/AuthTokens'
+   *       400:
+   *         description: Invalid credentials
+   *       429:
+   *         description: Too many login attempts
    */
   router.post(
     '/login',

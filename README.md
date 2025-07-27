@@ -1,6 +1,6 @@
-# WayrApp - Language Learning Platform
+# WayrApp Backend & Ecosystem
 
-A comprehensive and decentralized language learning platform built with Node.js, Express, TypeScript, React, and React Native. WayrApp provides a complete ecosystem including a robust backend API, web-based content creator tool, and mobile application for language learning.
+A decentralized & OpenSource language learning platform built with Node.js, Express, TypeScript, React, and React Native. WayrApp mission is to provide a complete ecosystem including a robust backend API, web-based content creator tool, and mobile application for language learning.
 
 ## 🏗️ Monorepo Structure
 
@@ -8,21 +8,23 @@ This repository is organized as an NPM Workspaces monorepo containing:
 
 - **Backend API** (root) - Node.js/Express API server
 - **Content Creator** (`frontend-creator/`) - React web application for creating educational content
-- **Mobile App** (`frontend-mobile/`) - React Native mobile application
-- **Shared Components** (`frontend-shared/`) - Shared utilities and components
+- **Mobile App** (`frontend-mobile/`) - Cross Platform React Native mobile application
+- **Shared Components** (`frontend-shared/`) - Frontend shared utilities and components
 
 ## 🚀 Features
 
-- **🔐 Authentication & Authorization** - JWT-based auth with role-based access control
-- **📚 Content Management** - Hierarchical course structure (Courses → Levels → Sections → Modules → Lessons)
+-**Ready to Deploy Backend** - Node.js/Express API server with PostgreSQL database and Prisma ORM (TODO: Expand to make it DB-Agnostic)
+- **📱 Mobile App** - Cross-platform mobile application for learners (TODO)
+- **🎨 Content Creator** - Web-based tool for creating and managing educational content
+- **📚 Content Management** - Hierarchical course structure (Courses → Levels → Sections → Modules → Lessons → Exercises)
 - **🎯 Exercise System** - Multiple exercise types with reusable components
+- **🔐 Authentication & Authorization** - JWT-based auth with role-based access control (TODO: implement OAuth)
 - **📊 Progress Tracking** - Experience points, streaks, lives, and completion tracking
 - **📱 Offline Support** - Packaged content API with versioning and caching
-- **🎮 Gamification** - Lives system, streaks, and experience points
 - **🔄 Sync Capabilities** - Offline progress synchronization
+- **🎮 Gamification** - Lives system, streaks, and experience points
 - **🛡️ Security** - Input validation, rate limiting, and secure headers
-- **🎨 Content Creator** - Web-based tool for creating and managing educational content
-- **📱 Mobile App** - Cross-platform mobile application for learners
+
 
 ## 🏗️ Architecture
 
@@ -31,10 +33,10 @@ This repository is organized as an NPM Workspaces monorepo containing:
 #### Backend API
 - **Runtime**: Node.js with TypeScript
 - **Framework**: Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT tokens with refresh token rotation
+- **Database**: PostgreSQL with Prisma ORM (TODO: Expand to make it DB-Agnostic)
+- **Authentication**: JWT tokens with refresh token rotation (TODO: implement OAuth and MFA)
 - **Validation**: Zod schemas
-- **Testing**: Jest with comprehensive test coverage
+- **Testing**: Jest with comprehensive test coverage (CRITCAL: you need to set a .env.test with test DB)
 - **Caching**: In-memory caching with TTL support
 
 #### Frontend Applications
@@ -45,30 +47,86 @@ This repository is organized as an NPM Workspaces monorepo containing:
 - **Build Tools**: Vite (Creator), Expo (Mobile), TypeScript compiler (Shared)
 
 ### Monorepo Structure
-```
+```txt
 wayrapp/
-├── src/                    # Backend API source code
-│   ├── modules/           # Feature modules
-│   │   ├── auth/         # Authentication & authorization
-│   │   ├── users/        # User management
-│   │   ├── content/      # Course content management
-│   │   └── progress/     # Progress tracking
-│   ├── shared/           # Shared utilities and types
-│   └── server.ts         # Backend entry point
-├── frontend-creator/      # Content Creator Web App
-│   ├── src/              # React application source
-│   ├── dist/             # Built web application
-│   └── package.json      # Creator-specific dependencies
-├── frontend-mobile/       # Mobile Application
-│   ├── src/              # React Native source
-│   ├── web-build/        # Built mobile web version
-│   └── package.json      # Mobile-specific dependencies
-├── frontend-shared/       # Shared Frontend Code
-│   ├── types/            # Shared TypeScript types
-│   ├── utils/            # Shared utilities
-│   ├── dist/             # Built shared components
-│   └── package.json      # Shared dependencies
-└── package.json          # Root monorepo configuration
+├── src/                        # Backend API source code
+│   ├── __tests__/              # Integration tests
+│   │   └── integration/        # Cross-module integration tests
+│   ├── modules/                # Feature modules (domain-driven design)
+│   │   ├── users/              # User management & authentication
+│   │   │   ├── controllers/    # HTTP request handlers
+│   │   │   ├── services/       # Business logic
+│   │   │   ├── repositories/   # Data access layer
+│   │   │   ├── routes/         # Route definitions
+│   │   │   ├── types/          # Module-specific types
+│   │   │   └── __tests__/      # Module unit tests
+│   │   ├── content/            # Course content management
+│   │   │   ├── controllers/    # Content CRUD operations
+│   │   │   ├── services/       # Content business logic
+│   │   │   ├── repositories/   # Content data access
+│   │   │   ├── routes/         # Content API routes
+│   │   │   ├── schemas/        # Content validation schemas
+│   │   │   ├── types/          # Content type definitions
+│   │   │   └── __tests__/      # Content module tests
+│   │   └── progress/           # Progress tracking & gamification
+│   │       ├── controllers/    # Progress API handlers
+│   │       ├── services/       # Progress calculations
+│   │       ├── repositories/   # Progress data persistence
+│   │       ├── routes/         # Progress API routes
+│   │       ├── types/          # Progress type definitions
+│   │       └── __tests__/      # Progress module tests
+│   ├── shared/                 # Shared utilities and infrastructure
+│   │   ├── database/           # Database connection & utilities
+│   │   ├── middleware/         # Express middleware (auth, validation, etc.)
+│   │   ├── schemas/            # Zod validation schemas
+│   │   ├── utils/              # Utility functions & helpers
+│   │   ├── types/              # Shared TypeScript types
+│   │   ├── routes/             # Shared routes (health checks)
+│   │   └── test/               # Test utilities & setup
+│   │       ├── factories/      # Test data factories
+│   │       ├── fixtures/       # Test fixtures
+│   │       ├── utils/          # Test helper functions
+│   │       ├── setup.ts        # Global test configuration
+│   │       └── testDb.ts       # Test database utilities
+│   ├── types/                  # Global type definitions
+│   ├── app.ts                  # Express app configuration
+│   ├── server.ts               # Server entry point
+│   └── testInfo.ts             # Testing documentation & metadata
+├── frontend-creator/           # Content Creator Web App (React + Vite)
+│   ├── src/                    # React application source
+│   ├── dist/                   # Built web application
+│   ├── public/                 # Static assets
+│   ├── scripts/                # Build scripts
+│   ├── package.json            # Creator-specific dependencies
+│   ├── vite.config.ts          # Vite configuration
+│   └── tailwind.config.js      # Tailwind CSS configuration
+├── frontend-mobile/            # Mobile Application (React Native + Expo)
+│   ├── src/                    # React Native source
+│   ├── assets/                 # Mobile app assets
+│   ├── dist/                   # Built mobile application
+│   ├── app.json                # Expo configuration
+│   └── package.json            # Mobile-specific dependencies
+├── frontend-shared/            # Shared Frontend Code
+│   ├── types/                  # Shared TypeScript types
+│   ├── utils/                  # Shared utility functions
+│   ├── dist/                   # Built shared components
+│   ├── __mocks__/              # Jest mocks for shared code
+│   └── package.json            # Shared dependencies
+├── prisma/                     # Database schema & migrations
+│   ├── migrations/             # Database migration files
+│   └── schema.prisma           # Prisma database schema
+├── scripts/                    # Build & deployment scripts
+│   ├── setup-test-db.js        # Test database setup script
+│   └── check-test-config.js    # Test configuration validator
+├── docs/                       # Generated backend & ecosystem documentation
+├── logs/                       # Application logs
+├── .env.example                # Environment template
+├── .env.test.example           # Test environment template
+├── jest.config.js              # Unit tests configuration
+├── jest.integration.config.js  # Integration tests configuration
+├── tsconfig.json               # TypeScript configuration
+├── typedoc.json                # Documentation generation config
+└── package.json                # Root monorepo configuration
 ```
 
 ## 📱 Applications
@@ -115,21 +173,31 @@ Common utilities, types, and components shared between frontend applications.
 **Includes:**
 - TypeScript type definitions
 - Utility functions
+- **Design system tokens** - Consistent colors, typography, spacing, and styling rules
 - Design system components
 - API client configurations
 
+**Design System:**
+- **Primary Color**: #50A8B1 (Teal) - Used throughout all applications and documentation
+- **Typography**: Lato, Open Sans, Roboto font stack
+- **Consistent spacing, shadows, and border radius** across all interfaces
+- **Shared between frontend apps and backend documentation** for unified branding
+
 ## 📖 Documentation
 
-### 🌐 Live API Documentation
-- **[Interactive API Docs](https://exetrujillo.github.io/wayrapp/)** - GitHub Pages hosted documentation
-- **API Endpoints** (when server is running):
-  - `GET /api/docs` - OpenAPI 3.0 specification
+### 🌐 Live Documentation
+- **[Complete Backend & Ecosystem Docs](https://exetrujillo.github.io/wayrapp/)** - GitHub Pages hosted documentation
+- **[Testing Guide](https://exetrujillo.github.io/wayrapp/modules/TestInfo.html)** - Comprehensive testing setup and best practices
+- **Interactive API Documentation** (when server is running):
+  - `GET /docs` - **Interactive Swagger UI** - Test API endpoints directly in your browser (styled with WayrApp design tokens)
+  - `GET /api-docs` - Alternative Swagger UI interface
+  - `GET /api/swagger.json` - OpenAPI 3.0 specification (JSON)
   - `GET /api/docs/overview` - Comprehensive API overview
   - `GET /api/status` - API status and health check
 
-### 🔧 API Documentation Endpoints
+### 🔧 Backend API Documentation Endpoints
 
-When running the server locally, you can access comprehensive API documentation:
+When running the server locally, you can access comprehensive backend API documentation:
 
 | Endpoint | Description |
 |----------|-------------|
@@ -146,17 +214,25 @@ When running the server locally, you can access comprehensive API documentation:
 ### 📱 API Usage Examples
 
 ```bash
+# Interactive API Documentation (open in browser)
+open http://localhost:3000/docs
+
+# Get OpenAPI specification
+curl http://localhost:3000/api/swagger.json
+
 # Get API information
 curl http://localhost:3000/api
-
-# Get comprehensive documentation
-curl http://localhost:3000/api/docs
 
 # Check API status
 curl http://localhost:3000/api/status
 
 # Health check
 curl http://localhost:3000/health
+
+# Test authentication endpoint
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
 ```
 
 ## 🚀 Quick Start
@@ -191,7 +267,14 @@ curl http://localhost:3000/health
    npm run db:migrate
    ```
 
-5. **Start all applications in development mode**
+5. **Set up test environment** (for running tests safely)
+   ```bash
+   cp .env.example .env.test
+   # Edit .env.test with a SEPARATE test database URL
+   npm run test:db:setup
+   ```
+
+6. **Start all applications in development mode**
    ```bash
    npm run dev:all
    ```
@@ -221,8 +304,13 @@ curl http://localhost:3000/health
 - `npm run dev` - Start backend development server with hot reload
 - `npm run build` - Build backend for production
 - `npm run start` - Start backend production server
-- `npm run test` - Run backend test suite
+- `npm run test` - Run backend unit tests
+- `npm run test:integration` - Run integration tests (requires test DB setup)
+- `npm run test:integration:safe` - Setup test DB and run integration tests safely
+- `npm run test:backend` - Run all backend tests (unit + integration)
 - `npm run test:watch` - Run backend tests in watch mode
+- `npm run test:db:setup` - Setup test database schema
+- `npm run test:db:check` - Verify test/production database separation
 - `npm run db:generate` - Generate Prisma client
 - `npm run db:migrate` - Run database migrations
 - `npm run db:studio` - Open Prisma Studio
@@ -251,9 +339,34 @@ JWT_REFRESH_SECRET="your-super-secure-refresh-secret-key-here"
 # Server Configuration
 PORT=3000
 NODE_ENV="development"
-
-
 ```
+
+### Test Environment Configuration
+
+**CRITICAL**: Create a separate `.env.test` file for testing to prevent data loss:
+
+```bash
+# Test Environment Configuration
+NODE_ENV="test"
+
+# Test Database Configuration - MUST BE SEPARATE FROM PRODUCTION
+DATABASE_URL="postgresql://username:password@...test_database?sslmode=require"
+
+# JWT Configuration (same as dev for testing)
+JWT_SECRET="your-super-secure-jwt-secret-key-here"
+JWT_REFRESH_SECRET="your-super-secure-refresh-secret-key-here"
+
+# Server Configuration
+PORT=3001
+
+# Logging (minimal for tests)
+LOG_LEVEL="error"
+
+# Security (faster for tests)
+BCRYPT_ROUNDS=4
+```
+
+**⚠️ WARNING**: Never use the same database for testing and production. Tests will delete all data during cleanup.
 
 ### Database Schema
 
@@ -270,14 +383,41 @@ Course
 
 ## 🧪 Testing
 
-The monorepo includes comprehensive test coverage across all applications:
+The monorepo includes comprehensive test coverage across all applications with **separate test databases** to ensure production data safety.
+
+### Test Database Setup
+
+**IMPORTANT**: Tests use a separate test database to prevent data loss. 
+
+**ARCHITECTURAL DECISION**: All tests (unit and integration) require a test database configuration. This is intentional to enforce security and prevent accidental data loss.
+
+Before running any tests:
+
+1. **Create a test database** (separate from production)
+2. **Configure test environment**:
+   ```bash
+   cp .env.example .env.test
+   # Edit .env.test with your TEST database URL
+   ```
+3. **Verify test configuration**:
+   ```bash
+   npm run test:db:check  # Ensures test/production databases are separate
+   ```
+4. **Setup test database**:
+   ```bash
+   npm run test:db:setup  # Initializes test database schema
+   ```
+
+### Running Tests
 
 ```bash
 # Run tests for all applications
 npm run test:all
 
-# Run backend tests only
-npm test
+# Backend tests
+npm test                           # Unit tests only
+npm run test:integration:safe      # Integration tests (with DB setup)
+npm run test:backend              # All backend tests (unit + integration)
 
 # Run tests for specific workspace
 npm run test --workspace=frontend-creator
@@ -285,12 +425,27 @@ npm run test --workspace=frontend-mobile
 npm run test --workspace=frontend-shared
 
 # Run tests in watch mode
-npm run test:watch  # Backend only
+npm run test:watch  # Backend unit tests only
 npm run test --workspace=frontend-creator -- --watch  # Creator only
 
 # Run tests with coverage
 npm run test:coverage  # Backend only
 ```
+
+### Test Types
+
+- **Unit Tests** (`.test.ts`): Fast, isolated tests that don't require database
+- **Integration Tests** (`.integration.test.ts`): Full API tests using separate test database
+- **Component Tests** (`.test.tsx`): Frontend component tests
+
+### Test Database Safety
+
+The testing system includes multiple safety measures:
+- ✅ **Mandatory test database** - All tests require separate test database
+- ✅ **Automatic validation** ensures test/production databases are different
+- ✅ **Safe test commands** that setup test DB before running tests
+- ✅ **Database isolation** with complete cleanup after each test
+- ✅ **Team consistency** - Enforces proper setup across all developers
 
 Test files are located alongside source files with `.test.ts` or `.test.tsx` extensions.
 
@@ -400,6 +555,7 @@ API endpoints are rate-limited to prevent abuse:
 - **Rate Limiting**: Configurable rate limits per endpoint
 - **CORS Protection**: Configurable CORS policies
 - **Security Headers**: Helmet.js for secure HTTP headers
+- **Test Database Isolation**: Mandatory separate test database prevents production data loss
 
 ## 📊 Monitoring & Logging
 
@@ -417,12 +573,23 @@ API endpoints are rate-limited to prevent abuse:
    - Ensure database is accessible
    - Check SSL configuration
 
-2. **Migration Failures**
+2. **Test Database Issues**
+   - Ensure `.env.test` exists with separate test database URL
+   - Run `npm run test:db:check` to verify database separation
+   - Run `npm run test:db:setup` to initialize test database
+   - Never use production database for testing
+
+3. **Migration Failures**
    - Ensure database permissions are correct
    - Check for conflicting schema changes
    - Verify Prisma schema syntax
 
-3. **Authentication Issues**
+4. **Test Failures**
+   - Check if test database is properly configured
+   - Ensure test database schema is up to date
+   - Verify no rate limiting issues (tests include rate limit handling)
+
+5. **Authentication Issues**
    - Verify JWT_SECRET is set
    - Check token expiration
    - Ensure proper Authorization header format

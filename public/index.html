@@ -1,14 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WayrApp API</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WayrApp Backend API</title>
+    <style>
+        body {
+            font-family: Lato, "Open Sans", Roboto, system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem; /* spacing.10 spacing.5 */
+            background: #F8F8F8; /* secondary.100 */
+            line-height: 1.5; /* lineHeight.normal */
+        }
+        .container {
+            background: white;
+            padding: 2.5rem; /* spacing.10 */
+            border-radius: 0.5rem; /* borderRadius.DEFAULT */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadows.md */
+        }
+        h1 {
+            color: #50A8B1; /* primary.400 */
+            margin-bottom: 0.5rem; /* spacing.2 */
+            font-size: 2.25rem; /* fontSize.4xl */
+            font-weight: 600; /* fontWeight.semibold */
+            line-height: 1.25; /* lineHeight.tight */
+        }
+        .subtitle {
+            color: #707070; /* neutral.500 */
+            margin-bottom: 1.875rem; /* spacing between 6 and 8 */
+            font-size: 1.125rem; /* fontSize.lg */
+            line-height: 1.625; /* lineHeight.relaxed */
+        }
+        .main-link {
+            display: inline-block;
+            background: #50A8B1; /* primary.400 */
+            color: white;
+            padding: 0.75rem 1.5rem; /* spacing.3 spacing.6 */
+            text-decoration: none;
+            border-radius: 0.5rem; /* borderRadius.DEFAULT */
+            font-weight: 600; /* fontWeight.semibold */
+            margin-bottom: 1.875rem;
+            transition: all 150ms ease;
+            font-size: 1rem; /* fontSize.base */
+        }
+        .main-link:hover {
+            background: #3A8086; /* primary.500 */
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadows.lg */
+        }
+        .main-link:active {
+            background: #2D6469; /* primary.600 */
+            transform: translateY(0);
+        }
+        .links {
+            list-style: none;
+            padding: 0;
+        }
+        .links li {
+            margin: 0.5rem 0; /* spacing.2 */
+        }
+        .links a {
+            color: #50A8B1; /* primary.400 */
+            text-decoration: none;
+            font-weight: 500; /* fontWeight.medium */
+            transition: all 150ms ease;
+            display: inline-block;
+            padding: 0.25rem 0; /* spacing.1 */
+        }
+        .links a:hover {
+            color: #3A8086; /* primary.500 */
+            text-decoration: underline;
+            transform: translateX(4px);
+        }
+        .section {
+            margin-top: 1.875rem;
+            padding-top: 1.25rem; /* spacing.5 */
+            border-top: 1px solid #E8E8E8; /* secondary.200 */
+        }
+        h3 {
+            color: #1A1A1A; /* neutral.900 */
+            font-size: 1.25rem; /* fontSize.xl */
+            font-weight: 600; /* fontWeight.semibold */
+            margin-bottom: 1rem; /* spacing.4 */
+        }
+    </style>
 </head>
 <body>
-    <h1>WayrApp API</h1>
-    <p>This is a backend API. Please use the API endpoints.</p>
-    <ul>
-        <li><a href="/api">API Documentation</a></li>
-        <li><a href="/health">Health Check</a></li>
-    </ul>
+    <div class="container">
+        <h1>WayrApp Backend API</h1>
+        <p class="subtitle">Open-source language learning platform backend</p>
+        
+        <a href="/docs" class="main-link">📚 Interactive API Documentation</a>
+        
+        <div class="section">
+            <h3>Quick Links</h3>
+            <ul class="links">
+                <li><a href="/docs">🔍 Interactive API Documentation (Swagger)</a></li>
+                <li><a href="/api-docs">📖 Alternative API Docs</a></li>
+                <li><a href="/api">ℹ️ API Information</a></li>
+                <li><a href="/health">💚 Health Check</a></li>
+                <li><a href="/api/status">📊 API Status</a></li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>External Resources</h3>
+            <ul class="links">
+                <li><a href="https://exetrujillo.github.io/wayrapp/" target="_blank">📚 Complete Backend & Ecosystem Documentation</a></li>
+                <li><a href="https://github.com/exetrujillo/wayrapp" target="_blank">🔗 GitHub Repository</a></li>
+            </ul>
+        </div>
+    </div>
 </body>
 </html>

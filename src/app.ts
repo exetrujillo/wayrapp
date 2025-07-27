@@ -69,6 +69,8 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import path from "path";
 
 import {
   errorHandler,
@@ -81,6 +83,8 @@ import {
   requestSizeLimiter,
   xssProtection,
 } from "@/shared/middleware";
+import { swaggerSpec } from "@/shared/swagger/config";
+import { getSwaggerCustomCSS } from "@/shared/utils/designTokens";
 
 // Load environment variables
 dotenv.config();
@@ -662,6 +666,24 @@ app.get("/api/docs", (_req, res) => {
     },
   });
 });
+
+// Swagger API Documentation
+app.get('/api/swagger.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// Serve custom Swagger UI
+app.get('/docs', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/swagger.html'));
+});
+
+// Serve Swagger UI assets (fallback)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: getSwaggerCustomCSS(),
+  customSiteTitle: 'WayrApp API Documentation',
+  customfavIcon: '/favicon.ico'
+}));
 
 // Versioned API routes
 // Authentication routes
