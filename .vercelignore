@@ -26,6 +26,7 @@ typedoc.json
 .prettierrc
 # tsconfig.json - needed for build
 # tsconfig.build.json - needed for build
+# tsconfig.vercel.json - needed for Vercel build
 
 # Logs
 logs/

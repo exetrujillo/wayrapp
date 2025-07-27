@@ -394,6 +394,23 @@ The `vercel.json` file is configured to handle both API and documentation routin
 
 **Important**: Uses `rewrites` instead of `routes` to avoid Vercel configuration conflicts.
 
+### TypeScript Configuration for Vercel
+
+The project includes a specific TypeScript configuration for Vercel deployment:
+
+- `tsconfig.vercel.json` - Optimized for serverless deployment
+- Excludes project references that don't exist in Vercel
+- Uses CommonJS modules for Node.js compatibility
+- Disables source maps and declarations for faster builds
+
+```bash
+# Local development build
+npm run build
+
+# Vercel deployment build
+npm run build:vercel
+```
+
 ### Database Schema
 
 The application uses a hierarchical content structure:
@@ -509,6 +526,11 @@ The `vercel.json` configuration handles:
   - `/` → Main landing page (`index.html`)
 - **CORS headers** for API endpoints
 - **Build optimization** with `.vercelignore` for faster deployments
+
+**Key files for Vercel deployment:**
+- `tsconfig.vercel.json` - TypeScript config optimized for serverless
+- `api/index.js` - Serverless function handler
+- `.vercelignore` - Excludes unnecessary files from deployment
 
 ### Docker Support
 
