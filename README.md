@@ -201,7 +201,7 @@ Common utilities, types, and components shared between frontend applications.
 - **Interactive API Documentation** (when server is running):
   - `GET /swagger` - **Interactive Swagger UI** - Test API endpoints directly in your browser (styled with WayrApp design tokens)
   - `GET /api-docs` - Alternative Swagger UI interface  
-  - `GET /api/swagger.json` - OpenAPI 3.0 specification (JSON)
+  - `GET /api/swagger.json` - OpenAPI 3.0 specification (JSON) - **Serverless-optimized with fallback**
   - `GET /api/docs/overview` - Comprehensive API overview
   - `GET /api/status` - API status and health check
 

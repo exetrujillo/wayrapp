@@ -669,8 +669,41 @@ app.get("/api/docs", (_req, res) => {
 
 // Swagger API Documentation
 app.get('/api/swagger.json', (_req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
+  try {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  } catch (error) {
+    console.error('Error serving Swagger spec:', error);
+    
+    // Fallback minimal spec
+    const fallbackSpec = {
+      openapi: '3.0.0',
+      info: {
+        title: 'WayrApp Backend API',
+        version: '1.0.0',
+        description: 'API documentation (fallback mode)'
+      },
+      servers: [
+        {
+          url: process.env['NODE_ENV'] === 'production' 
+            ? 'https://wayrapp.vercel.app'
+            : 'http://localhost:3000'
+        }
+      ],
+      paths: {
+        '/health': {
+          get: {
+            summary: 'Health check',
+            responses: {
+              200: { description: 'OK' }
+            }
+          }
+        }
+      }
+    };
+    
+    res.json(fallbackSpec);
+  }
 });
 
 // Serve custom Swagger UI (avoid conflict with GitHub Pages /docs)
