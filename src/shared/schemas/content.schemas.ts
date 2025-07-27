@@ -32,6 +32,8 @@
  * and flexible exercise data structures that accommodate various learning activities.
  * 
  * @module content.schemas
+ * @category Content
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

@@ -33,6 +33,8 @@
  * context for effective monitoring and debugging.
  * 
  * @module requestLogger
+ * @category Middleware
+ * @category Logs
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

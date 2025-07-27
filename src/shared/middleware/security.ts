@@ -1,10 +1,5 @@
 // src/shared/middleware/security.ts
 
-import { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
-import { logger } from '@/shared/utils/logger';
-import { ErrorCodes, HttpStatus } from '@/shared/types';
-
 /**
  * Node Security Hardening Middleware
  * 
@@ -73,6 +68,11 @@ import { ErrorCodes, HttpStatus } from '@/shared/types';
  * 
  * app.use('/api/v1', apiRateLimiter);
  */
+
+import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
+import { logger } from '@/shared/utils/logger';
+import { ErrorCodes, HttpStatus } from '@/shared/types';
 
 /**
  * CORS (Cross-Origin Resource Sharing) Configuration

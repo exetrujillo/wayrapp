@@ -25,6 +25,8 @@
  * denial-of-service attacks through request size validation and schema complexity limits.
  * 
  * @module validation
+ * @category Middleware
+ * @category Security
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

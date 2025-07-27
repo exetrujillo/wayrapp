@@ -35,6 +35,7 @@
  * feature requirements and platform evolution.
  * 
  * @module common
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

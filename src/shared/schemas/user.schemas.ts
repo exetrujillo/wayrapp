@@ -33,6 +33,8 @@
  * maintain platform quality and user safety standards.
  * 
  * @module user.schemas
+ * @category Users
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

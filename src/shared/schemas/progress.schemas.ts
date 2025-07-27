@@ -31,6 +31,8 @@
  * learning analytics while protecting user privacy and data integrity.
  * 
  * @module progress.schemas
+ * @category Progress
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

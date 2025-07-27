@@ -3,6 +3,8 @@
  * Standardized utilities for pagination, filtering, and sorting across repositories
  * 
  * @module repositoriesHelpers
+ * @category Repositories
+ * @category Utilities 
  * @author Exequiel Trujillo
  * @since 1.0.0
  */

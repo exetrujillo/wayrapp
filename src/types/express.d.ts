@@ -1,9 +1,4 @@
-/**
- * @module types/express
- * 
- * Express type extensions for authentication
- */
-
+// src/types/express.d.ts
 import { JWTPayload } from '@/shared/types';
 
 declare global {

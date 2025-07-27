@@ -35,7 +35,8 @@
  * through centralized schema management, and clear dependency tracking that supports
  * security auditing and maintenance operations.
  * 
- * @module index
+ * @module SchemasIndex
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 

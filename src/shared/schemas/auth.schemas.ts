@@ -32,6 +32,8 @@
  * authentication flows including social login integration and multi-factor authentication.
  * 
  * @module auth.schemas
+ * @category Auth
+ * @category Schemas
  * @author Exequiel Trujillo
  * @since 1.0.0
  * 
