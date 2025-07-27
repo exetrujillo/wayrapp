@@ -680,12 +680,6 @@ app.get("/api/docs", (_req, res) => {
 
 // Swagger API Documentation
 app.get('/api/swagger.json', (_req, res) => {
-  // --- DIAGNOSTIC LOGS ---
-  console.log('[DEBUG] Checking Environment Variables for /api/swagger.json');
-  console.log(`[DEBUG] Value of process.env.PUBLIC_API_URL:`, process.env["PUBLIC_API_URL"]);
-  console.log(`[DEBUG] Fallback will be used?`, !process.env["PUBLIC_API_URL"]);
-  console.log(`[DEBUG] VERCEL_URL (for comparison):`, process.env["VERCEL_URL"]);
-  // --- END DIAGNOSTIC LOGS ---
 
   try {
     res.setHeader('Content-Type', 'application/json');

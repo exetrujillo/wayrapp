@@ -57,12 +57,6 @@ const baseSpec = {
  * Falls back to base spec if file scanning fails (e.g., in serverless environments)
  */
 function generateSwaggerSpec() {
-  // --- DIAGNOSTIC LOGS ---
-  console.log('[DEBUG] Generating Swagger spec in config.ts');
-  console.log(`[DEBUG] PUBLIC_API_URL in swagger config:`, process.env['PUBLIC_API_URL']);
-  console.log(`[DEBUG] NODE_ENV:`, process.env['NODE_ENV']);
-  console.log(`[DEBUG] VERCEL_URL (for comparison):`, process.env['VERCEL_URL']);
-  // --- END DIAGNOSTIC LOGS ---
 
   try {
     const options: swaggerJSDoc.Options = {

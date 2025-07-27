@@ -315,9 +315,9 @@ describe('Content Management Integration Tests', () => {
         // Act & Assert
         const response = await request(app)
           .get(`${API_BASE}/courses/non-existent-course`)
-          .expect(500);
+          .expect(404);
 
-        expect(response.body.error.message).toBe('Internal server error');
+        expect(response.body.error.code).toBe('NOT_FOUND');
       });
     });
 
@@ -503,9 +503,9 @@ describe('Content Management Integration Tests', () => {
           .post(`${API_BASE}/courses/${testCourse.id}/levels`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send(duplicateLevelData)
-          .expect(500);
+          .expect(409);
 
-        expect(response.body.error.message).toBe('Internal server error');
+        expect(response.body.error.code).toBe('CONFLICT');
       });
     });
 

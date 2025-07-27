@@ -18,13 +18,21 @@ describe('Error Handling Integration Tests', () => {
 
   afterEach(async () => {
     // Clean up ALL tables used in this suite in reverse dependency order
-    await prisma.revokedToken.deleteMany();
-    await prisma.course.deleteMany();
-    await prisma.user.deleteMany();
+    try {
+      await prisma.revokedToken.deleteMany();
+      await prisma.course.deleteMany();
+      await prisma.user.deleteMany();
+    } catch (error) {
+      console.warn('Database cleanup failed (this is expected if DB is unavailable):', error instanceof Error ? error.message : 'Unknown error');
+    }
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch (error) {
+      console.warn('Database disconnect failed (this is expected if DB is unavailable):', error instanceof Error ? error.message : 'Unknown error');
+    }
   });
 
   describe('Authentication Errors', () => {
@@ -285,11 +293,11 @@ describe('Error Handling Integration Tests', () => {
     it('should return consistent error for non-existent resources', async () => {
       const response = await request(app)
         .get(`${API_BASE}/courses/non-existent-course`)
-        .expect(500);
+        .expect(404);
 
       expect(response.body).toMatchObject({
         error: {
-          code: 'INTERNAL_ERROR',
+          code: 'NOT_FOUND',
           message: expect.any(String),
           timestamp: expect.any(String),
           path: '/api/v1/courses/non-existent-course'
@@ -300,9 +308,9 @@ describe('Error Handling Integration Tests', () => {
     it('should return not found for nested resources', async () => {
       const response = await request(app)
         .get(`${API_BASE}/courses/non-existent-course/levels`)
-        .expect(500);
+        .expect(404);
 
-      expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      expect(response.body.error.code).toBe('NOT_FOUND');
     });
 
     it('should return not found for invalid endpoints', async () => {
@@ -535,7 +543,7 @@ describe('Error Handling Integration Tests', () => {
     it('should include correlation IDs for error tracking', async () => {
       const response = await request(app)
         .get(`${API_BASE}/courses/non-existent`)
-        .expect(500);
+        .expect(404);
 
       // In a production system, you might include correlation IDs
       expect(response.body.error).toHaveProperty('timestamp');
@@ -549,9 +557,9 @@ describe('Error Handling Integration Tests', () => {
       
       const response = await request(app)
         .get(`${API_BASE}/courses/${longId}`)
-        .expect(500);
+        .expect(404);
 
-      expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      expect(response.body.error.code).toBe('NOT_FOUND');
     });
 
     it('should handle special characters in URLs', async () => {
@@ -559,9 +567,9 @@ describe('Error Handling Integration Tests', () => {
       
       const response = await request(app)
         .get(`${API_BASE}/courses/${specialId}`)
-        .expect(500);
+        .expect(404);
 
-      expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      expect(response.body.error.code).toBe('NOT_FOUND');
     });
 
     it('should handle concurrent error scenarios', async () => {
@@ -573,8 +581,8 @@ describe('Error Handling Integration Tests', () => {
       const responses = await Promise.all(requests);
       
       responses.forEach(response => {
-        expect(response.status).toBe(500);
-        expect(response.body.error.code).toBe('INTERNAL_ERROR');
+        expect(response.status).toBe(404);
+        expect(response.body.error.code).toBe('NOT_FOUND');
       });
     });
 
@@ -615,7 +623,7 @@ describe('Error Handling Integration Tests', () => {
       // Make a request that fails
       await request(app)
         .get(`${API_BASE}/courses/non-existent`)
-        .expect(500);
+        .expect(404);
 
       // Make a request that succeeds
       const response = await request(app)
@@ -652,7 +660,7 @@ describe('Error Handling Integration Tests', () => {
       await request(app)
         .get(`${API_BASE}/courses/non-existent`)
         .set('Authorization', `Bearer ${token1}`)
-        .expect(500);
+        .expect(404);
 
       // Second user should still be able to make successful requests
       const response = await request(app)

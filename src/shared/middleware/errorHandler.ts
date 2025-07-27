@@ -3,7 +3,7 @@
 /**
  * Global error handling middleware and utilities for WayrApp Backend API
  * 
- * This module provides comprehensive error handling capabilities for the WayrApp language learning platform,
+ * This module provides error handling capabilities for the WayrApp language learning platform,
  * including a custom error class, global error handler middleware, and async wrapper utility. It ensures
  * consistent error responses across all API endpoints and provides proper error logging for debugging
  * and monitoring purposes.
@@ -171,14 +171,14 @@ export class AppError extends Error {
    * @example 400, 401, 403, 404, 409, 500
    */
   public statusCode: number;
-  
+
   /** 
    * Application-specific error code for categorization and client-side handling
    * @type {string}
    * @example 'VALIDATION_ERROR', 'NOT_FOUND', 'AUTHORIZATION_ERROR'
    */
   public code: string;
-  
+
   /** 
    * Flag indicating this is an expected operational error, not a system failure
    * Operational errors are expected and should be handled gracefully by the application
