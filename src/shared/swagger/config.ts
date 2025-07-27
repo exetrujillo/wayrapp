@@ -23,11 +23,11 @@ const baseSpec = {
   },
   servers: [
     {
-      url: `${process.env['PUBLIC_API_URL'] || 'https://wayrapp.vercel.app'}/api/v1`,
+      url: process.env['PUBLIC_API_URL'] || 'https://wayrapp.vercel.app',
       description: "Production Server"
     },
     {
-      url: "http://localhost:3000/api/v1",
+      url: "http://localhost:3000",
       description: "Local Development Server"
     }
   ],
