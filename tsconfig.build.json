@@ -16,6 +16,8 @@
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/shared/test"
+    "src/shared/test",
+    "src/__tests__",
+    "**/__tests__/**"
   ]
 }
