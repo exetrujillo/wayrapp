@@ -24,8 +24,8 @@ typedoc.json
 # Development dependencies
 .eslintrc.js
 .prettierrc
-tsconfig.json
-tsconfig.build.json
+# tsconfig.json - needed for build
+# tsconfig.build.json - needed for build
 
 # Logs
 logs/
