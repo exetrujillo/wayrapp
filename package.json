@@ -14,9 +14,8 @@
   },
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
-    "build:vercel": "prisma generate && tsc -p tsconfig.vercel.json",
-    "verify:vercel": "node scripts/verify-vercel-build.js",
-    "vercel-build": "npm run build:vercel",
+
+    "vercel-build": "npm run build",
     "build:shared": "npm run build --workspace=wayrapp-shared",
     "build:all": "npm run build && npm run build:shared",
     "start": "node dist/server.js",

@@ -6,7 +6,6 @@
 **/__tests__/
 src/shared/test/
 src/__tests__/
-src/testInfo.ts
 
 # Development files
 .env.example
@@ -27,7 +26,6 @@ typedoc.json
 .prettierrc
 # tsconfig.json - needed for build
 # tsconfig.build.json - needed for build
-# tsconfig.vercel.json - needed for Vercel build
 
 # Logs
 logs/

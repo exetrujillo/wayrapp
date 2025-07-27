@@ -394,25 +394,16 @@ The `vercel.json` file is configured to handle both API and documentation routin
 
 **Important**: Uses `rewrites` instead of `routes` to avoid Vercel configuration conflicts.
 
-### TypeScript Configuration for Vercel
+### Build Configuration
 
-The project includes a specific TypeScript configuration for Vercel deployment:
+The project uses TypeScript with different configurations for different environments:
 
-- `tsconfig.vercel.json` - Optimized for serverless deployment
-- Excludes project references that don't exist in Vercel
-- **Excludes test-related files** - No Jest dependencies in production
-- Uses CommonJS modules for Node.js compatibility
-- Disables source maps and declarations for faster builds
+- `tsconfig.json` - Base TypeScript configuration
+- `tsconfig.build.json` - Production build configuration (extends base config)
 
 ```bash
-# Local development build
+# Build for production
 npm run build
-
-# Vercel deployment build
-npm run build:vercel
-
-# Verify Vercel build requirements
-npm run verify:vercel
 ```
 
 ### Database Schema
@@ -532,7 +523,7 @@ The `vercel.json` configuration handles:
 - **Build optimization** with `.vercelignore` for faster deployments
 
 **Key files for Vercel deployment:**
-- `tsconfig.vercel.json` - TypeScript config optimized for serverless
+- `tsconfig.build.json` - Production TypeScript configuration
 - `api/index.js` - Serverless function handler
 - `.vercelignore` - Excludes unnecessary files from deployment
 
