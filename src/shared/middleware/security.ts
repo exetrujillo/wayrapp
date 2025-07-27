@@ -119,33 +119,7 @@ export const corsOptions = {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
-    // Check for exact matches first
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-      return;
-    }
-
-    // Check for pattern matches (wildcards and Vercel domains)
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      // Handle wildcard patterns
-      if (allowedOrigin.includes('*')) {
-        const pattern = allowedOrigin.replace(/\*/g, '.*');
-        const regex = new RegExp(`^${pattern}$`);
-        return regex.test(origin);
-      }
-
-      // Handle Vercel preview deployments
-      if (allowedOrigin.includes('vercel.app') && origin.includes('vercel.app')) {
-        // Allow any subdomain of vercel.app if the base domain is allowed
-        const baseDomain = allowedOrigin.replace(/^https?:\/\/[^.]+\./, 'https://');
-        const originBaseDomain = origin.replace(/^https?:\/\/[^.]+\./, 'https://');
-        return baseDomain === originBaseDomain;
-      }
-
-      return false;
-    });
-
-    if (isAllowed) {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin, allowedOrigins });

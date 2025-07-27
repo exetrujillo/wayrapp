@@ -209,9 +209,13 @@ app.get("/api/docs", (_req, res) => {
     },
     servers: [
       {
-        url: API_BASE,
-        description: "Production API",
+        url: `${process.env["PUBLIC_API_URL"] || 'https://wayrapp.vercel.app'}/api/v1`,
+        description: "Production Server",
       },
+      {
+        url: "http://localhost:3000/api/v1",
+        description: "Local Development Server"
+      }
     ],
     security: [
       {
@@ -674,7 +678,7 @@ app.get('/api/swagger.json', (_req, res) => {
     res.send(swaggerSpec);
   } catch (error) {
     console.error('Error serving Swagger spec:', error);
-    
+
     // Fallback minimal spec
     const fallbackSpec = {
       openapi: '3.0.0',
@@ -685,9 +689,12 @@ app.get('/api/swagger.json', (_req, res) => {
       },
       servers: [
         {
-          url: process.env['NODE_ENV'] === 'production' 
-            ? 'https://wayrapp.vercel.app'
-            : 'http://localhost:3000'
+          url: `${process.env["PUBLIC_API_URL"] || 'https://wayrapp.vercel.app'}/api/v1`,
+          description: "Production Server"
+        },
+        {
+          url: "http://localhost:3000/api/v1",
+          description: "Local Development Server"
         }
       ],
       paths: {
@@ -701,7 +708,7 @@ app.get('/api/swagger.json', (_req, res) => {
         }
       }
     };
-    
+
     res.json(fallbackSpec);
   }
 });
