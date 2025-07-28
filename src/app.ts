@@ -98,7 +98,7 @@ dotenv.config();
  * 
  * @type {express.Application}
  */
-const app = express();
+const app: express.Application = express();
 
 // Trust proxy for Vercel deployment
 app.set('trust proxy', 1);
