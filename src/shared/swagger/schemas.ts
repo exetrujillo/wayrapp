@@ -185,6 +185,24 @@ export const swaggerSchemas = {
             format: 'date-time'
           }
         }
+      },
+      Error: {
+        type: 'object',
+        properties: {
+          success: {
+            type: 'boolean',
+            example: false
+          },
+          message: {
+            type: 'string',
+            example: 'An error occurred'
+          },
+          timestamp: {
+            type: 'string',
+            format: 'date-time',
+            example: '2023-07-20T12:34:56.789Z'
+          }
+        }
       }
     }
   }
