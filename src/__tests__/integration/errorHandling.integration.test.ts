@@ -7,32 +7,19 @@
 
 import request from 'supertest';
 import app from '../../app';
-import { prisma } from '../../shared/database/connection';
-import { UserFactory } from '../../shared/test/factories/userFactory';
+import { TestFactory } from '../../shared/test/factories/testFactory';
 import { CourseFactory } from '../../shared/test/factories/contentFactory';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 describe('Error Handling Integration Tests', () => {
   const API_BASE = '/api/v1';
 
   afterEach(async () => {
-    // Clean up ALL tables used in this suite in reverse dependency order
-    try {
-      await prisma.revokedToken.deleteMany();
-      await prisma.course.deleteMany();
-      await prisma.user.deleteMany();
-    } catch (error) {
-      console.warn('Database cleanup failed (this is expected if DB is unavailable):', error instanceof Error ? error.message : 'Unknown error');
-    }
+    await TestFactory.cleanupDatabase();
   });
 
   afterAll(async () => {
-    try {
-      await prisma.$disconnect();
-    } catch (error) {
-      console.warn('Database disconnect failed (this is expected if DB is unavailable):', error instanceof Error ? error.message : 'Unknown error');
-    }
+    await TestFactory.prisma.$disconnect();
   });
 
   describe('Authentication Errors', () => {
@@ -42,10 +29,11 @@ describe('Error Handling Integration Tests', () => {
         .expect(401);
 
       expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: 'AUTHENTICATION_ERROR',
           message: expect.any(String),
-          timestamp: expect.any(String),
           path: '/api/v1/users/profile'
         }
       });
@@ -57,9 +45,15 @@ describe('Error Handling Integration Tests', () => {
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
 
-      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
-      expect(response.body.error).toHaveProperty('timestamp');
-      expect(response.body.error).toHaveProperty('path');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/users/profile'
+        }
+      });
     });
 
     it('should return consistent error for malformed token', async () => {
@@ -68,18 +62,23 @@ describe('Error Handling Integration Tests', () => {
         .set('Authorization', 'InvalidFormat')
         .expect(401);
 
-      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/users/profile'
+        }
+      });
     });
 
     it('should return consistent error for expired token', async () => {
       // Arrange: Create a fresh user for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'expired-token-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
+      const testData = await TestFactory.createFullContentHierarchy();
+      const user = await TestFactory.prisma.user.update({
+        where: { id: testData.user.id },
+        data: { role: 'student' }
       });
 
       // Create an expired token
@@ -95,22 +94,27 @@ describe('Error Handling Integration Tests', () => {
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
 
-      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/users/profile'
+        }
+      });
     });
   });
 
   describe('Authorization Errors', () => {
     it('should return consistent error for insufficient permissions', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'student-permission-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
+      const testData = await TestFactory.createFullContentHierarchy();
+      const user = await TestFactory.prisma.user.update({
+        where: { id: testData.user.id },
+        data: { role: 'student' }
       });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token = TestFactory.createAuthToken(user);
 
       const courseData = CourseFactory.buildDto({
         id: 'authz-course-test'
@@ -124,10 +128,11 @@ describe('Error Handling Integration Tests', () => {
         .expect(403);
 
       expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: 'AUTHORIZATION_ERROR',
           message: expect.any(String),
-          timestamp: expect.any(String),
           path: '/api/v1/courses'
         }
       });
@@ -135,15 +140,12 @@ describe('Error Handling Integration Tests', () => {
 
     it('should return consistent error for role-based restrictions', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'role-restriction-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
+      const testData = await TestFactory.createFullContentHierarchy();
+      const user = await TestFactory.prisma.user.update({
+        where: { id: testData.user.id },
+        data: { role: 'student' }
       });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token = TestFactory.createAuthToken(user);
 
       // Act & Assert
       // Try to access admin-only endpoint
@@ -152,7 +154,15 @@ describe('Error Handling Integration Tests', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
 
-      expect(response.body.error.code).toBe('AUTHORIZATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHORIZATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/users'
+        }
+      });
     });
   });
 
@@ -170,6 +180,8 @@ describe('Error Handling Integration Tests', () => {
         .expect(400);
 
       expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
@@ -179,7 +191,6 @@ describe('Error Handling Integration Tests', () => {
               message: expect.any(String)
             })
           ]),
-          timestamp: expect.any(String),
           path: '/api/v1/auth/register'
         }
       });
@@ -190,15 +201,8 @@ describe('Error Handling Integration Tests', () => {
 
     it('should return validation error for missing required fields', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'missing-fields-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       const incompleteData = {
         name: 'Test Course'
@@ -212,33 +216,32 @@ describe('Error Handling Integration Tests', () => {
         .send(incompleteData)
         .expect(400);
 
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error.details).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            field: 'id'
-          }),
-          expect.objectContaining({
-            field: 'source_language'
-          }),
-          expect.objectContaining({
-            field: 'target_language'
-          })
-        ])
-      );
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.any(String),
+          details: expect.arrayContaining([
+            expect.objectContaining({
+              field: 'id'
+            }),
+            expect.objectContaining({
+              field: 'source_language'
+            }),
+            expect.objectContaining({
+              field: 'target_language'
+            })
+          ]),
+          path: '/api/v1/courses'
+        }
+      });
     });
 
     it('should return validation error for invalid data types', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'invalid-types-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       const invalidTypeData = {
         id: 'invalid-types-test',
@@ -255,24 +258,25 @@ describe('Error Handling Integration Tests', () => {
         .send(invalidTypeData)
         .expect(400);
 
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/courses'
+        }
+      });
     });
 
     it('should return validation error for invalid enum values', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'invalid-enum-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       const invalidEnumData = {
         id: 'invalid-enum-test',
-        section_id: 'some-section-id',
+        section_id: testData.section.id,
         module_type: 'invalid_module_type', // Invalid enum value
         name: 'Test Module',
         order: 1
@@ -280,12 +284,20 @@ describe('Error Handling Integration Tests', () => {
 
       // Act & Assert
       const response = await request(app)
-        .post(`${API_BASE}/sections/some-section-id/modules`)
+        .post(`${API_BASE}/sections/${testData.section.id}/modules`)
         .set('Authorization', `Bearer ${token}`)
         .send(invalidEnumData)
         .expect(400);
 
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.any(String),
+          path: `/api/v1/sections/${testData.section.id}/modules`
+        }
+      });
     });
   });
 
@@ -296,10 +308,11 @@ describe('Error Handling Integration Tests', () => {
         .expect(404);
 
       expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: 'NOT_FOUND',
           message: expect.any(String),
-          timestamp: expect.any(String),
           path: '/api/v1/courses/non-existent-course'
         }
       });
@@ -310,7 +323,15 @@ describe('Error Handling Integration Tests', () => {
         .get(`${API_BASE}/courses/non-existent-course/levels`)
         .expect(404);
 
-      expect(response.body.error.code).toBe('NOT_FOUND');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'NOT_FOUND',
+          message: expect.any(String),
+          path: '/api/v1/courses/non-existent-course/levels'
+        }
+      });
     });
 
     it('should return not found for invalid endpoints', async () => {
@@ -318,7 +339,15 @@ describe('Error Handling Integration Tests', () => {
         .get(`${API_BASE}/invalid-endpoint`)
         .expect(401);
 
-      expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/invalid-endpoint'
+        }
+      });
     });
   });
 
@@ -328,14 +357,8 @@ describe('Error Handling Integration Tests', () => {
 
     it('should return conflict error for duplicate email registration', async () => {
       // Arrange: Create a fresh user for this specific test
-      const password = 'TestPass123!';
-      const existingUser = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'duplicate-email-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
-      });
+      const testData = await TestFactory.createFullContentHierarchy();
+      const existingUser = testData.user;
 
       const userData = {
         email: existingUser.email, // Same as existing user
@@ -349,8 +372,15 @@ describe('Error Handling Integration Tests', () => {
         .send(userData)
         .expect(409);
 
-      expect(response.body.error.code).toBe('CONFLICT');
-      expect(response.body.error.message).toContain('Email already registered');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'CONFLICT',
+          message: expect.stringContaining('Email already registered'),
+          path: '/api/v1/auth/register'
+        }
+      });
     });
   });
 
@@ -369,10 +399,10 @@ describe('Error Handling Integration Tests', () => {
   //     );
 
   //     const responses = await Promise.all(requests);
-      
+
   //     // Some requests should be rate limited
   //     const rateLimitedResponses = responses.filter(r => r.status === 429);
-      
+
   //     if (rateLimitedResponses.length > 0) {
   //       expect(rateLimitedResponses[0]?.body?.error?.code).toBe('RATE_LIMIT_ERROR');
   //       expect(rateLimitedResponses[0]?.body?.error).toHaveProperty('timestamp');
@@ -383,15 +413,8 @@ describe('Error Handling Integration Tests', () => {
   describe('Request Size Errors', () => {
     it('should return error for oversized requests', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'oversized-request-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       const oversizedData = {
         id: 'oversized-request-test',
@@ -409,6 +432,18 @@ describe('Error Handling Integration Tests', () => {
 
       // This might return 413 (Payload Too Large) or 400 depending on middleware
       expect([400, 413]).toContain(response.status);
+
+      if (response.body.error) {
+        expect(response.body).toMatchObject({
+          success: false,
+          timestamp: expect.any(String),
+          error: {
+            code: expect.any(String),
+            message: expect.any(String),
+            path: '/api/v1/courses'
+          }
+        });
+      }
     });
   });
 
@@ -420,7 +455,15 @@ describe('Error Handling Integration Tests', () => {
         .send('{ invalid json }')
         .expect(500);
 
-      expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/auth/register'
+        }
+      });
     });
 
     it('should return error for unsupported content type', async () => {
@@ -431,26 +474,27 @@ describe('Error Handling Integration Tests', () => {
         .expect(400);
 
       // Should handle unsupported content type gracefully
-      expect(response.body.error).toBeDefined();
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: expect.any(String),
+          message: expect.any(String),
+          path: '/api/v1/auth/register'
+        }
+      });
     });
   });
 
   describe('Database Errors', () => {
     it('should handle database connection errors gracefully', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'database-error-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       // This is difficult to test without actually disconnecting the database
       // For now, we'll test with an operation that might cause a database error
-      
+
       // Try to create a resource with invalid foreign key
       const invalidData = {
         id: 'invalid-fk-level-test',
@@ -467,23 +511,28 @@ describe('Error Handling Integration Tests', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
-      expect(response.body.error).toHaveProperty('details'); // Validation errors should include details
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.any(String),
+          details: expect.any(Array),
+          path: '/api/v1/courses/non-existent-course-id/levels'
+        }
+      });
     });
   });
 
   describe('Error Response Consistency', () => {
     it('should have consistent error response structure across all endpoints', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'consistency-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
+      const testData = await TestFactory.createFullContentHierarchy();
+      const user = await TestFactory.prisma.user.update({
+        where: { id: testData.user.id },
+        data: { role: 'student' }
       });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token = TestFactory.createAuthToken(user);
 
       // Act & Assert
       const errorResponses = await Promise.all([
@@ -499,17 +548,18 @@ describe('Error Handling Integration Tests', () => {
 
       errorResponses.forEach(response => {
         expect(response.body).toMatchObject({
+          success: false,
+          timestamp: expect.any(String),
           error: {
             code: expect.any(String),
             message: expect.any(String),
-            timestamp: expect.any(String),
             path: expect.any(String)
           }
         });
 
         // Timestamp should be valid ISO string
-        expect(new Date(response.body.error.timestamp).toISOString()).toBe(response.body.error.timestamp);
-        
+        expect(new Date(response.body.timestamp).toISOString()).toBe(response.body.timestamp);
+
         // Path should match the request path
         expect(response.body.error.path).toMatch(/^\/api\/v1\//);
       });
@@ -517,15 +567,12 @@ describe('Error Handling Integration Tests', () => {
 
     it('should not expose sensitive information in error messages', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'sensitive-info-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'student'
-        }),
+      const testData = await TestFactory.createFullContentHierarchy();
+      const user = await TestFactory.prisma.user.update({
+        where: { id: testData.user.id },
+        data: { role: 'student' }
       });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token = TestFactory.createAuthToken(user);
 
       // Act & Assert
       // Try to access non-existent user (should not reveal if user exists)
@@ -533,6 +580,16 @@ describe('Error Handling Integration Tests', () => {
         .get(`${API_BASE}/users/non-existent-user-id`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'AUTHORIZATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/users/non-existent-user-id'
+        }
+      });
 
       expect(response.body.error.message).not.toContain('database');
       expect(response.body.error.message).not.toContain('SQL');
@@ -546,15 +603,22 @@ describe('Error Handling Integration Tests', () => {
         .expect(404);
 
       // In a production system, you might include correlation IDs
-      expect(response.body.error).toHaveProperty('timestamp');
-      expect(response.body.error).toHaveProperty('path');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'NOT_FOUND',
+          message: expect.any(String),
+          path: '/api/v1/courses/non-existent'
+        }
+      });
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle extremely long URLs gracefully', async () => {
       const longId = 'a'.repeat(1000);
-      
+
       const response = await request(app)
         .get(`${API_BASE}/courses/${longId}`)
         .expect(404);
@@ -564,7 +628,7 @@ describe('Error Handling Integration Tests', () => {
 
     it('should handle special characters in URLs', async () => {
       const specialId = 'test%20course%21%40%23';
-      
+
       const response = await request(app)
         .get(`${API_BASE}/courses/${specialId}`)
         .expect(404);
@@ -579,7 +643,7 @@ describe('Error Handling Integration Tests', () => {
       );
 
       const responses = await Promise.all(requests);
-      
+
       responses.forEach(response => {
         expect(response.status).toBe(404);
         expect(response.body.error.code).toBe('NOT_FOUND');
@@ -588,15 +652,8 @@ describe('Error Handling Integration Tests', () => {
 
     it('should handle null and undefined values gracefully', async () => {
       // Arrange: Create a fresh user and token for this specific test
-      const password = 'TestPass123!';
-      const user = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'null-values-test@example.com',
-          passwordHash: await bcrypt.hash(password, 10),
-          role: 'content_creator'
-        }),
-      });
-      const token = jwt.sign({ sub: user.id, role: user.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const testData = await TestFactory.createFullContentHierarchy();
+      const token = testData.authToken;
 
       const dataWithNulls = {
         id: 'null-values-test',
@@ -613,7 +670,15 @@ describe('Error Handling Integration Tests', () => {
         .send(dataWithNulls)
         .expect(400);
 
-      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body).toMatchObject({
+        success: false,
+        timestamp: expect.any(String),
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: expect.any(String),
+          path: '/api/v1/courses'
+        }
+      });
     });
   });
 
@@ -635,25 +700,19 @@ describe('Error Handling Integration Tests', () => {
 
     it('should handle errors without affecting other users', async () => {
       // Arrange: Create two users for this specific test
-      const password1 = 'TestPass123!';
-      const user1 = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'error-recovery-user1@example.com',
-          passwordHash: await bcrypt.hash(password1, 10),
-          role: 'student'
-        }),
+      const testData1 = await TestFactory.createFullContentHierarchy();
+      const user1 = await TestFactory.prisma.user.update({
+        where: { id: testData1.user.id },
+        data: { role: 'student' }
       });
-      const token1 = jwt.sign({ sub: user1.id, role: user1.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token1 = TestFactory.createAuthToken(user1);
 
-      const password2 = 'OtherPass123!';
-      const user2 = await prisma.user.create({
-        data: UserFactory.build({
-          email: 'error-recovery-user2@example.com',
-          passwordHash: await bcrypt.hash(password2, 10),
-          role: 'student'
-        }),
+      const testData2 = await TestFactory.createFullContentHierarchy();
+      const user2 = await TestFactory.prisma.user.update({
+        where: { id: testData2.user.id },
+        data: { role: 'student' }
       });
-      const token2 = jwt.sign({ sub: user2.id, role: user2.role }, process.env['JWT_SECRET'] || 'test-jwt-secret');
+      const token2 = TestFactory.createAuthToken(user2);
 
       // Act & Assert
       // First user makes failing request

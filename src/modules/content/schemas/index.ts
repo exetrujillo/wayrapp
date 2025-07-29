@@ -27,6 +27,7 @@ export const UpdateCourseSchema = CreateCourseSchema.partial().omit({
 });
 
 export const CourseQuerySchema = BasePaginationSchema.extend({
+  search: z.string().optional(),
   source_language: LanguageCodeSchema.optional(),
   target_language: LanguageCodeSchema.optional(),
   is_public: z
@@ -106,6 +107,8 @@ export const CreateLessonSchema = z.object({
     .string()
     .min(1, "Module ID is required")
     .max(50, "Module ID too long"),
+  name: TextFieldSchema(1, 150),
+  description: OptionalTextFieldSchema(500),
   experience_points: ExperiencePointsSchema.optional().default(10),
   order: OrderSchema,
 });
@@ -113,6 +116,11 @@ export const CreateLessonSchema = z.object({
 export const UpdateLessonSchema = CreateLessonSchema.partial().omit({
   id: true,
   module_id: true,
+}).extend({
+  description: z.union([
+    z.string().max(500, "Description cannot exceed 500 characters"),
+    z.null()
+  ]).optional(),
 });
 
 export const LessonQuerySchema = BasePaginationSchema;

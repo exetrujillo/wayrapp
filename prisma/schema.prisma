@@ -203,6 +203,8 @@ model Module {
 model Lesson {
   id               String    @id @db.VarChar(60)
   moduleId         String    @map("module_id") @db.VarChar(50)
+  name             String    @db.VarChar(150)
+  description      String?
   experiencePoints Int       @default(10) @map("experience_points")
   order            Int
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz

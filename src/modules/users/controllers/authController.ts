@@ -24,7 +24,6 @@
  */
 
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { AppError, asyncHandler } from '@/shared/middleware/errorHandler';
 import { ErrorCodes, HttpStatus, ApiResponse, UserRole } from '@/shared/types';
 import {
@@ -35,29 +34,13 @@ import {
 import { logger } from '@/shared/utils/logger';
 import { UserService } from '../services/userService';
 import { CreateUserDto } from '../types';
+import { 
+  LoginSchema, 
+  RegisterSchema, 
+  RefreshTokenBodySchema 
+} from '@/shared/schemas/auth.schemas';
 
-// Validation schemas
-const LoginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required')
-});
 
-const RefreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required')
-});
-
-const RegisterSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
-  country_code: z.string().length(2, 'Country code must be 2 characters').optional(),
-  profile_picture_url: z.string().url('Invalid URL format').optional()
-});
 
 /**
  * Login request payload interface
@@ -218,6 +201,7 @@ export class AuthController {
     const response: ApiResponse<AuthResponse> = {
       success: true,
       timestamp: new Date().toISOString(),
+      message: 'Login successful',
       data: {
         user: {
           id: user.id,
@@ -250,7 +234,7 @@ export class AuthController {
    */
   refresh = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Validate request body
-    const validatedData = RefreshTokenSchema.parse(req.body);
+    const validatedData = RefreshTokenBodySchema.parse(req.body);
     const { refreshToken } = validatedData;
 
     logger.debug('Token refresh attempt');
@@ -304,6 +288,7 @@ export class AuthController {
       const response: ApiResponse<{ tokens: typeof tokens }> = {
         success: true,
         timestamp: new Date().toISOString(),
+        message: 'Token refresh successful',
         data: { tokens }
       };
 
@@ -422,6 +407,7 @@ export class AuthController {
     const response: ApiResponse<AuthResponse> = {
       success: true,
       timestamp: new Date().toISOString(),
+      message: 'Registration successful',
       data: {
         user: {
           id: user.id,

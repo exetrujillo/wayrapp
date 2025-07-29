@@ -511,7 +511,8 @@ export class ProgressRepository {
    * Retrieves comprehensive progress summary with aggregated statistics.
    * 
    * Calculates lessons completed, courses started, and other analytics data by performing
-   * complex queries across multiple related tables.
+   * complex queries across multiple related tables. Includes advanced analytics like
+   * longest streak, completion percentage, and average score.
    * 
    * @param {string} userId - The unique identifier of the user
    * @returns {Promise<ProgressSummary | null>} Promise resolving to progress summary or null if user progress not found
@@ -527,10 +528,28 @@ export class ProgressRepository {
         return null;
       }
 
-      // Count completed lessons
-      const lessonsCompleted = await this.prisma.lessonCompletion.count({
+      // Count completed lessons and get aggregation stats
+      const completionStats = await this.prisma.lessonCompletion.aggregate({
         where: { userId },
+        _count: { lessonId: true },
+        _avg: { score: true },
       });
+
+      const lessonsCompleted = completionStats._count.lessonId;
+      const averageScore = completionStats._avg.score || 0;
+
+      // Get total lessons count for completion percentage
+      const totalLessons = await this.prisma.lesson.count();
+      const completionPercentage = totalLessons > 0 ? (lessonsCompleted / totalLessons) * 100 : 0;
+
+      // Calculate longest streak from completion dates
+      const completions = await this.prisma.lessonCompletion.findMany({
+        where: { userId },
+        orderBy: { completedAt: 'asc' },
+        select: { completedAt: true },
+      });
+
+      const longestStreak = this.calculateLongestStreak(completions.map(c => c.completedAt));
 
       // Count courses started (courses with at least one completed lesson)
       const uniqueCourses = await this.prisma.lessonCompletion.findMany({
@@ -571,9 +590,12 @@ export class ProgressRepository {
         experience_points: progress.experiencePoints,
         lives_current: progress.livesCurrent,
         streak_current: progress.streakCurrent,
+        longest_streak: longestStreak,
         lessons_completed: lessonsCompleted,
         courses_started: coursesStarted,
         courses_completed: coursesCompleted,
+        completion_percentage: Math.round(completionPercentage * 100) / 100, // Round to 2 decimal places
+        average_score: Math.round(averageScore * 100) / 100, // Round to 2 decimal places
         last_activity_date: progress.lastActivityDate,
       };
     } catch (error) {
@@ -707,5 +729,64 @@ export class ProgressRepository {
       score: prismaCompletion.score,
       time_spent_seconds: prismaCompletion.timeSpentSeconds,
     };
+  }
+
+  /**
+   * Calculates the longest consecutive streak from completion dates.
+   * 
+   * Analyzes completion dates to find the longest sequence of consecutive days
+   * with lesson completions. Days are considered consecutive if they are within
+   * 24 hours of each other.
+   * 
+   * @private
+   * @param {Date[]} completionDates - Array of completion dates sorted in ascending order
+   * @returns {number} The longest consecutive streak in days
+   */
+  private calculateLongestStreak(completionDates: Date[]): number {
+    if (completionDates.length === 0) {
+      return 0;
+    }
+
+    let longestStreak = 1;
+    let currentStreak = 1;
+
+    // Convert dates to day strings for comparison (YYYY-MM-DD format)
+    const dayStrings = completionDates.map(date => 
+      date.toISOString().split('T')[0]
+    );
+
+    // Remove duplicates (multiple completions on same day)
+    const uniqueDays = [...new Set(dayStrings)].sort();
+
+    if (uniqueDays.length <= 1) {
+      return uniqueDays.length;
+    }
+
+    for (let i = 1; i < uniqueDays.length; i++) {
+      const currentDay = uniqueDays[i];
+      const previousDay = uniqueDays[i - 1];
+      
+      if (!currentDay || !previousDay) {
+        continue;
+      }
+      
+      const currentDate = new Date(currentDay);
+      const previousDate = new Date(previousDay);
+      
+      // Calculate difference in days
+      const diffTime = currentDate.getTime() - previousDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Consecutive day
+        currentStreak++;
+        longestStreak = Math.max(longestStreak, currentStreak);
+      } else {
+        // Break in streak
+        currentStreak = 1;
+      }
+    }
+
+    return longestStreak;
   }
 }

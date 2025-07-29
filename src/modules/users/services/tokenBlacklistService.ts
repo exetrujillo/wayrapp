@@ -123,14 +123,14 @@ export class TokenBlacklistService {
    * Checks if a refresh token has been revoked and is present in the blacklist
    * 
    * @param {string} token - The JWT refresh token to check for revocation status
-   * @returns {Promise<boolean>} Promise resolving to true if token is revoked, false if valid or check fails
-   * @throws {Error} Does not throw - errors are logged and method returns false to prevent blocking legitimate requests
+   * @returns {Promise<boolean>} Promise resolving to true if token is revoked, true if check fails (fail-safe)
+   * @throws {Error} Does not throw - errors are logged and method returns true for fail-safe behavior
    * 
    * This method queries the revoked_tokens table to determine if a token has been blacklisted.
    * Used during token refresh operations to validate that the refresh token is still valid. If the database
-   * query fails, the method returns false (assumes token is valid) to prevent legitimate users from being
-   * blocked due to temporary database issues. This fail-open approach prioritizes availability over security
-   * in edge cases.
+   * query fails, the method returns true (assumes token is revoked) to implement fail-safe behavior where
+   * system failures default to the most secure state. This fail-safe approach prioritizes security over
+   * availability in edge cases.
    * 
    * @example
    * ```typescript
@@ -150,9 +150,14 @@ export class TokenBlacklistService {
 
       return !!revokedToken;
     } catch (error) {
-      logger.error('Error checking token revocation status', { error });
-      // If we can't check, assume it's not revoked to prevent blocking legitimate requests
-      return false;
+      logger.error('Error checking token revocation status - failing safe by assuming token is revoked', {
+        // Log the full error object for complete diagnostics
+        error,
+        // Also include context, but avoid exposing full sensitive data in logs if possible
+        tokenHint: token ? token.substring(0, 10) + '...' + token.slice(-4) : 'N/A'
+      });
+      // Fail-safe behavior: if we can't check, assume token is revoked for security
+      return true;
     }
   }
 

@@ -571,12 +571,27 @@ CMD ["npm", "start"]
 
 The API follows RESTful conventions with consistent response formats:
 
+**Success Response:**
 ```json
 {
   "success": true,
   "timestamp": "2023-07-20T12:34:56.789Z",
   "data": {
     // Response data here
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "timestamp": "2023-07-20T12:34:56.789Z",
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable error message",
+    "details": "Additional error details (optional)",
+    "path": "/api/endpoint"
   }
 }
 ```

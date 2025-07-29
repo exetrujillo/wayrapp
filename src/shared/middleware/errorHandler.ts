@@ -60,11 +60,12 @@ import { ApiError, ErrorCodes, HttpStatus } from '@/shared/types';
  * All errors are returned in a consistent format:
  * ```json
  * {
+ *   "success": false,
+ *   "timestamp": "2024-01-20T10:30:00.000Z",
  *   "error": {
  *     "code": "ERROR_CODE",
  *     "message": "Human readable message",
  *     "details": "Additional error details (optional)",
- *     "timestamp": "2024-01-20T10:30:00.000Z",
  *     "path": "/api/endpoint"
  *   }
  * }
@@ -409,11 +410,12 @@ export const errorHandler = (
 
   // Construct the standardized error response
   const errorResponse: ApiError = {
+    success: false,
+    timestamp: new Date().toISOString(),
     error: {
       code,
       message,
       details,
-      timestamp: new Date().toISOString(),
       path: req.path
     }
   };

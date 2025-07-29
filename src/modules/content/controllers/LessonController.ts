@@ -124,13 +124,14 @@ export class LessonController {
                 );
             }
 
-            const validatedData = CreateLessonSchema.parse(req.body);
-            const lessonData: CreateLessonDto = { ...validatedData, module_id: moduleId };
+            const validatedData = CreateLessonSchema.omit({ module_id: true }).parse(req.body);
+            const lessonData = { ...validatedData, module_id: moduleId } as CreateLessonDto;
             const lesson = await this.lessonService.createLesson(lessonData);
 
             const response: ApiResponse = {
                 data: lesson,
                 success: true,
+                message: 'Lesson created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -142,16 +143,17 @@ export class LessonController {
 
     /**
      * Retrieves a single lesson by its unique identifier with comprehensive validation.
+     * Uses composite key lookup to prevent horizontal access vulnerabilities.
      * 
-     * Extracts lesson ID from URL parameters, validates parameter presence, delegates lesson
+     * Extracts lesson ID and module ID from URL parameters, validates parameter presence, delegates lesson
      * retrieval to the service layer, and returns a standardized API response with HTTP 200
      * status containing the lesson data.
      * 
-     * @param {Request} req - Express request object containing lesson ID in params
+     * @param {Request} req - Express request object containing lesson ID and module ID in params
      * @param {Response} res - Express response object for sending HTTP response
      * @param {NextFunction} next - Express next function for error handling middleware
      * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
-     * @throws {AppError} When lesson ID is missing from URL parameters
+     * @throws {AppError} When lesson ID or module ID is missing from URL parameters
      * @throws {Error} When service layer lesson retrieval fails or lesson not found
      * 
      * @example
@@ -164,16 +166,23 @@ export class LessonController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-            const { id } = req.params;
-            if (!id) {
+            const { id: lessonId, moduleId } = req.params;
+            if (!lessonId) {
                 throw new AppError(
                     "Lesson ID is required in URL parameters.",
                     HttpStatus.BAD_REQUEST,
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
+            if (!moduleId) {
+                throw new AppError(
+                    "Module ID is required in URL parameters.",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR,
+                );
+            }
 
-            const lesson = await this.lessonService.getLesson(id);
+            const lesson = await this.lessonService.getLesson(lessonId, moduleId);
             const response: ApiResponse = {
                 data: lesson,
                 success: true,
@@ -253,16 +262,17 @@ export class LessonController {
 
     /**
      * Updates an existing lesson with partial data and comprehensive validation.
+     * Uses composite key lookup to prevent horizontal access vulnerabilities.
      * 
-     * Extracts lesson ID from URL parameters, validates request body against UpdateLessonSchema,
+     * Extracts lesson ID and module ID from URL parameters, validates request body against UpdateLessonSchema,
      * filters out undefined values from update data, delegates lesson update to the service layer,
      * and returns a standardized API response with HTTP 200 status containing updated lesson data.
      * 
-     * @param {Request} req - Express request object containing lesson ID in params and update data in body
+     * @param {Request} req - Express request object containing lesson ID and module ID in params and update data in body
      * @param {Response} res - Express response object for sending HTTP response
      * @param {NextFunction} next - Express next function for error handling middleware
      * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
-     * @throws {AppError} When lesson ID is missing from URL parameters
+     * @throws {AppError} When lesson ID or module ID is missing from URL parameters
      * @throws {Error} When request body validation fails against UpdateLessonSchema
      * @throws {Error} When service layer lesson update fails or lesson not found
      * 
@@ -277,10 +287,17 @@ export class LessonController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-            const { id } = req.params;
-            if (!id) {
+            const { id: lessonId, moduleId } = req.params;
+            if (!lessonId) {
                 throw new AppError(
                     "Lesson ID is required in URL parameters.",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR,
+                );
+            }
+            if (!moduleId) {
+                throw new AppError(
+                    "Module ID is required in URL parameters.",
                     HttpStatus.BAD_REQUEST,
                     ErrorCodes.VALIDATION_ERROR,
                 );
@@ -295,11 +312,12 @@ export class LessonController {
                 }
             }
     
-            const lesson = await this.lessonService.updateLesson(id, cleanUpdateData);
+            const lesson = await this.lessonService.updateLesson(lessonId, moduleId, cleanUpdateData);
 
             const response: ApiResponse = {
                 data: lesson,
                 success: true,
+                message: 'Lesson updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -311,16 +329,17 @@ export class LessonController {
 
     /**
      * Permanently deletes a lesson and all its associated exercise assignments.
+     * Uses composite key lookup to prevent horizontal access vulnerabilities.
      * 
-     * Extracts lesson ID from URL parameters, validates parameter presence, delegates lesson
+     * Extracts lesson ID and module ID from URL parameters, validates parameter presence, delegates lesson
      * deletion to the service layer, and returns a standardized API response with HTTP 204
      * status indicating successful deletion without content.
      * 
-     * @param {Request} req - Express request object containing lesson ID in params
+     * @param {Request} req - Express request object containing lesson ID and module ID in params
      * @param {Response} res - Express response object for sending HTTP response
      * @param {NextFunction} next - Express next function for error handling middleware
      * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
-     * @throws {AppError} When lesson ID is missing from URL parameters
+     * @throws {AppError} When lesson ID or module ID is missing from URL parameters
      * @throws {Error} When service layer lesson deletion fails or lesson not found
      * 
      * @example
@@ -333,16 +352,23 @@ export class LessonController {
         next: NextFunction,
     ): Promise<void> => {
         try {
-            const { id } = req.params;
-            if (!id) {
+            const { id: lessonId, moduleId } = req.params;
+            if (!lessonId) {
                 throw new AppError(
                     "Lesson ID is required in URL parameters.",
                     HttpStatus.BAD_REQUEST,
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
+            if (!moduleId) {
+                throw new AppError(
+                    "Module ID is required in URL parameters.",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR,
+                );
+            }
 
-            await this.lessonService.deleteLesson(id);
+            await this.lessonService.deleteLesson(lessonId, moduleId);
 
             const response: ApiResponse = {
                 success: true,
@@ -350,7 +376,7 @@ export class LessonController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }
@@ -400,6 +426,7 @@ export class LessonController {
             const response: ApiResponse = {
                 data: lessonExercise,
                 success: true,
+                message: 'Exercise assigned to lesson successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -458,7 +485,7 @@ export class LessonController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }

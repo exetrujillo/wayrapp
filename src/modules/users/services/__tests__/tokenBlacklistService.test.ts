@@ -17,11 +17,7 @@ jest.mock('@/shared/utils/auth', () => ({
 }));
 
 /**
- * @fileoverview Unit and integration tests for TokenBlacklistService.ts
- * 
- * @summary Test suite for the TokenBlacklistService class, covering secure JWT refresh token revocation and management operations.
- * 
- * @description These tests verify that the TokenBlacklistService correctly implements all token blacklist operations including:
+ * These tests verify that the TokenBlacklistService correctly implements all token blacklist operations including:
  * - Token revocation during logout operations with proper expiration handling
  * - Token validation during refresh operations with blacklist checking
  * - Automated cleanup of expired tokens for database maintenance
@@ -35,7 +31,6 @@ jest.mock('@/shared/utils/auth', () => ({
  * that must not disrupt the authentication flow.
  * 
  * @author Exequiel Trujillo
-  * 
  * @since 1.0.0
  */
 describe('TokenBlacklistService', () => {
@@ -164,7 +159,7 @@ describe('TokenBlacklistService', () => {
             });
         });
 
-        it('should return false on database errors to prevent blocking legitimate requests', async () => {
+        it('should return true on database errors for fail-safe behavior', async () => {
             // Arrange
             const token = 'some.jwt.token';
 
@@ -174,10 +169,64 @@ describe('TokenBlacklistService', () => {
             const result = await tokenBlacklistService.isTokenRevoked(token);
 
             // Assert
-            expect(result).toBe(false);
+            expect(result).toBe(true);
             expect(mockPrisma.revokedToken.findUnique).toHaveBeenCalledWith({
                 where: { token },
             });
+        });
+
+        it('should log enhanced error information with partial token on database errors', async () => {
+            // Arrange
+            const token = 'very.long.jwt.token.with.lots.of.content';
+            const dbError = new Error('Database connection timeout');
+
+            (mockPrisma.revokedToken.findUnique as jest.Mock).mockRejectedValue(dbError);
+
+            const { logger } = await import('@/shared/utils/logger');
+
+            // Act
+            const result = await tokenBlacklistService.isTokenRevoked(token);
+
+            // Assert
+            expect(result).toBe(true);
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error checking token revocation status - failing safe by assuming token is revoked',
+                {
+                    // Full error object is logged for complete diagnostics
+                    error: dbError,
+                    // Token hint with first 10 chars + last 4 chars
+                    tokenHint: 'very.long....tent'
+                }
+            );
+        });
+
+        it('should return true (fail-safe) if the database query fails', async () => {
+            // Arrange
+            const testToken = 'any-test-token';
+            const dbError = new Error('Database connection failed');
+
+            // Mock the database query to throw an error
+            (mockPrisma.revokedToken.findUnique as jest.Mock).mockRejectedValue(dbError);
+
+            const { logger } = await import('@/shared/utils/logger');
+
+            // Act
+            const result = await tokenBlacklistService.isTokenRevoked(testToken);
+
+            // Assert
+            expect(result).toBe(true);
+            expect(mockPrisma.revokedToken.findUnique).toHaveBeenCalledWith({
+                where: { token: testToken },
+            });
+            
+            // Verify that the failure is being logged correctly
+            expect(logger.error).toHaveBeenCalledWith(
+                'Error checking token revocation status - failing safe by assuming token is revoked',
+                {
+                    error: dbError,
+                    tokenHint: 'any-test-t...oken'
+                }
+            );
         });
     });
 

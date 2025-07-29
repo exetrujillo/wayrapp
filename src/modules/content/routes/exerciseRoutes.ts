@@ -177,9 +177,6 @@ export function createExerciseRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Exercises retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -292,9 +289,6 @@ export function createExerciseRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Exercise retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Exercise'
    *       400:
@@ -497,9 +491,6 @@ export function createExerciseRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Exercises retrieved successfully
    *                 data:
    *                   type: array
    *                   items:

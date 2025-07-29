@@ -68,6 +68,7 @@ import { authenticateToken } from '@/shared/middleware/auth';
 import { authRateLimiter } from '@/shared/middleware/security';
 import { validate } from '@/shared/middleware/validation';
 import { asyncHandler } from '@/shared/middleware/errorHandler';
+import { RefreshTokenBodySchema } from '@/shared/schemas/auth.schemas';
 import { z } from 'zod';
 
 /**
@@ -89,22 +90,7 @@ const loginSchema = {
   })
 };
 
-/**
- * Token refresh request validation schema
- * 
- * Defines the validation rules for token refresh requests using Zod schema validation.
- * Ensures that refresh requests contain a valid refresh token string before processing
- * by the authentication controller for token renewal operations.
- * 
- * @constant {Object} refreshTokenSchema - Zod validation schema for token refresh requests
- * @property {Object} body - Request body validation rules
- * @property {string} body.refreshToken - Non-empty refresh token string (required)
- */
-const refreshTokenSchema = {
-  body: z.object({
-    refreshToken: z.string().min(1, 'Refresh token is required')
-  })
-};
+
 
 /**
  * User registration request validation schema
@@ -261,7 +247,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    *                   example: true
    *                 message:
    *                   type: string
-   *                   example: User registered successfully
+   *                   example: Registration successful
    *                 data:
    *                   type: object
    *                   properties:
@@ -471,7 +457,7 @@ export function createAuthRoutes(authController: AuthController): Router {
    *                   example: true
    *                 message:
    *                   type: string
-   *                   example: Tokens refreshed successfully
+   *                   example: Token refresh successful
    *                 data:
    *                   type: object
    *                   properties:
@@ -487,7 +473,7 @@ export function createAuthRoutes(authController: AuthController): Router {
   router.post(
     '/refresh',
     authRateLimiter,
-    validate(refreshTokenSchema),
+    validate({ body: RefreshTokenBodySchema }),
     asyncHandler(authController.refresh)
   );
 
@@ -546,13 +532,11 @@ export function createAuthRoutes(authController: AuthController): Router {
    *     security:
    *       - bearerAuth: []
    *     requestBody:
-   *       required: true
+   *       required: false
    *       content:
    *         application/json:
    *           schema:
    *             type: object
-   *             required:
-   *               - refreshToken
    *             properties:
    *               refreshToken:
    *                 type: string
@@ -585,11 +569,7 @@ export function createAuthRoutes(authController: AuthController): Router {
   router.post(
     '/logout',
     authenticateToken,
-    validate({
-      body: z.object({
-        refreshToken: z.string().min(1, 'Refresh token is required')
-      })
-    }),
+    validate({ body: RefreshTokenBodySchema }),
     asyncHandler(authController.logout)
   );
 
@@ -665,9 +645,6 @@ export function createAuthRoutes(authController: AuthController): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: User information retrieved successfully
    *                 data:
    *                   type: object
    *                   properties:

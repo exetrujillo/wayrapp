@@ -8,11 +8,12 @@ export interface ApiResponse<T = any> {
 }
 
 export interface ApiError {
+  success: false;
+  timestamp: string;
   error: {
     code: string;
     message: string;
     details?: any;
-    timestamp: string;
     path: string;
   };
 }

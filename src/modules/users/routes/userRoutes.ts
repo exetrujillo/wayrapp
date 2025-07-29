@@ -52,7 +52,9 @@ import { UserController } from '../controllers/userController';
 import { UserService } from '../services/userService';
 import { UserRepository } from '../repositories/userRepository';
 import { authenticateToken, requireRole } from '@/shared/middleware/auth';
+import { authRateLimiter } from '@/shared/middleware/security';
 import { validate } from '@/shared/middleware/validation';
+import { UserQuerySchema } from '@/shared/schemas';
 import { z } from 'zod';
 import { UpdateUserSchema, UpdatePasswordSchema, UpdateRoleSchema } from '../types';
 
@@ -107,9 +109,6 @@ const router = Router();
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 message:
- *                   type: string
- *                   example: Profile retrieved successfully
  *                 data:
  *                   type: object
  *                   properties:
@@ -254,6 +253,7 @@ router.put(
 router.put(
   '/password',
   authenticateToken,
+  authRateLimiter,
   validate({ body: UpdatePasswordSchema }),
   userController.updatePassword
 );
@@ -342,9 +342,6 @@ router.put(
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 message:
- *                   type: string
- *                   example: Users retrieved successfully
  *                 data:
  *                   type: array
  *                   items:
@@ -358,17 +355,7 @@ router.get(
   '/',
   authenticateToken,
   requireRole('admin'),
-  validate({
-    query: z.object({
-      page: z.string().regex(/^\d+$/).optional(),
-      limit: z.string().regex(/^\d+$/).optional(),
-      sortBy: z.string().optional(),
-      sortOrder: z.enum(['asc', 'desc']).optional(),
-      role: z.enum(['student', 'content_creator', 'admin']).optional(),
-      is_active: z.enum(['true', 'false']).optional(),
-      search: z.string().optional()
-    }).optional()
-  }),
+  validate({ query: UserQuerySchema }),
   userController.getAllUsers
 );
 
@@ -409,9 +396,6 @@ router.get(
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 message:
- *                   type: string
- *                   example: User retrieved successfully
  *                 data:
  *                   type: object
  *                   properties:

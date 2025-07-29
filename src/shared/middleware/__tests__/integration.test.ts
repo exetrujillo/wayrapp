@@ -140,9 +140,10 @@ describe('Middleware Integration', () => {
         .get('/test-error')
         .expect(500);
 
+      expect(response.body.success).toBe(false);
+      expect(response.body.timestamp).toBeDefined();
       expect(response.body.error.code).toBe('INTERNAL_ERROR');
       expect(response.body.error.message).toBe('Internal server error');
-      expect(response.body.error.timestamp).toBeDefined();
       expect(response.body.error.path).toBe('/test-error');
     });
   });

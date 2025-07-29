@@ -161,9 +161,10 @@ export class ProgressService {
       );
     }
 
-    // Get lesson details to calculate experience points
+    // Step 1: Find the lesson to get its actual moduleId and validate existence
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: progressData.lesson_id },
+      select: { moduleId: true, experiencePoints: true } // Select only what is needed
     });
 
     if (!lesson) {
@@ -173,6 +174,11 @@ export class ProgressService {
         ErrorCodes.NOT_FOUND
       );
     }
+
+    // The lesson exists. Now we proceed with the rest of the logic,
+    // using lesson.experiencePoints.
+    // The hierarchical check from Task 1 now protects the Content module's direct access routes.
+    // This lookup in the progress module is for a different purpose (validating existence and getting points).
 
     // Calculate experience points based on lesson difficulty and user performance
     const experienceGained = this.calculateExperiencePoints(

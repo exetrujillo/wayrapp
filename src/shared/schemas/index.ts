@@ -144,7 +144,7 @@ export {
  * 
  * @example
  * // Token management and session handling
- * import { RefreshTokenSchema, PasswordUpdateSchema } from '@/shared/schemas';
+ * import { RefreshTokenBodySchema, PasswordUpdateSchema } from '@/shared/schemas';
  * 
  * @example
  * // Type-safe authentication operations
@@ -154,7 +154,7 @@ export {
   PasswordSchema,
   RegisterSchema,
   LoginSchema,
-  RefreshTokenSchema,
+  RefreshTokenBodySchema,
   PasswordUpdateSchema,
   type RegisterRequest,
   type LoginRequest,

@@ -352,6 +352,9 @@ export class UserRepository {
     if (updates.is_active !== undefined) {
       dataToUpdate.isActive = updates.is_active;
     }
+    if (updates.role !== undefined) {
+      dataToUpdate.role = updates.role as any;
+    }
 
     if (Object.keys(dataToUpdate).length === 0) {
       logger.warn('Update called with no data to update for user', { userId: id });
@@ -434,6 +437,19 @@ export class UserRepository {
 
       const skip = (page - 1) * limit;
 
+      // Map API field names to Prisma field names
+      const sortFieldMap: Record<string, string> = {
+        'created_at': 'createdAt',
+        'updated_at': 'updatedAt',
+        'registration_date': 'registrationDate',
+        'last_login_date': 'lastLoginDate',
+        'country_code': 'countryCode',
+        'profile_picture_url': 'profilePictureUrl',
+        'is_active': 'isActive',
+      };
+
+      const prismaSort = sortFieldMap[sortBy] || sortBy;
+
       // Build where clause from filters
       const where: any = {};
       if (filters['role']) {
@@ -457,7 +473,7 @@ export class UserRepository {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { [prismaSort]: sortOrder },
       });
 
       const mappedUsers = users.map((user) => this.mapPrismaUserToUser(user));

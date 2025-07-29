@@ -44,9 +44,7 @@
  * - Mock logger to prevent console output during tests
  * - Mock Date.now() for consistent timestamp testing
  * - Use real error instances (ZodError, PrismaError) for authentic testing
- * @fileoverview Test suite for the Error Handler Middleware
  * @author Exequiel Trujillo
-  * 
  * @since 1.0.0
  */
 import { Request, Response, NextFunction } from 'express';
@@ -157,11 +155,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify the response format and status code
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.VALIDATION_ERROR,
           message: 'Test error message',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -194,6 +193,8 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify the response includes detailed validation information
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.VALIDATION_ERROR,
           message: 'Validation failed',
@@ -201,7 +202,6 @@ describe('Error Handler Middleware', () => {
             expect.objectContaining({ field: 'name' }),
             expect.objectContaining({ field: 'email' })
           ]),
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -230,11 +230,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify proper mapping to NOT_FOUND response
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.NOT_FOUND,
           message: 'Record not found',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -264,11 +265,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify proper mapping to CONFLICT response with field details
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.CONFLICT,
           message: 'Unique constraint violation',
           details: { field: ['email'] },
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -297,11 +299,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify fallback to generic database error response
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.DATABASE_ERROR,
           message: 'Database operation failed',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -327,11 +330,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify proper mapping to validation error response
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.VALIDATION_ERROR,
           message: 'Invalid data provided',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -358,11 +362,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify fallback to generic internal server error response
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.INTERNAL_ERROR,
           message: 'Internal server error',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });
@@ -389,11 +394,12 @@ describe('Error Handler Middleware', () => {
       // Assert: Verify both the response format and that logging occurred
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
       expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        timestamp: expect.any(String),
         error: {
           code: ErrorCodes.INTERNAL_ERROR,
           message: 'Internal server error',
           details: undefined,
-          timestamp: expect.any(String),
           path: '/test-path',
         },
       });

@@ -888,6 +888,8 @@ export class ContentService {
               lessons: module.lessons.map(lesson => ({
                 id: lesson.id,
                 module_id: lesson.moduleId,
+                name: lesson.name,
+                ...(lesson.description && { description: lesson.description }),
                 experience_points: lesson.experiencePoints,
                 order: lesson.order,
                 created_at: lesson.createdAt,

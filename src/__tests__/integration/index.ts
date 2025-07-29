@@ -3,7 +3,7 @@
  * 
  * Integration Tests Index
  * Exports all integration test suites for organized test execution
- * 
+ * I think this is not actually necessary and it is not up to the current state of the app.
  * @author Exequiel Trujillo
  * 
  * @since 1.0.0

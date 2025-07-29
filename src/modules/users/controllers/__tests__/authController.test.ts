@@ -19,7 +19,6 @@
  * 
  * @fileoverview Unit and integration tests for AuthController.ts
  * @author Exequiel Trujillo
-  * 
  * @since 1.0.0
  */
 
@@ -151,6 +150,7 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         timestamp: expect.any(String),
+        message: 'Login successful',
         data: {
           user: {
             id: mockUser.id,
@@ -183,6 +183,7 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         timestamp: expect.any(String),
+        message: 'Login successful',
         data: {
           user: {
             id: mockUser.id,
@@ -288,6 +289,7 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         timestamp: expect.any(String),
+        message: 'Registration successful',
         data: {
           user: {
             id: mockUser.id,
@@ -382,6 +384,7 @@ describe('AuthController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         timestamp: expect.any(String),
+        message: 'Token refresh successful',
         data: { tokens: mockTokens }
       });
       expect(logger.debug).toHaveBeenCalledWith('Token refresh attempt');

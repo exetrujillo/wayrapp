@@ -179,9 +179,6 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Lessons retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -227,12 +224,17 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *           schema:
    *             type: object
    *             required:
+   *               - id
    *               - name
    *               - order
    *             properties:
+   *               id:
+   *                 type: string
+   *                 maxLength: 60
+   *                 example: "lesson-intro-greetings"
    *               name:
    *                 type: string
-   *                 maxLength: 100
+   *                 maxLength: 150
    *                 example: "Introduction to Greetings"
    *               description:
    *                 type: string
@@ -242,15 +244,6 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *                 type: integer
    *                 minimum: 1
    *                 example: 1
-   *               is_active:
-   *                 type: boolean
-   *                 default: true
-   *                 example: true
-   *               estimated_duration_minutes:
-   *                 type: integer
-   *                 minimum: 1
-   *                 nullable: true
-   *                 example: 10
    *               experience_points:
    *                 type: integer
    *                 minimum: 0
@@ -326,9 +319,6 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Lesson retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Lesson'
    *       400:
@@ -378,7 +368,7 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *             properties:
    *               name:
    *                 type: string
-   *                 maxLength: 100
+   *                 maxLength: 150
    *                 example: "Updated Introduction to Greetings"
    *               description:
    *                 type: string
@@ -388,14 +378,6 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *                 type: integer
    *                 minimum: 1
    *                 example: 1
-   *               is_active:
-   *                 type: boolean
-   *                 example: true
-   *               estimated_duration_minutes:
-   *                 type: integer
-   *                 minimum: 1
-   *                 nullable: true
-   *                 example: 12
    *               experience_points:
    *                 type: integer
    *                 minimum: 0
@@ -526,9 +508,6 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Lesson exercises retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -730,30 +709,13 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
    *           schema:
    *             type: object
    *             required:
-   *               - exercises
+   *               - exercise_ids
    *             properties:
-   *               exercises:
+   *               exercise_ids:
    *                 type: array
    *                 items:
-   *                   type: object
-   *                   required:
-   *                     - exercise_id
-   *                     - order
-   *                   properties:
-   *                     exercise_id:
-   *                       type: string
-   *                       example: "exercise-001"
-   *                     order:
-   *                       type: integer
-   *                       minimum: 1
-   *                       example: 1
-   *                 example:
-   *                   - exercise_id: "exercise-001"
-   *                     order: 1
-   *                   - exercise_id: "exercise-002"
-   *                     order: 2
-   *                   - exercise_id: "exercise-003"
-   *                     order: 3
+   *                   type: string
+   *                 example: ["exercise-001", "exercise-002", "exercise-003"]
    *     responses:
    *       200:
    *         description: Lesson exercises reordered successfully

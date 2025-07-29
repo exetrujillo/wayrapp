@@ -46,6 +46,10 @@ jest.mock('../../../../shared/middleware/validation', () => ({
   validate: jest.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
 }));
 
+jest.mock('../../../../shared/middleware/security', () => ({
+  authRateLimiter: jest.fn((_req: Request, _res: Response, next: NextFunction) => next()),
+}));
+
 
 describe('User Routes', () => {
   let app: express.Application;
@@ -87,6 +91,7 @@ describe('User Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toEqual('Profile updated successfully');
       expect(response.body.data.username).toBe('newusername');
     });
   });
@@ -102,7 +107,36 @@ describe('User Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Password updated successfully');
       expect(response.body.data.message).toBe('Password updated successfully');
+    });
+
+    it('should apply rate limiting to password update endpoint', async () => {
+      // Mock the authRateLimiter to simulate rate limit exceeded
+      const { authRateLimiter } = require('../../../../shared/middleware/security');
+      authRateLimiter.mockImplementation((_req: Request, res: Response, _next: NextFunction) => {
+        res.status(429).json({
+          error: {
+            code: 'RATE_LIMIT_ERROR',
+            message: 'Too many requests from this IP, please try again later.',
+            timestamp: new Date().toISOString(),
+            path: '/api/users/password'
+          }
+        });
+      });
+
+      const passwordData = { current_password: 'oldPassword123!', new_password: 'newPassword456!' };
+
+      const response = await request(app)
+        .put('/api/users/password')
+        .send(passwordData)
+        .expect(429);
+
+      expect(response.body.error.code).toBe('RATE_LIMIT_ERROR');
+      expect(response.body.error.message).toBe('Too many requests from this IP, please try again later.');
+      
+      // Verify that the rate limiter was called
+      expect(authRateLimiter).toHaveBeenCalled();
     });
   });
 
@@ -164,6 +198,7 @@ describe('User Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toEqual('User role updated successfully');
       expect(response.body.data.role).toBe('admin');
     });
   });

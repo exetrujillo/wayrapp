@@ -47,6 +47,8 @@ export interface Module {
 export interface Lesson {
   id: string;
   module_id: string;
+  name: string;
+  description?: string | null;
   experience_points: number;
   order: number;
   created_at: Date;
@@ -111,6 +113,8 @@ export interface CreateModuleDto {
 export interface CreateLessonDto {
   id: string;
   module_id: string;
+  name: string;
+  description?: string | undefined;
   experience_points?: number;
   order: number;
 }

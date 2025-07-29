@@ -7,91 +7,26 @@
 
 import request from 'supertest';
 import app from '../../app';
-import { prisma } from '../../shared/database/connection';
-import { UserFactory } from '../../shared/test/factories/userFactory';
+import { TestFactory } from '../../shared/test/factories/testFactory';
 import { CourseFactory, LevelFactory, SectionFactory, ModuleFactory } from '../../shared/test/factories/contentFactory';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
 describe('Content Management Integration Tests', () => {
   const API_BASE = '/api/v1';
-  let adminUser: any;
-  let contentCreatorUser: any;
-  let studentUser: any;
-  let adminToken: string;
-  let contentCreatorToken: string;
-  let studentToken: string;
 
-  beforeAll(async () => {
-    // Create test users with different roles
-    adminUser = await prisma.user.create({
-      data: {
-        ...UserFactory.buildAdmin({
-          email: 'content-admin@example.com',
-          passwordHash: await bcrypt.hash('AdminPass123!', 10)
-        })
-      }
-    });
-
-    contentCreatorUser = await prisma.user.create({
-      data: {
-        ...UserFactory.buildContentCreator({
-          email: 'content-creator@example.com',
-          passwordHash: await bcrypt.hash('CreatorPass123!', 10)
-        })
-      }
-    });
-
-    studentUser = await prisma.user.create({
-      data: {
-        ...UserFactory.build({
-          email: 'content-student@example.com',
-          passwordHash: await bcrypt.hash('StudentPass123!', 10)
-        })
-      }
-    });
-
-    // Generate JWT tokens
-    const jwtSecret = process.env['JWT_SECRET'] || 'test-secret';
-
-    adminToken = jwt.sign(
-      { sub: adminUser.id, email: adminUser.email, role: adminUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    contentCreatorToken = jwt.sign(
-      { sub: contentCreatorUser.id, email: contentCreatorUser.email, role: contentCreatorUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    studentToken = jwt.sign(
-      { sub: studentUser.id, email: studentUser.email, role: studentUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-  });
-
-  afterEach(async () => {
-    // Clean up the database IN REVERSE ORDER of creation
-    await prisma.lessonExercise.deleteMany();
-    await prisma.lesson.deleteMany();
-    await prisma.module.deleteMany();
-    await prisma.section.deleteMany();
-    await prisma.level.deleteMany();
-    await prisma.course.deleteMany();
+  beforeEach(async () => {
+    await TestFactory.cleanupDatabase();
   });
 
   afterAll(async () => {
-    // Final cleanup including users
-    await prisma.user.deleteMany();
-    await prisma.$disconnect();
+    await TestFactory.prisma.$disconnect();
   });
 
   describe('Course Management', () => {
     describe('POST /courses', () => {
       it('should allow admin to create course', async () => {
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
         const courseData = CourseFactory.buildDto({
           id: 'test-course-1',
           name: 'Test Course for Integration'
@@ -113,6 +48,9 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should allow content creator to create course', async () => {
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: contentCreatorToken } = await TestFactory.createUser({ role: 'content_creator' });
+
         const courseData = CourseFactory.buildDto({
           id: 'test-course-2',
           name: 'Creator Course'
@@ -129,6 +67,9 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should reject student creating course', async () => {
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: studentToken } = await TestFactory.createUser({ role: 'student' });
+
         const courseData = CourseFactory.buildDto({
           id: 'test-course-3'
         });
@@ -156,6 +97,9 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should validate course data', async () => {
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
         const invalidCourseData = {
           id: '', // Invalid empty ID
           source_language: 'invalid-lang-code-too-long',
@@ -181,8 +125,8 @@ describe('Content Management Integration Tests', () => {
 
     describe('GET /courses', () => {
       it('should return paginated courses', async () => {
-        // Arrange: Create test courses
-        await prisma.course.createMany({
+        // SETUP: Create fresh, isolated data for this test
+        await TestFactory.prisma.course.createMany({
           data: [
             CourseFactory.build({
               id: 'test-list-1',
@@ -202,7 +146,7 @@ describe('Content Management Integration Tests', () => {
           ]
         });
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .get(`${API_BASE}/courses`)
           .query({ limit: 2, page: 1 })
@@ -222,8 +166,8 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should filter courses by language', async () => {
-        // Arrange: Create test courses
-        await prisma.course.createMany({
+        // SETUP: Create fresh, isolated data for this test
+        await TestFactory.prisma.course.createMany({
           data: [
             CourseFactory.build({
               id: 'test-filter-1',
@@ -243,7 +187,7 @@ describe('Content Management Integration Tests', () => {
           ]
         });
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .get(`${API_BASE}/courses`)
           .query({ source_language: 'qu' })
@@ -256,8 +200,8 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should search courses by name', async () => {
-        // Arrange: Create test courses
-        await prisma.course.createMany({
+        // SETUP: Create fresh, isolated data for this test
+        await TestFactory.prisma.course.createMany({
           data: [
             CourseFactory.build({
               id: 'test-search-1',
@@ -277,7 +221,7 @@ describe('Content Management Integration Tests', () => {
           ]
         });
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .get(`${API_BASE}/courses`)
           .query({ search: 'Public Course 1' })
@@ -289,17 +233,64 @@ describe('Content Management Integration Tests', () => {
       });
     });
 
+    describe('GET /courses - Search Functionality', () => {
+      it('should return only courses matching the search term', async () => {
+        // SETUP: Create several courses with distinct names and descriptions
+        const courseA = await TestFactory.prisma.course.create({
+          data: CourseFactory.build({
+            id: 'course-a',
+            name: 'Beginner Spanish Lessons',
+            description: 'Learn the basics of European Spanish.',
+            isPublic: true
+          })
+        });
+
+        const courseB = await TestFactory.prisma.course.create({
+          data: CourseFactory.build({
+            id: 'course-b',
+            name: 'Advanced French Grammar',
+            description: 'Focus on complex French structures.',
+            isPublic: true
+          })
+        });
+
+        const courseC = await TestFactory.prisma.course.create({
+          data: CourseFactory.build({
+            id: 'course-c',
+            name: 'Conversational Spanish',
+            description: 'Practice speaking.',
+            isPublic: true
+          })
+        });
+
+        // EXECUTE: Search for "spanish"
+        const response = await request(app)
+          .get(`${API_BASE}/courses`)
+          .query({ search: 'spanish' })
+          .expect(200);
+
+        // ASSERT: Should return only courses A and C
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        
+        const returnedIds = response.body.data.map((course: any) => course.id);
+        expect(returnedIds).toContain(courseA.id);
+        expect(returnedIds).toContain(courseC.id);
+        expect(returnedIds).not.toContain(courseB.id);
+      });
+    });
+
     describe('GET /courses/:id', () => {
       it('should return course by ID', async () => {
-        // Arrange: Create test course
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-get',
             name: 'Test Course for Get'
           })
         });
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .get(`${API_BASE}/courses/${testCourse.id}`)
           .expect(200);
@@ -312,7 +303,7 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should return 404 or 500 for non-existent course', async () => {
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .get(`${API_BASE}/courses/non-existent-course`)
           .expect(404);
@@ -323,8 +314,10 @@ describe('Content Management Integration Tests', () => {
 
     describe('PUT /courses/:id', () => {
       it('should allow admin to update course', async () => {
-        // Arrange: Create test course
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-update',
             name: 'Original Course Name'
@@ -336,7 +329,7 @@ describe('Content Management Integration Tests', () => {
           description: 'Updated description'
         };
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .put(`${API_BASE}/courses/${testCourse.id}`)
           .set('Authorization', `Bearer ${adminToken}`)
@@ -349,8 +342,10 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should reject student updating course', async () => {
-        // Arrange: Create test course
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: studentToken } = await TestFactory.createUser({ role: 'student' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-update-2',
             name: 'Original Course Name'
@@ -359,7 +354,7 @@ describe('Content Management Integration Tests', () => {
 
         const updateData = { name: 'Unauthorized Update' };
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .put(`${API_BASE}/courses/${testCourse.id}`)
           .set('Authorization', `Bearer ${studentToken}`)
@@ -372,37 +367,41 @@ describe('Content Management Integration Tests', () => {
 
     describe('DELETE /courses/:id', () => {
       it('should allow admin to delete course', async () => {
-        // Arrange: Create test course
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-delete',
             name: 'Course to Delete'
           })
         });
 
-        // Act
+        // EXECUTE
         await request(app)
           .delete(`${API_BASE}/courses/${testCourse.id}`)
           .set('Authorization', `Bearer ${adminToken}`)
-          .expect(204);
+          .expect(200);
 
-        // Verify course is deleted
-        const deletedCourse = await prisma.course.findUnique({
+        // ASSERT: Verify course is deleted
+        const deletedCourse = await TestFactory.prisma.course.findUnique({
           where: { id: testCourse.id }
         });
         expect(deletedCourse).toBeNull();
       });
 
       it('should reject content creator deleting course', async () => {
-        // Arrange: Create test course
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: contentCreatorToken } = await TestFactory.createUser({ role: 'content_creator' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-delete-2',
             name: 'Course to Delete'
           })
         });
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .delete(`${API_BASE}/courses/${testCourse.id}`)
           .set('Authorization', `Bearer ${contentCreatorToken}`)
@@ -416,8 +415,10 @@ describe('Content Management Integration Tests', () => {
   describe('Hierarchical Content Management', () => {
     describe('Level Management', () => {
       it('should create level under course', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-1',
             name: 'Hierarchy Test Course'
@@ -431,14 +432,14 @@ describe('Content Management Integration Tests', () => {
           order: 2
         };
 
-        // Act
+        // EXECUTE
         const response = await request(app)
           .post(`${API_BASE}/courses/${testCourse.id}/levels`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send(levelData)
           .expect(201);
 
-        // Assert
+        // ASSERT
         expect(response.body.success).toBe(true);
         expect(response.body.data).toMatchObject({
           id: levelData.id,
@@ -448,27 +449,27 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should list levels for course', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-2',
             name: 'Hierarchy Test Course'
           })
         });
 
-        await prisma.level.create({
+        await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-1',
             code: 'A1'
           })
         });
 
-        // Act
+        // EXECUTE
         const response = await request(app)
           .get(`${API_BASE}/courses/${testCourse.id}/levels`)
           .expect(200);
 
-        // Assert
+        // ASSERT
         expect(response.body.success).toBe(true);
         expect(response.body.data).toBeInstanceOf(Array);
         expect(response.body.data.length).toBeGreaterThan(0);
@@ -476,15 +477,17 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should enforce unique level codes within course', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-3',
             name: 'Hierarchy Test Course'
           })
         });
 
-        await prisma.level.create({
+        await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-existing',
             code: 'A1'
@@ -498,7 +501,7 @@ describe('Content Management Integration Tests', () => {
           order: 3
         };
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .post(`${API_BASE}/courses/${testCourse.id}/levels`)
           .set('Authorization', `Bearer ${adminToken}`)
@@ -511,15 +514,17 @@ describe('Content Management Integration Tests', () => {
 
     describe('Section Management', () => {
       it('should create section under level', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for thties ft
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-4',
             name: 'Hierarchy Test Course'
           })
         });
 
-        const testLevel = await prisma.level.create({
+        const testLevel = await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-2',
             code: 'A1'
@@ -532,14 +537,14 @@ describe('Content Management Integration Tests', () => {
           order: 2
         };
 
-        // Act
+        // EXECUTE
         const response = await request(app)
           .post(`${API_BASE}/levels/${testLevel.id}/sections`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send(sectionData)
           .expect(201);
 
-        // Assert
+        // ASSERT
         expect(response.body.success).toBe(true);
         expect(response.body.data).toMatchObject({
           id: sectionData.id,
@@ -549,33 +554,33 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should list sections for level', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-5',
             name: 'Hierarchy Test Course'
           })
         });
 
-        const testLevel = await prisma.level.create({
+        const testLevel = await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-3',
             code: 'A1'
           })
         });
 
-        await prisma.section.create({
+        await TestFactory.prisma.section.create({
           data: SectionFactory.build(testLevel.id, {
             id: 'test-section-1'
           })
         });
 
-        // Act
+        // EXECUTE
         const response = await request(app)
           .get(`${API_BASE}/levels/${testLevel.id}/sections`)
           .expect(200);
 
-        // Assert
+        // ASSERT
         expect(response.body.success).toBe(true);
         expect(response.body.data).toBeInstanceOf(Array);
         expect(response.body.data[0].level_id).toBe(testLevel.id);
@@ -584,22 +589,24 @@ describe('Content Management Integration Tests', () => {
 
     describe('Module Management', () => {
       it('should create module under section', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-6',
             name: 'Hierarchy Test Course'
           })
         });
 
-        const testLevel = await prisma.level.create({
+        const testLevel = await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-4',
             code: 'A1'
           })
         });
 
-        const testSection = await prisma.section.create({
+        const testSection = await TestFactory.prisma.section.create({
           data: SectionFactory.build(testLevel.id, {
             id: 'test-section-2'
           })
@@ -612,14 +619,14 @@ describe('Content Management Integration Tests', () => {
           order: 1
         };
 
-        // Act
+        // EXECUTE
         const response = await request(app)
           .post(`${API_BASE}/sections/${testSection.id}/modules`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send(moduleData)
           .expect(201);
 
-        // Assert
+        // ASSERT
         expect(response.body.success).toBe(true);
         expect(response.body.data).toMatchObject({
           id: moduleData.id,
@@ -629,22 +636,24 @@ describe('Content Management Integration Tests', () => {
       });
 
       it('should validate module type', async () => {
-        // Arrange: Create the necessary parent entities first
-        const testCourse = await prisma.course.create({
+        // SETUP: Create fresh, isolated data for this test
+        const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+        const testCourse = await TestFactory.prisma.course.create({
           data: CourseFactory.build({
             id: 'test-hier-7',
             name: 'Hierarchy Test Course'
           })
         });
 
-        const testLevel = await prisma.level.create({
+        const testLevel = await TestFactory.prisma.level.create({
           data: LevelFactory.build(testCourse.id, {
             id: 'test-level-5',
             code: 'A1'
           })
         });
 
-        const testSection = await prisma.section.create({
+        const testSection = await TestFactory.prisma.section.create({
           data: SectionFactory.build(testLevel.id, {
             id: 'test-section-3'
           })
@@ -657,7 +666,7 @@ describe('Content Management Integration Tests', () => {
           order: 1
         };
 
-        // Act & Assert
+        // EXECUTE & ASSERT
         const response = await request(app)
           .post(`${API_BASE}/sections/${testSection.id}/modules`)
           .set('Authorization', `Bearer ${adminToken}`)
@@ -671,48 +680,49 @@ describe('Content Management Integration Tests', () => {
 
   describe('Packaged Content API', () => {
     it('should return packaged course with nested content', async () => {
-      // Arrange: Create complete course hierarchy for packaging
-      const packagedCourse = await prisma.course.create({
+      // SETUP: Create fresh, isolated data for this test
+      const packagedCourse = await TestFactory.prisma.course.create({
         data: CourseFactory.build({
           id: 'test-package-1',
           name: 'Packaged Course'
         })
       });
 
-      const level = await prisma.level.create({
+      const level = await TestFactory.prisma.level.create({
         data: LevelFactory.build(packagedCourse.id, {
           id: 'test-pack-level',
           code: 'A1'
         })
       });
 
-      const section = await prisma.section.create({
+      const section = await TestFactory.prisma.section.create({
         data: SectionFactory.build(level.id, {
           id: 'test-pack-section'
         })
       });
 
-      const module = await prisma.module.create({
+      const module = await TestFactory.prisma.module.create({
         data: ModuleFactory.build(section.id, {
           id: 'test-pack-module'
         })
       });
 
-      await prisma.lesson.create({
+      await TestFactory.prisma.lesson.create({
         data: {
           id: 'test-pack-lesson',
           moduleId: module.id,
+          name: 'Test Package Lesson',
           experiencePoints: 10,
           order: 1
         }
       });
 
-      // Act
+      // EXECUTE
       const response = await request(app)
         .get(`${API_BASE}/courses/${packagedCourse.id}/package`)
         .expect(200);
 
-      // Assert
+      // ASSERT
       expect(response.body.success).toBe(true);
       expect(response.body.data.course).toMatchObject({
         id: packagedCourse.id,
@@ -725,48 +735,49 @@ describe('Content Management Integration Tests', () => {
     });
 
     it('should include versioning information', async () => {
-      // Arrange: Create complete course hierarchy for packaging
-      const packagedCourse = await prisma.course.create({
+      // SETUP: Create fresh, isolated data for this test
+      const packagedCourse = await TestFactory.prisma.course.create({
         data: CourseFactory.build({
           id: 'test-package-2',
           name: 'Packaged Course'
         })
       });
 
-      const level = await prisma.level.create({
+      const level = await TestFactory.prisma.level.create({
         data: LevelFactory.build(packagedCourse.id, {
           id: 'test-pack-level-2',
           code: 'A1'
         })
       });
 
-      const section = await prisma.section.create({
+      const section = await TestFactory.prisma.section.create({
         data: SectionFactory.build(level.id, {
           id: 'test-pack-section-2'
         })
       });
 
-      const module = await prisma.module.create({
+      const module = await TestFactory.prisma.module.create({
         data: ModuleFactory.build(section.id, {
           id: 'test-pack-module-2'
         })
       });
 
-      await prisma.lesson.create({
+      await TestFactory.prisma.lesson.create({
         data: {
           id: 'test-pack-lesson-2',
           moduleId: module.id,
+          name: 'Test Package Lesson 2',
           experiencePoints: 10,
           order: 1
         }
       });
 
-      // Act
+      // EXECUTE
       const response = await request(app)
         .get(`${API_BASE}/courses/${packagedCourse.id}/package`)
         .expect(200);
 
-      // Assert
+      // ASSERT
       expect(response.body.data).toHaveProperty('package_version');
       expect(response.body.data.package_version).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
@@ -774,36 +785,38 @@ describe('Content Management Integration Tests', () => {
 
   describe('Cross-Module Integration', () => {
     it('should handle cascading deletes properly', async () => {
-      // Arrange: Create complete hierarchy
-      const course = await prisma.course.create({
+      // SETUP: Create fresh, isolated data for this test
+      const { authToken: adminToken } = await TestFactory.createUser({ role: 'admin' });
+
+      const course = await TestFactory.prisma.course.create({
         data: CourseFactory.build({
           id: 'test-cascade'
         })
       });
 
-      const level = await prisma.level.create({
+      const level = await TestFactory.prisma.level.create({
         data: LevelFactory.build(course.id, {
           id: 'test-cascade-level'
         })
       });
 
-      const section = await prisma.section.create({
+      const section = await TestFactory.prisma.section.create({
         data: SectionFactory.build(level.id, {
           id: 'test-cascade-section'
         })
       });
 
-      // Act: Delete course
+      // EXECUTE: Delete course
       await request(app)
         .delete(`${API_BASE}/courses/${course.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(204);
+        .expect(200);
 
-      // Assert: Verify cascading delete
-      const deletedLevel = await prisma.level.findUnique({
+      // ASSERT: Verify cascading delete
+      const deletedLevel = await TestFactory.prisma.level.findUnique({
         where: { id: level.id }
       });
-      const deletedSection = await prisma.section.findUnique({
+      const deletedSection = await TestFactory.prisma.section.findUnique({
         where: { id: section.id }
       });
 

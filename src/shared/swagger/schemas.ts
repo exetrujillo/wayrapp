@@ -109,6 +109,107 @@ export const swaggerSchemas = {
           }
         }
       },
+      Lesson: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            maxLength: 60,
+            example: 'lesson-intro-greetings'
+          },
+          module_id: {
+            type: 'string',
+            maxLength: 50,
+            example: 'module-basic-conversation'
+          },
+          name: {
+            type: 'string',
+            maxLength: 150,
+            example: 'Introduction to Greetings'
+          },
+          description: {
+            type: 'string',
+            nullable: true,
+            example: 'Learn basic greeting phrases and expressions'
+          },
+          experience_points: {
+            type: 'integer',
+            minimum: 0,
+            example: 15
+          },
+          order: {
+            type: 'integer',
+            minimum: 1,
+            example: 1
+          },
+          created_at: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-20T10:30:00.000Z'
+          },
+          updated_at: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-20T10:30:00.000Z'
+          },
+          exercises: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/LessonExercise'
+            }
+          }
+        }
+      },
+      LessonExercise: {
+        type: 'object',
+        properties: {
+          lesson_id: {
+            type: 'string',
+            example: 'lesson-intro-greetings'
+          },
+          exercise_id: {
+            type: 'string',
+            example: 'exercise-translate-hello'
+          },
+          order: {
+            type: 'integer',
+            minimum: 1,
+            example: 1
+          },
+          exercise: {
+            $ref: '#/components/schemas/Exercise'
+          }
+        }
+      },
+      Exercise: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            maxLength: 15,
+            example: 'exercise-001'
+          },
+          exercise_type: {
+            type: 'string',
+            enum: ['translation', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering'],
+            example: 'translation'
+          },
+          data: {
+            type: 'object',
+            description: 'Exercise-specific data structure'
+          },
+          created_at: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-20T10:30:00.000Z'
+          },
+          updated_at: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-20T10:30:00.000Z'
+          }
+        }
+      },
       ApiResponse: {
         type: 'object',
         properties: {
@@ -201,6 +302,35 @@ export const swaggerSchemas = {
             type: 'string',
             format: 'date-time',
             example: '2023-07-20T12:34:56.789Z'
+          }
+        }
+      },
+      PaginationInfo: {
+        type: 'object',
+        properties: {
+          total: {
+            type: 'integer',
+            example: 100
+          },
+          totalPages: {
+            type: 'integer',
+            example: 5
+          },
+          page: {
+            type: 'integer',
+            example: 1
+          },
+          limit: {
+            type: 'integer',
+            example: 20
+          },
+          hasNext: {
+            type: 'boolean',
+            example: true
+          },
+          hasPrev: {
+            type: 'boolean',
+            example: false
           }
         }
       }

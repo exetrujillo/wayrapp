@@ -123,6 +123,7 @@ export class ExerciseController {
             const response: ApiResponse = {
                 data: exercise,
                 success: true,
+                message: 'Exercise created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -352,6 +353,7 @@ export class ExerciseController {
             const response: ApiResponse = {
                 data: exercise,
                 success: true,
+                message: 'Exercise updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -403,7 +405,7 @@ export class ExerciseController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }

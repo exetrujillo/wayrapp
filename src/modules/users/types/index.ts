@@ -92,6 +92,13 @@ export const UpdateRoleSchema = z.object({
   role: z.enum(["student", "content_creator", "admin"]),
 });
 
+// Whitelist DTO for profile updates (security hardening)
+export type AllowedProfileUpdateDto = {
+  username?: string;
+  country_code?: string;
+  profile_picture_url?: string;
+};
+
 // Export types for Zod schemas
 export type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
 export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;

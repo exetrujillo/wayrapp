@@ -83,6 +83,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { AppError } from './errorHandler';
 import { JWTPayload, UserRole, ErrorCodes, HttpStatus } from '@/shared/types';
 import { logger } from '@/shared/utils/logger';
@@ -95,6 +96,30 @@ declare global {
     }
   }
 }
+
+/**
+ * JWT Payload Validation Schema
+ * 
+ * Zod schema for validating the structure and content of JWT payloads to ensure
+ * tokens contain properly formatted and valid data. This schema validates that:
+ * - sub (user ID) is a valid UUID string
+ * - email is a properly formatted email address
+ * - role is one of the expected UserRole enum values
+ * - iat (issued at) is a positive number representing Unix timestamp
+ * - exp (expiration) is a positive number representing Unix timestamp
+ * 
+ * This validation prevents malformed or malicious JWT payloads from being processed
+ * by the application, providing defense-in-depth security for authentication.
+ */
+const JWTPayloadSchema = z.object({
+  sub: z.string().uuid('Invalid user ID format in token'),
+  email: z.string().email('Invalid email format in token'),
+  role: z.enum(['student', 'content_creator', 'admin'], {
+    errorMap: () => ({ message: 'Invalid role in token' })
+  }),
+  iat: z.number().positive('Invalid issued at timestamp in token'),
+  exp: z.number().positive('Invalid expiration timestamp in token')
+});
 
 /**
  * JWT Authentication Middleware
@@ -171,14 +196,29 @@ export const authenticateToken = async (
     }
 
     // Verify token
-    const decoded = jwt.verify(token, jwtSecret) as JWTPayload;
+    const decoded = jwt.verify(token, jwtSecret);
 
-    // Attach user info to request
-    req.user = decoded;
+    // Validate JWT payload structure and content
+    const validationResult = JWTPayloadSchema.safeParse(decoded);
+    
+    if (!validationResult.success) {
+      logger.warn('Invalid JWT payload structure', {
+        error: validationResult.error.flatten(),
+        tokenId: (decoded as any)?.jti || 'unknown'
+      });
+      throw new AppError(
+        'Invalid token payload',
+        HttpStatus.UNAUTHORIZED,
+        ErrorCodes.AUTHENTICATION_ERROR
+      );
+    }
+
+    // Attach validated user info to request
+    req.user = validationResult.data;
 
     logger.debug('Token verified successfully', {
-      userId: decoded.sub,
-      role: decoded.role
+      userId: validationResult.data.sub,
+      role: validationResult.data.role
     });
 
     next();
@@ -531,9 +571,19 @@ export const optionalAuth = async (
     }
 
     try {
-      const decoded = jwt.verify(token, jwtSecret) as JWTPayload;
-      req.user = decoded;
-      logger.debug('Optional auth - token verified', { userId: decoded.sub });
+      const decoded = jwt.verify(token, jwtSecret);
+      
+      // Validate JWT payload structure for optional auth as well
+      const validationResult = JWTPayloadSchema.safeParse(decoded);
+      
+      if (validationResult.success) {
+        req.user = validationResult.data;
+        logger.debug('Optional auth - token verified', { userId: validationResult.data.sub });
+      } else {
+        logger.debug('Optional auth - invalid token payload ignored', { 
+          error: validationResult.error.flatten() 
+        });
+      }
     } catch (error: any) {
       // Ignore token errors for optional auth
       logger.debug('Optional auth - invalid token ignored', { error: error.message });

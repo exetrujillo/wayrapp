@@ -68,8 +68,18 @@ import { PrismaClient } from '@prisma/client';
 import { ProgressController } from '../controllers/progressController';
 import { ProgressService } from '../services/progressService';
 import { ProgressRepository } from '../repositories/progressRepository';
+import { 
+  UpdateUserProgressSchema,
+  LessonIdParamSchema,
+  LessonCompletionBodySchema,
+  OfflineProgressSyncSchema,
+  UpdateUserLivesSchema,
+  AwardBonusSchema,
+  ResetProgressSchema
+} from '../types';
 import { authenticateToken, requireRole } from '@/shared/middleware/auth';
-// import { validate as validateRequest } from '@/shared/middleware/validation';
+import { validate } from '@/shared/middleware/validation';
+import { PaginationSchema } from '@/shared/schemas';
 
 /**
  * Creates and configures an Express router with progress tracking and gamification routes.
@@ -142,9 +152,6 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "User progress retrieved successfully"
    *                 data:
    *                   type: object
    *                   properties:
@@ -206,9 +213,6 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "Progress summary retrieved successfully"
    *                 data:
    *                   type: object
    *                   properties:
@@ -309,7 +313,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: User progress not found
    */
-  router.put('/progress', progressController.updateUserProgress);
+  router.put('/progress', validate({ body: UpdateUserProgressSchema }), progressController.updateUserProgress);
 
   // Lesson completion endpoints
 
@@ -402,7 +406,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       409:
    *         description: Lesson already completed
    */
-  router.post('/progress/lesson/:id', progressController.completeLesson);
+  router.post('/progress/lesson/:id', validate({ params: LessonIdParamSchema, body: LessonCompletionBodySchema }), progressController.completeLesson);
   /**
    * @swagger
    * /api/v1/progress/lesson/{id}/completed:
@@ -434,9 +438,6 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "Lesson completion status retrieved successfully"
    *                 data:
    *                   type: object
    *                   properties:
@@ -467,7 +468,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: Lesson not found
    */
-  router.get('/progress/lesson/:id/completed', progressController.checkLessonCompletion);
+  router.get('/progress/lesson/:id/completed', validate({ params: LessonIdParamSchema }), progressController.checkLessonCompletion);
   /**
    * @swagger
    * /api/v1/progress/completions:
@@ -512,9 +513,6 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "User lesson completions retrieved successfully"
    *                 data:
    *                   type: array
    *                   items:
@@ -544,7 +542,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       401:
    *         description: Invalid or missing authentication token
    */
-  router.get('/progress/completions', progressController.getUserLessonCompletions);
+  router.get('/progress/completions', validate({ query: PaginationSchema }), progressController.getUserLessonCompletions);
 
   // Offline synchronization
 
@@ -639,7 +637,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       409:
    *         description: Sync conflicts detected
    */
-  router.put('/progress/sync', progressController.syncOfflineProgress);
+  router.put('/progress/sync', validate({ body: OfflineProgressSyncSchema }), progressController.syncOfflineProgress);
 
   // Gamification features
 
@@ -712,7 +710,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: User progress not found
    */
-  router.put('/progress/lives', progressController.updateUserLives);
+  router.put('/progress/lives', validate({ body: UpdateUserLivesSchema }), progressController.updateUserLives);
 
   // Admin-only endpoints
 
@@ -793,7 +791,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: User not found
    */
-  router.post('/progress/bonus', requireRole(['admin']), progressController.awardBonusExperience);
+  router.post('/progress/bonus', requireRole(['admin']), validate({ body: AwardBonusSchema }), progressController.awardBonusExperience);
   /**
    * @swagger
    * /api/v1/progress/reset:
@@ -869,7 +867,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: User not found
    */
-  router.post('/progress/reset', requireRole(['admin']), progressController.resetUserProgress);
+  router.post('/progress/reset', requireRole(['admin']), validate({ body: ResetProgressSchema }), progressController.resetUserProgress);
 
   // Analytics endpoints (admin and content creators)
 
@@ -912,9 +910,6 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "Lesson completion statistics retrieved successfully"
    *                 data:
    *                   type: object
    *                   properties:
@@ -992,6 +987,7 @@ export function createProgressRoutes(prisma: PrismaClient): Router {
   router.get(
     '/progress/lesson/:id/stats',
     requireRole(['admin', 'content_creator']),
+    validate({ params: LessonIdParamSchema }),
     progressController.getLessonCompletionStats
   );
 

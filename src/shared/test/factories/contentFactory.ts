@@ -156,6 +156,8 @@ export class LessonFactory {
     const defaultLesson = {
       id: lessonId,
       moduleId: moduleId,
+      name: `Test Lesson ${lessonId}`,
+      description: `Description for ${lessonId}`,
       experiencePoints: 10,
       order: Math.floor(Math.random() * 10) + 1,
     };

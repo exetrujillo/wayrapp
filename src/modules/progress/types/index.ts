@@ -46,9 +46,12 @@ export interface ProgressSummary {
   experience_points: number;
   lives_current: number;
   streak_current: number;
+  longest_streak: number;
   lessons_completed: number;
   courses_started: number;
   courses_completed: number;
+  completion_percentage: number;
+  average_score: number;
   last_activity_date: Date;
 }
 
@@ -82,6 +85,11 @@ export const UpdateProgressSchema = z.object({
     .string()
     .min(1, "Lesson ID is required")
     .max(60, "Lesson ID too long"),
+  score: ScoreSchema.optional(),
+  time_spent_seconds: TimeSecondsSchema.optional(),
+});
+
+export const LessonCompletionBodySchema = z.object({
   score: ScoreSchema.optional(),
   time_spent_seconds: TimeSecondsSchema.optional(),
 });
@@ -130,6 +138,21 @@ export const LessonIdParamSchema = z.object({
   id: z.string().min(1, "Lesson ID is required").max(60, "Lesson ID too long"),
 });
 
+export const UpdateUserLivesSchema = z.object({
+  lives_change: z.number().int(),
+});
+
+export const AwardBonusSchema = z.object({
+  target_user_id: z.string().uuid('Invalid user ID format'),
+  bonus_points: z.number().int().positive('Bonus points must be a positive integer'),
+  reason: z.string().min(1, 'Reason is required'),
+});
+
+export const ResetProgressSchema = z.object({
+  target_user_id: z.string().uuid('Invalid user ID format'),
+  reason: z.string().min(1).optional(),
+});
+
 // Type exports for validation schemas
 export type UpdateProgressInput = z.infer<typeof UpdateProgressSchema>;
 export type OfflineProgressSyncInput = z.infer<
@@ -141,3 +164,7 @@ export type CreateLessonCompletionInput = z.infer<
   typeof CreateLessonCompletionSchema
 >;
 export type LessonIdParam = z.infer<typeof LessonIdParamSchema>;
+export type UpdateUserLivesInput = z.infer<typeof UpdateUserLivesSchema>;
+export type AwardBonusInput = z.infer<typeof AwardBonusSchema>;
+export type ResetProgressInput = z.infer<typeof ResetProgressSchema>;
+export type LessonCompletionBodyInput = z.infer<typeof LessonCompletionBodySchema>;

@@ -264,7 +264,7 @@ describe("Authentication Middleware", () => {
       req.headers = { authorization: `Bearer ${token}` };
 
       const decodedToken = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "student",
         iat: 1234567890,
@@ -388,6 +388,59 @@ describe("Authentication Middleware", () => {
       // Assert
       expect(next).toHaveBeenCalledWith(customError);
     });
+
+    it("should reject token with invalid payload structure", async () => {
+      // Arrange
+      req.headers = { authorization: "Bearer token" };
+      
+      // Mock JWT verification to return invalid payload (missing required fields)
+      const invalidPayload = {
+        sub: "not-a-uuid", // Invalid UUID format
+        email: "invalid-email", // Invalid email format
+        role: "invalid-role", // Invalid role
+        iat: -1, // Invalid timestamp
+        exp: -1 // Invalid timestamp
+      };
+      
+      (jwt.verify as jest.Mock).mockReturnValue(invalidPayload);
+
+      // Act
+      await authenticateToken(req, res, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Invalid token payload",
+          statusCode: HttpStatus.UNAUTHORIZED,
+          code: ErrorCodes.AUTHENTICATION_ERROR,
+        }),
+      );
+    });
+
+    it("should reject token with missing required fields", async () => {
+      // Arrange
+      req.headers = { authorization: "Bearer token" };
+      
+      // Mock JWT verification to return payload missing required fields
+      const incompletePayload = {
+        sub: "550e8400-e29b-41d4-a716-446655440000",
+        // Missing email, role, iat, exp
+      };
+      
+      (jwt.verify as jest.Mock).mockReturnValue(incompletePayload);
+
+      // Act
+      await authenticateToken(req, res, next);
+
+      // Assert
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: "Invalid token payload",
+          statusCode: HttpStatus.UNAUTHORIZED,
+          code: ErrorCodes.AUTHENTICATION_ERROR,
+        }),
+      );
+    });
   });
 
   /**
@@ -413,7 +466,7 @@ describe("Authentication Middleware", () => {
     it("should allow access when user has required role", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "admin",
         iat: 1234567890,
@@ -432,7 +485,7 @@ describe("Authentication Middleware", () => {
     it("should allow access when user has one of the required roles", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "content_creator",
         iat: 1234567890,
@@ -451,7 +504,7 @@ describe("Authentication Middleware", () => {
     it("should deny access when user does not have required role", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "student",
         iat: 1234567890,
@@ -515,7 +568,7 @@ describe("Authentication Middleware", () => {
     it("should allow access when user has required permission", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "admin",
         iat: 1234567890,
@@ -534,7 +587,7 @@ describe("Authentication Middleware", () => {
     it("should deny access when user does not have required permission", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "student",
         iat: 1234567890,
@@ -559,7 +612,7 @@ describe("Authentication Middleware", () => {
     it("should allow content creator to create content", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "creator@example.com",
         role: "content_creator",
         iat: 1234567890,
@@ -578,7 +631,7 @@ describe("Authentication Middleware", () => {
     it("should deny student access to create content", () => {
       // Arrange
       req.user = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "student@example.com",
         role: "student",
         iat: 1234567890,
@@ -645,7 +698,7 @@ describe("Authentication Middleware", () => {
       req.headers = { authorization: `Bearer ${token}` };
 
       const decodedToken = {
-        sub: "user-123",
+        sub: "550e8400-e29b-41d4-a716-446655440000",
         email: "test@example.com",
         role: "student",
         iat: 1234567890,
@@ -702,6 +755,29 @@ describe("Authentication Middleware", () => {
       expect(req.user).toBeNull();
       expect(next).toHaveBeenCalledWith();
     });
+
+    it("should continue without error when token has invalid payload", async () => {
+      // Arrange
+      req.headers = { authorization: "Bearer token" };
+      
+      // Mock JWT verification to return invalid payload
+      const invalidPayload = {
+        sub: "not-a-uuid",
+        email: "invalid-email",
+        role: "invalid-role",
+        iat: -1,
+        exp: -1
+      };
+      
+      (jwt.verify as jest.Mock).mockReturnValue(invalidPayload);
+
+      // Act
+      await optionalAuth(req, res, next);
+
+      // Assert
+      expect(req.user).toBeNull(); // Should not attach invalid user
+      expect(next).toHaveBeenCalledWith();
+    });
   });
 
   /**
@@ -728,7 +804,7 @@ describe("Authentication Middleware", () => {
   describe("requireOwnership", () => {
     it("should allow access when user is the owner of the resource", () => {
       // Arrange
-      const userId = "user-123";
+      const userId = "550e8400-e29b-41d4-a716-446655440000";
       req.user = {
         sub: userId,
         email: "test@example.com",
@@ -756,7 +832,7 @@ describe("Authentication Middleware", () => {
         iat: 1234567890,
         exp: 9999999999,
       };
-      req.params = { userId: "user-123" };
+      req.params = { userId: "550e8400-e29b-41d4-a716-446655440000" };
 
       const middleware = requireOwnership();
 
@@ -776,7 +852,7 @@ describe("Authentication Middleware", () => {
         iat: 1234567890,
         exp: 9999999999,
       };
-      req.params = { userId: "user-123" };
+      req.params = { userId: "550e8400-e29b-41d4-a716-446655440000" };
 
       const middleware = requireOwnership();
 
@@ -795,7 +871,7 @@ describe("Authentication Middleware", () => {
 
     it("should use custom parameter name when provided", () => {
       // Arrange
-      const userId = "user-123";
+      const userId = "550e8400-e29b-41d4-a716-446655440000";
       req.user = {
         sub: userId,
         email: "test@example.com",
@@ -816,7 +892,7 @@ describe("Authentication Middleware", () => {
 
     it("should throw error when user is not authenticated", () => {
       // Arrange
-      req.params = { userId: "user-123" };
+      req.params = { userId: "550e8400-e29b-41d4-a716-446655440000" };
 
       const middleware = requireOwnership();
 

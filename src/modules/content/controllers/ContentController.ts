@@ -128,6 +128,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: course,
                 success: true,
+                message: 'Course created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -272,6 +273,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: course,
                 success: true,
+                message: 'Course updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -320,7 +322,7 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }
@@ -432,6 +434,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: level,
                 success: true,
+                message: 'Level created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -576,6 +579,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: level,
                 success: true,
+                message: 'Level updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -619,7 +623,7 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }
@@ -660,6 +664,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: section,
                 success: true,
+                message: 'Section created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -795,6 +800,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: section,
                 success: true,
+                message: 'Section updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -835,7 +841,7 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }
@@ -879,6 +885,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: module,
                 success: true,
+                message: 'Module created successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -1024,6 +1031,7 @@ export class ContentController {
             const response: ApiResponse = {
                 data: module,
                 success: true,
+                message: 'Module updated successfully',
                 timestamp: new Date().toISOString(),
             };
 
@@ -1065,7 +1073,7 @@ export class ContentController {
                 timestamp: new Date().toISOString(),
             };
 
-            res.status(HttpStatus.NO_CONTENT).json(response);
+            res.status(HttpStatus.OK).json(response);
         } catch (error) {
             next(error);
         }

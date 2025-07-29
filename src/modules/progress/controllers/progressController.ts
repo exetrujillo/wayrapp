@@ -43,15 +43,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProgressService } from '../services/progressService';
 import { 
-  UpdateProgressSchema, 
-  OfflineProgressSyncSchema,
-  UpdateUserProgressSchema,
-  LessonIdParamSchema,
   UpdateProgressInput,
   OfflineProgressSyncInput,
   UpdateUserProgressInput
 } from '../types';
-import { PaginationSchema } from '@/shared/schemas';
 import { AppError } from '@/shared/middleware/errorHandler';
 import { ErrorCodes, HttpStatus } from '@/shared/types';
 import { logger } from '@/shared/utils/logger';
@@ -187,19 +182,18 @@ export class ProgressController {
         );
       }
 
-      // Validate lesson ID parameter
-      const { id: lessonId } = LessonIdParamSchema.parse(req.params);
-
-      // Validate request body
+      // Extract validated data from middleware
+      const { id: lessonId } = req.params as { id: string };
+      const bodyData = req.body;
+      
+      // Construct the progress data with lesson_id from URL parameter
       const progressData: UpdateProgressInput = {
         lesson_id: lessonId,
-        score: req.body.score,
-        time_spent_seconds: req.body.time_spent_seconds,
+        score: bodyData.score,
+        time_spent_seconds: bodyData.time_spent_seconds,
       };
 
-      const validatedData = UpdateProgressSchema.parse(progressData);
-
-      const result = await this.progressService.completeLesson(userId, validatedData);
+      const result = await this.progressService.completeLesson(userId, progressData);
 
       logger.info('Lesson completion processed', {
         userId,
@@ -256,8 +250,8 @@ export class ProgressController {
         );
       }
 
-      // Validate request body
-      const syncData: OfflineProgressSyncInput = OfflineProgressSyncSchema.parse(req.body);
+      // Use validated data from middleware
+      const syncData: OfflineProgressSyncInput = req.body;
 
       const result = await this.progressService.syncOfflineProgress(userId, syncData);
 
@@ -299,8 +293,8 @@ export class ProgressController {
         );
       }
 
-      // Validate pagination parameters
-      const paginationOptions = PaginationSchema.parse(req.query);
+      // Use validated pagination parameters from middleware
+      const paginationOptions = req.query;
 
       const result = await this.progressService.getUserLessonCompletions(userId, paginationOptions);
 
@@ -335,8 +329,8 @@ export class ProgressController {
         );
       }
 
-      // Validate lesson ID parameter
-      const { id: lessonId } = LessonIdParamSchema.parse(req.params);
+      // Use validated lesson ID from middleware
+      const { id: lessonId } = req.params as { id: string };
 
       const isCompleted = await this.progressService.isLessonCompleted(userId, lessonId);
 
@@ -373,8 +367,8 @@ export class ProgressController {
         );
       }
 
-      // Validate request body
-      const updates: UpdateUserProgressInput = UpdateUserProgressSchema.parse(req.body);
+      // Use validated request body from middleware
+      const updates: UpdateUserProgressInput = req.body;
 
       const updatedProgress = await this.progressService.updateUserProgress(userId, updates);
 
@@ -419,32 +413,12 @@ export class ProgressController {
         );
       }
 
-      // Check if user has admin role
       if (req.user?.role !== 'admin') {
-        throw new AppError(
-          'Insufficient permissions',
-          HttpStatus.FORBIDDEN,
-          ErrorCodes.AUTHORIZATION_ERROR
-        );
+        throw new AppError('Insufficient permissions', HttpStatus.FORBIDDEN, ErrorCodes.AUTHORIZATION_ERROR);
       }
 
+      // Use validated request body from middleware
       const { target_user_id, bonus_points, reason } = req.body;
-
-      if (!target_user_id || !bonus_points || !reason) {
-        throw new AppError(
-          'Missing required fields: target_user_id, bonus_points, reason',
-          HttpStatus.BAD_REQUEST,
-          ErrorCodes.VALIDATION_ERROR
-        );
-      }
-
-      if (typeof bonus_points !== 'number' || bonus_points <= 0) {
-        throw new AppError(
-          'Bonus points must be a positive number',
-          HttpStatus.BAD_REQUEST,
-          ErrorCodes.VALIDATION_ERROR
-        );
-      }
 
       const updatedProgress = await this.progressService.awardBonusExperience(
         target_user_id,
@@ -496,15 +470,8 @@ export class ProgressController {
         );
       }
 
+      // Use validated request body from middleware
       const { lives_change } = req.body;
-
-      if (typeof lives_change !== 'number') {
-        throw new AppError(
-          'Lives change must be a number',
-          HttpStatus.BAD_REQUEST,
-          ErrorCodes.VALIDATION_ERROR
-        );
-      }
 
       const updatedProgress = await this.progressService.updateUserLives(userId, lives_change);
 
@@ -545,24 +512,12 @@ export class ProgressController {
         );
       }
 
-      // Check if user has admin role
       if (req.user?.role !== 'admin') {
-        throw new AppError(
-          'Insufficient permissions',
-          HttpStatus.FORBIDDEN,
-          ErrorCodes.AUTHORIZATION_ERROR
-        );
+        throw new AppError('Insufficient permissions', HttpStatus.FORBIDDEN, ErrorCodes.AUTHORIZATION_ERROR);
       }
 
+      // Use validated request body from middleware
       const { target_user_id } = req.body;
-
-      if (!target_user_id) {
-        throw new AppError(
-          'Missing required field: target_user_id',
-          HttpStatus.BAD_REQUEST,
-          ErrorCodes.VALIDATION_ERROR
-        );
-      }
 
       const resetProgress = await this.progressService.resetUserProgress(target_user_id);
 
@@ -622,8 +577,8 @@ export class ProgressController {
         );
       }
 
-      // Validate lesson ID parameter
-      const { id: lessonId } = LessonIdParamSchema.parse(req.params);
+      // Use validated lesson ID from middleware
+      const { id: lessonId } = req.params as { id: string };
 
       const stats = await this.progressService.getLessonCompletionStats(lessonId);
 

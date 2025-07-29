@@ -16,11 +16,11 @@ jest.mock("@/shared/utils/logger", () => ({
 }));
 
 /**
- * @fileoverview Unit and integration tests for UserRepository.ts
+ * Unit and integration tests for UserRepository.ts
  * 
- * @summary Test suite for the UserRepository class, covering all CRUD operations, authentication methods, and security features.
+ * Test suite for the UserRepository class, covering all CRUD operations, authentication methods, and security features.
  * 
- * @description This test suite validates the UserRepository's data access layer functionality including user creation,
+ * This test suite validates the UserRepository's data access layer functionality including user creation,
  * retrieval, updates, and deletion operations. It tests both standard user operations and specialized authentication
  * workflows that return minimal UserAuthData for security. The tests verify proper error handling, Prisma integration,
  * data mapping, pagination, filtering, and the security improvements including type-safe operations and selective
@@ -37,7 +37,6 @@ jest.mock("@/shared/utils/logger", () => ({
  * - Type safety and proper TypeScript integration testing
  * 
  * @author Exequiel Trujillo
-  * 
  * @since 1.0.0
  */
 describe("UserRepository", () => {
@@ -374,7 +373,7 @@ describe("UserRepository", () => {
         where: {},
         skip: 0,
         take: 10,
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
       });
     });
 
@@ -434,7 +433,7 @@ describe("UserRepository", () => {
         },
         skip: 0,
         take: 10,
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
       });
     });
 

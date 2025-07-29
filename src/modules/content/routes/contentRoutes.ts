@@ -177,9 +177,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Courses retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -359,14 +356,10 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Course retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Course'
    *             example:
    *               success: true
-   *               message: Course retrieved successfully
    *               data:
    *                 id: "qu-es-beginner"
    *                 source_language: "qu"
@@ -609,9 +602,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Packaged course retrieved successfully
    *                 data:
    *                   type: object
    *                   properties:
@@ -782,9 +772,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Levels retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -934,9 +921,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Level retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Level'
    *       400:
@@ -1176,9 +1160,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Sections retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -1319,9 +1300,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Section retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Section'
    *       400:
@@ -1560,9 +1538,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Modules retrieved successfully
    *                 data:
    *                   type: array
    *                   items:
@@ -1713,9 +1688,6 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *                 success:
    *                   type: boolean
    *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Module retrieved successfully
    *                 data:
    *                   $ref: '#/components/schemas/Module'
    *       400:

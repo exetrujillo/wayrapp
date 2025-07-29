@@ -79,6 +79,7 @@ describe('Authentication Routes', () => {
         res.status(201).json({
           success: true,
           timestamp: new Date().toISOString(),
+          message: 'Registration successful',
           data: {
             user: {
               id: 'user-123',
@@ -105,6 +106,7 @@ describe('Authentication Routes', () => {
 
       expect(mockAuthController.register).toHaveBeenCalledTimes(1);
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toEqual('Registration successful');
       expect(response.body.data.user.email).toBe('test@example.com');
       expect(response.body.data.tokens).toBeDefined();
     });
@@ -158,6 +160,7 @@ describe('Authentication Routes', () => {
         res.status(200).json({
           success: true,
           timestamp: new Date().toISOString(),
+          message: 'Login successful',
           data: {
             user: {
               id: 'user-123',
@@ -183,6 +186,7 @@ describe('Authentication Routes', () => {
 
       expect(mockAuthController.login).toHaveBeenCalledTimes(1);
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toEqual('Login successful');
       expect(response.body.data.user.email).toBe('test@example.com');
       expect(response.body.data.tokens).toBeDefined();
     });
@@ -245,6 +249,7 @@ describe('Authentication Routes', () => {
         res.status(200).json({
           success: true,
           timestamp: new Date().toISOString(),
+          message: 'Token refresh successful',
           data: {
             tokens: {
               accessToken: 'new-access-token',
@@ -263,6 +268,7 @@ describe('Authentication Routes', () => {
 
       expect(mockAuthController.refresh).toHaveBeenCalledTimes(1);
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toEqual('Token refresh successful');
       expect(response.body.data.tokens.accessToken).toBe('new-access-token');
       expect(response.body.data.tokens.refreshToken).toBe('new-refresh-token');
     });
@@ -385,6 +391,7 @@ describe('Authentication Routes', () => {
 
       expect(mockAuthController.logout).toHaveBeenCalledTimes(1);
       expect(response.body.success).toBe(true);
+      expect(response.body.data.message).toContain('Logged out successfully');
     });
   });
 

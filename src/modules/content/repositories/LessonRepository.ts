@@ -100,6 +100,8 @@ export class LessonRepository {
       data: {
         id: data.id,
         moduleId: data.module_id,
+        name: data.name,
+        description: data.description ?? null,
         experiencePoints: data.experience_points ?? 10,
         order: data.order,
       },
@@ -109,15 +111,20 @@ export class LessonRepository {
   }
 
   /**
-   * Retrieves a single lesson by its unique identifier with complete exercise information.
+   * Retrieves a single lesson by its unique identifier and module ID with complete exercise information.
    * Includes all assigned exercises with their details, ordered by exercise sequence within the lesson.
+   * Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * @param {string} id - Unique identifier of the lesson to retrieve
+   * @param {string} moduleId - Module identifier to ensure lesson belongs to the correct module
    * @returns {Promise<Lesson | null>} Promise resolving to lesson with exercises or null if not found
    */
-  async findById(id: string): Promise<Lesson | null> {
+  async findById(id: string, moduleId: string): Promise<Lesson | null> {
     const lesson = await this.prisma.lesson.findUnique({
-      where: { id },
+      where: {
+        id,
+        moduleId
+      },
       include: {
         exercises: {
           include: {
@@ -263,24 +270,30 @@ export class LessonRepository {
   /**
    * Updates an existing lesson with partial data and field mapping transformation.
    * Supports updating experience points and order position with complete exercise information
-   * returned in the updated lesson object.
+   * returned in the updated lesson object. Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * @param {string} id - Unique identifier of the lesson to update
+   * @param {string} moduleId - Module identifier to ensure lesson belongs to the correct module
    * @param {Partial<CreateLessonDto>} data - Partial lesson data with fields to update
    * @param {number} [data.experience_points] - Updated experience points value
    * @param {number} [data.order] - Updated order position within the module
    * @returns {Promise<Lesson>} Promise resolving to updated lesson with complete exercise information
    * @throws {Error} When lesson is not found or database operation fails
    */
-  async update(id: string, data: Partial<CreateLessonDto>): Promise<Lesson> {
+  async update(id: string, moduleId: string, data: Partial<CreateLessonDto>): Promise<Lesson> {
     const updateData: any = {};
 
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
     if (data.experience_points !== undefined)
       updateData.experiencePoints = data.experience_points;
     if (data.order !== undefined) updateData.order = data.order;
 
     const lesson = await this.prisma.lesson.update({
-      where: { id },
+      where: {
+        id,
+        moduleId
+      },
       data: updateData,
       include: {
         exercises: {
@@ -301,23 +314,30 @@ export class LessonRepository {
   }
 
   /**
-   * Deletes a lesson from the database by its unique identifier.
+   * Deletes a lesson from the database by its unique identifier and module ID.
    * Handles deletion gracefully with error catching to prevent application crashes.
    * Cascade deletion will automatically remove associated lesson-exercise relationships.
+   * Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * @param {string} id - Unique identifier of the lesson to delete
+   * @param {string} moduleId - Module identifier to ensure lesson belongs to the correct module
    * @returns {Promise<boolean>} Promise resolving to true if deletion succeeded, false if failed or lesson not found
    */
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, moduleId: string): Promise<boolean> {
     try {
       await this.prisma.lesson.delete({
-        where: { id },
+        where: {
+          id,
+          moduleId
+        },
       });
       return true;
     } catch (error) {
       return false;
     }
   }
+
+
 
   /**
    * Checks if a lesson exists in the database by its unique identifier.
@@ -461,14 +481,18 @@ export class LessonRepository {
    * @private
    */
   private mapPrismaToModel(lesson: PrismaLesson): Lesson {
-    return {
+    const result: Lesson = {
       id: lesson.id,
       module_id: lesson.moduleId,
+      name: lesson.name,
+      description: lesson.description,
       experience_points: lesson.experiencePoints,
       order: lesson.order,
       created_at: lesson.createdAt,
       updated_at: lesson.updatedAt,
     };
+
+    return result;
   }
 
   /**

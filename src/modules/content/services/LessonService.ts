@@ -1,7 +1,7 @@
 // src/modules/content/services/LessonService.ts
 
 /**
- * Comprehensive lesson management service for the WayrApp language learning platform.
+ * Lesson management service for the WayrApp language learning platform.
  * 
  * This service provides complete CRUD operations for lessons within the content management system,
  * handling lesson lifecycle management, exercise assignment, and ordering operations. It serves as
@@ -66,6 +66,8 @@ import {
   AssignExerciseToLessonDto
 } from '../types';
 import { PaginatedResult, QueryOptions } from '../../../shared/types';
+import { AppError } from '../../../shared/middleware/errorHandler';
+import { HttpStatus, ErrorCodes } from '../../../shared/types';
 
 /**
  * Service class for comprehensive lesson management operations within the WayrApp content system.
@@ -133,20 +135,26 @@ export class LessonService {
   }
 
   /**
-   * Retrieves a single lesson by its unique identifier.
+   * Retrieves a single lesson by its unique identifier and module ID.
+   * Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * @param {string} id - The unique lesson identifier
+   * @param {string} moduleId - The module identifier to ensure lesson belongs to the correct module
    * @returns {Promise<Lesson>} The lesson object with all its properties
-   * @throws {Error} When lesson with the specified ID is not found
+   * @throws {Error} When lesson with the specified ID is not found or doesn't belong to the module
    * 
    * @example
-   * const lesson = await lessonService.getLesson('lesson-intro-greetings');
+   * const lesson = await lessonService.getLesson('lesson-intro-greetings', 'module-basic-conversation');
    * console.log(lesson.experience_points); // 25
    */
-  async getLesson(id: string): Promise<Lesson> {
-    const lesson = await this.lessonRepository.findById(id);
+  async getLesson(id: string, moduleId: string): Promise<Lesson> {
+    const lesson = await this.lessonRepository.findById(id, moduleId);
     if (!lesson) {
-      throw new Error(`Lesson with ID '${id}' not found`);
+      throw new AppError(
+        `Lesson with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
     return lesson;
   }
@@ -211,64 +219,77 @@ export class LessonService {
 
   /**
    * Updates an existing lesson with partial data and order conflict validation.
+   * Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * Validates lesson existence and prevents order conflicts within the same module
    * when updating lesson properties. ID and module_id cannot be modified.
    * 
    * @param {string} id - The unique lesson identifier
+   * @param {string} moduleId - The module identifier to ensure lesson belongs to the correct module
    * @param {Partial<Omit<CreateLessonDto, 'id' | 'module_id'>>} data - Partial lesson data for update
    * @param {number} [data.experience_points] - Updated experience points value
    * @param {number} [data.order] - Updated lesson order within the module
    * @returns {Promise<Lesson>} The updated lesson object
-   * @throws {Error} When lesson with the specified ID is not found
+   * @throws {Error} When lesson with the specified ID is not found or doesn't belong to the module
    * @throws {Error} When new order conflicts with existing lessons in the module
    * 
    * @example
-   * const updatedLesson = await lessonService.updateLesson('lesson-intro-greetings', {
+   * const updatedLesson = await lessonService.updateLesson('lesson-intro-greetings', 'module-basic-conversation', {
    *   experience_points: 30,
    *   order: 2
    * });
    */
-  async updateLesson(id: string, data: Partial<Omit<CreateLessonDto, 'id' | 'module_id'>>): Promise<Lesson> {
-    // Check if lesson exists
-    const existingLesson = await this.lessonRepository.findById(id);
+  async updateLesson(id: string, moduleId: string, data: Partial<Omit<CreateLessonDto, 'id' | 'module_id'>>): Promise<Lesson> {
+    // Check if lesson exists and belongs to the specified module
+    const existingLesson = await this.lessonRepository.findById(id, moduleId);
     if (!existingLesson) {
-      throw new Error(`Lesson with ID '${id}' not found`);
+      throw new AppError(
+        `Lesson with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
 
     // Check if new order conflicts with existing lessons in the same module
     if (data.order !== undefined) {
-      const orderExists = await this.moduleRepository.existsLessonOrderInModule(existingLesson.module_id, data.order, id);
+      const orderExists = await this.moduleRepository.existsLessonOrderInModule(moduleId, data.order, id);
       if (orderExists) {
-        throw new Error(`Lesson with order '${data.order}' already exists in module '${existingLesson.module_id}'`);
+        throw new Error(`Lesson with order '${data.order}' already exists in module '${moduleId}'`);
       }
     }
 
-    return await this.lessonRepository.update(id, data);
+    return await this.lessonRepository.update(id, moduleId, data);
   }
 
   /**
    * Permanently deletes a lesson and all its associated exercise assignments.
+   * Uses composite key lookup to prevent horizontal access vulnerabilities.
    * 
    * Validates lesson existence before deletion and ensures the operation completes successfully.
    * This operation cascades to remove all lesson-exercise relationships.
    * 
    * @param {string} id - The unique lesson identifier
+   * @param {string} moduleId - The module identifier to ensure lesson belongs to the correct module
    * @returns {Promise<void>} Resolves when deletion is complete
-   * @throws {Error} When lesson with the specified ID is not found
+   * @throws {Error} When lesson with the specified ID is not found or doesn't belong to the module
    * @throws {Error} When deletion operation fails
    * 
    * @example
-   * await lessonService.deleteLesson('lesson-intro-greetings');
+   * await lessonService.deleteLesson('lesson-intro-greetings', 'module-basic-conversation');
    * // Lesson and all its exercise assignments are now deleted
    */
-  async deleteLesson(id: string): Promise<void> {
-    const existingLesson = await this.lessonRepository.exists(id);
+  async deleteLesson(id: string, moduleId: string): Promise<void> {
+    // Check if lesson exists and belongs to the specified module
+    const existingLesson = await this.lessonRepository.findById(id, moduleId);
     if (!existingLesson) {
-      throw new Error(`Lesson with ID '${id}' not found`);
+      throw new AppError(
+        `Lesson with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
 
-    const success = await this.lessonRepository.delete(id);
+    const success = await this.lessonRepository.delete(id, moduleId);
     if (!success) {
       throw new Error(`Failed to delete lesson with ID '${id}'`);
     }

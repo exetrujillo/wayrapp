@@ -51,14 +51,15 @@ jest.mock('../logger', () => ({
  * 
  * @fileoverview Unit and integration tests for authentication utilities
  * @author Exequiel Trujillo
-  * 
  * @since 1.0.0
  */
 describe('Auth Utilities', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Configuramos las variables de entorno para los tests
+    // SECURITY_AUDIT_TODO: These hardcoded test secrets should be replaced with randomly generated values
+    // for each test run to prevent potential exposure in logs or test artifacts. Consider using
+    // crypto.randomBytes(32).toString('hex') or similar secure random generation.
     process.env['JWT_SECRET'] = 'test-access-secret';
     process.env['JWT_REFRESH_SECRET'] = 'test-refresh-secret';
     process.env['JWT_ACCESS_EXPIRES_IN'] = '15m';
@@ -66,7 +67,6 @@ describe('Auth Utilities', () => {
     process.env['BCRYPT_SALT_ROUNDS'] = '12';
   });
 
-  // El payload de prueba que usaremos, ahora sí completo
   const testPayload: TokenPayload = {
     userId: 'user-123',
     email: 'test@example.com',

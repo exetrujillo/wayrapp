@@ -371,7 +371,7 @@ export const LoginSchema = z.object({
  *   refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
  * };
  * 
- * const result = RefreshTokenSchema.safeParse(refreshData);
+ * const result = RefreshTokenBodySchema.safeParse(refreshData);
  * if (result.success) {
  *   console.log('Refresh token is valid format');
  * } else {
@@ -380,7 +380,7 @@ export const LoginSchema = z.object({
  * 
  * @example
  * // Token refresh endpoint with validation
- * router.post('/auth/refresh', validate({ body: RefreshTokenSchema }), async (req, res) => {
+ * router.post('/auth/refresh', validate({ body: RefreshTokenBodySchema }), async (req, res) => {
  *   const { refreshToken } = req.body; // Validated refresh token
  *   
  *   try {
@@ -399,7 +399,7 @@ export const LoginSchema = z.object({
  * @example
  * // Automatic token refresh in client applications
  * const refreshAccessToken = async (currentRefreshToken: string) => {
- *   const validation = RefreshTokenSchema.safeParse({ refreshToken: currentRefreshToken });
+ *   const validation = RefreshTokenBodySchema.safeParse({ refreshToken: currentRefreshToken });
  *   
  *   if (!validation.success) {
  *     throw new Error('Invalid refresh token format');
@@ -422,7 +422,7 @@ export const LoginSchema = z.object({
  * // Token validation with expiration checking
  * const validateAndRefreshToken = async (token: string) => {
  *   // First validate format
- *   const formatValidation = RefreshTokenSchema.safeParse({ refreshToken: token });
+ *   const formatValidation = RefreshTokenBodySchema.safeParse({ refreshToken: token });
  *   if (!formatValidation.success) {
  *     throw new ValidationError('Invalid token format');
  *   }
@@ -436,7 +436,7 @@ export const LoginSchema = z.object({
  *   }
  * };
  */
-export const RefreshTokenSchema = z.object({
+export const RefreshTokenBodySchema = z.object({
   refreshToken: z.string().min(10, 'Valid refresh token is required')
 });
 
@@ -662,7 +662,7 @@ export type LoginRequest = z.infer<typeof LoginSchema>;
  * @type {Object}
  * @property {string} refreshToken - Validated refresh token string (required)
  */
-export type RefreshTokenRequest = z.infer<typeof RefreshTokenSchema>;
+export type RefreshTokenRequest = z.infer<typeof RefreshTokenBodySchema>;
 
 /**
  * Type definition for password update request data
