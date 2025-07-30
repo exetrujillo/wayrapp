@@ -3,6 +3,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorDisplay } from './ErrorDisplay';
 import { useErrorBoundary } from './ErrorBoundaryProvider';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import { useErrorContext } from '../../contexts/ErrorContext';
 
 interface ErrorBoundaryWrapperProps {
   children: ReactNode;
@@ -32,12 +33,39 @@ export const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({
   context,
   className = '',
 }) => {
-  const { reportError } = useErrorBoundary();
+  // Try to use ErrorBoundaryProvider context, but fall back gracefully if not available
+  let reportError: ((error: Error, errorInfo?: React.ErrorInfo, context?: string) => void) | null = null;
+  
+  try {
+    const errorBoundaryContext = useErrorBoundary();
+    reportError = errorBoundaryContext.reportError;
+  } catch (error) {
+    // ErrorBoundaryProvider not available, try to use ErrorContext instead
+    try {
+      const errorContext = useErrorContext();
+      // SECURITY_AUDIT_TODO: Potential information disclosure vulnerability
+      // Error objects may contain sensitive information (stack traces, internal paths, API details)
+      // that should not be logged in production or exposed to users. Consider sanitizing error
+      // messages and limiting stack trace exposure in production environments.
+      reportError = (error: Error, errorInfo?: React.ErrorInfo, context?: string) => {
+        console.error(`Error in ${context || level}:`, error, errorInfo);
+        errorContext.showError(error.message || 'An unexpected error occurred');
+      };
+    } catch (contextError) {
+      // Neither context is available, use console logging as fallback
+      reportError = (error: Error, errorInfo?: React.ErrorInfo, context?: string) => {
+        console.error(`Error in ${context || level}:`, error, errorInfo);
+      };
+    }
+  }
+  
   const { isOnline } = useNetworkStatus();
 
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    // Report to global error boundary context
-    reportError(error, errorInfo, context || level);
+    // Report to error context if available
+    if (reportError) {
+      reportError(error, errorInfo, context || level);
+    }
     
     // Call custom error handler
     if (onError) {
@@ -53,6 +81,10 @@ export const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({
 
     // Return a function that ErrorBoundary can use
     return (error: Error, retryCount: number, retry: () => void) => {
+      // SECURITY_AUDIT_TODO: Error message inspection vulnerability
+      // Directly checking error.message content could expose sensitive information
+      // if error messages contain internal system details, API endpoints, or database info.
+      // Consider using error codes or types instead of string matching on error messages.
       const isNetworkError = !isOnline || 
         error.message?.toLowerCase().includes('network') ||
         error.message?.toLowerCase().includes('fetch') ||
@@ -80,6 +112,10 @@ export const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({
           return 'Unable to connect to the server. Please check your connection and try again.';
         }
 
+        // SECURITY_AUDIT_TODO: Direct error message exposure vulnerability
+        // Returning error.message directly to users can expose sensitive system information,
+        // internal API details, database errors, or file paths. Consider implementing a
+        // message sanitization function that maps internal errors to safe user-friendly messages.
         return error.message || 'An unexpected error occurred. Please try again.';
       };
 
@@ -167,17 +203,47 @@ export const withErrorBoundary = <P extends object>(
  * Hook for manually triggering error boundaries with enhanced context
  */
 export const useErrorHandler = () => {
-  const { reportError } = useErrorBoundary();
+  // Try to use ErrorBoundaryProvider context, but fall back gracefully if not available
+  let reportError: ((error: Error, errorInfo?: React.ErrorInfo, context?: string) => void) | null = null;
+  
+  try {
+    const errorBoundaryContext = useErrorBoundary();
+    reportError = errorBoundaryContext.reportError;
+  } catch (error) {
+    // ErrorBoundaryProvider not available, try to use ErrorContext instead
+    try {
+      const errorContext = useErrorContext();
+      // SECURITY_AUDIT_TODO: Potential information disclosure vulnerability
+      // Error objects may contain sensitive information (stack traces, internal paths, API details)
+      // that should not be logged in production or exposed to users. Consider sanitizing error
+      // messages and limiting stack trace exposure in production environments.
+      reportError = (error: Error, errorInfo?: React.ErrorInfo, context?: string) => {
+        console.error(`Error in ${context}:`, error, errorInfo);
+        errorContext.showError(error.message || 'An unexpected error occurred');
+      };
+    } catch (contextError) {
+      // Neither context is available, use console logging as fallback
+      reportError = (error: Error, errorInfo?: React.ErrorInfo, context?: string) => {
+        console.error(`Error in ${context}:`, error, errorInfo);
+      };
+    }
+  }
 
   const handleError = (error: Error | string, context?: string, additionalInfo?: any) => {
     const errorObj = typeof error === 'string' ? new Error(error) : error;
     
+    // SECURITY_AUDIT_TODO: Potential information disclosure through additionalInfo
+    // The additionalInfo parameter could contain sensitive data that gets attached to error objects
+    // and potentially logged or exposed. Consider sanitizing or validating additionalInfo content
+    // before attaching it to error objects, especially in production environments.
     // Add additional context to error
     if (additionalInfo) {
       (errorObj as any).additionalInfo = additionalInfo;
     }
     
-    reportError(errorObj, undefined, context);
+    if (reportError) {
+      reportError(errorObj, undefined, context);
+    }
   };
 
   const handleAsyncError = (promise: Promise<any>, context?: string) => {

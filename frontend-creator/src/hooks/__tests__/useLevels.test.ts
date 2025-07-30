@@ -115,6 +115,7 @@ describe('useLevels hooks', () => {
       };
 
       const levelData = {
+        id: 'level-2',
         code: 'A2',
         name: 'Elementary',
         order: 2,
@@ -141,6 +142,7 @@ describe('useLevels hooks', () => {
       mockLevelService.createLevel.mockRejectedValue(mockError);
 
       const levelData = {
+        id: 'level-2',
         code: 'A2',
         name: 'Elementary',
         order: 2,
@@ -182,7 +184,7 @@ describe('useLevels hooks', () => {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate({ id: '1', levelData: updateData });
+      result.current.mutate({ courseId: 'course-1', id: '1', levelData: updateData });
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
@@ -202,7 +204,7 @@ describe('useLevels hooks', () => {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate({ id: '1', levelData: updateData });
+      result.current.mutate({ courseId: 'course-1', id: '1', levelData: updateData });
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
@@ -220,7 +222,7 @@ describe('useLevels hooks', () => {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate('1');
+      result.current.mutate({ courseId: 'course-1', id: '1' });
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
@@ -237,7 +239,7 @@ describe('useLevels hooks', () => {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate('1');
+      result.current.mutate({ courseId: 'course-1', id: '1' });
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);

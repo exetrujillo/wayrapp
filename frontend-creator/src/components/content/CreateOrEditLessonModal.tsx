@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { LessonForm } from '../forms/LessonForm';
+import { EnhancedLessonForm } from '../forms/EnhancedLessonForm';
 import { useCreateLessonMutation, useUpdateLessonMutation } from '../../hooks/useLessons';
 import { Lesson } from '../../utils/types';
 import { LessonFormData } from '../../utils/validation';
@@ -16,7 +16,7 @@ interface CreateOrEditLessonModalProps {
 
 /**
  * Modal component for creating or editing lessons
- * Uses Modal component from src/components/ui and existing LessonForm
+ * Uses Modal component from src/components/ui and EnhancedLessonForm (DRY implementation)
  */
 export const CreateOrEditLessonModal: React.FC<CreateOrEditLessonModalProps> = ({
   isOpen,
@@ -65,7 +65,7 @@ export const CreateOrEditLessonModal: React.FC<CreateOrEditLessonModalProps> = (
       title={title}
       size="md"
     >
-      <LessonForm
+      <EnhancedLessonForm
         moduleId={moduleId}
         initialData={initialData}
         onSubmit={handleSubmit}

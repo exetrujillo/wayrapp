@@ -24,7 +24,11 @@ import { PageLoading } from './components/ui/LoadingStates';
 // Lazy-loaded pages for better performance
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
 const CreateCoursePage = lazy(() => import('./pages/CreateCoursePage'));
+const EditCoursePage = lazy(() => import('./pages/EditCoursePage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
+const LevelDetailPage = lazy(() => import('./pages/LevelDetailPage'));
+const SectionDetailPage = lazy(() => import('./pages/SectionDetailPage'));
+const ModuleDetailPage = lazy(() => import('./pages/ModuleDetailPage'));
 const LessonsPage = lazy(() => import('./pages/LessonsPage'));
 const CreateLessonPage = lazy(() => import('./pages/CreateLessonPage'));
 const LessonDetailPage = lazy(() => import('./pages/LessonDetailPage'));
@@ -107,9 +111,33 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
 
+        <Route path="/courses/:courseId/edit" element={
+          <ProtectedRoute>
+            <EditCoursePage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/courses/:courseId" element={
           <ProtectedRoute>
             <CourseDetailPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/courses/:courseId/levels/:levelId" element={
+          <ProtectedRoute>
+            <LevelDetailPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/courses/:courseId/levels/:levelId/sections/:sectionId" element={
+          <ProtectedRoute>
+            <SectionDetailPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/courses/:courseId/levels/:levelId/sections/:sectionId/modules/:moduleId" element={
+          <ProtectedRoute>
+            <ModuleDetailPage />
           </ProtectedRoute>
         } />
 

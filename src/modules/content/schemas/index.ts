@@ -158,6 +158,12 @@ export const ReorderExercisesSchema = z.object({
     .min(1, "At least one exercise ID is required"),
 });
 
+export const ReorderLessonsSchema = z.object({
+  lesson_ids: z
+    .array(z.string().min(1).max(60))
+    .min(1, "At least one lesson ID is required"),
+});
+
 // Parameter validation schemas
 export const CourseParamSchema = z.object({
   courseId: z
@@ -230,3 +236,4 @@ export type AssignExerciseToLessonDto = z.infer<
   typeof AssignExerciseToLessonSchema
 >;
 export type ReorderExercisesDto = z.infer<typeof ReorderExercisesSchema>;
+export type ReorderLessonsDto = z.infer<typeof ReorderLessonsSchema>;

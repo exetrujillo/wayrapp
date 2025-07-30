@@ -77,9 +77,9 @@ export const useCreateSectionMutation = () => {
           data: [
             ...old.data,
             {
-              id: `temp-${Date.now()}`, // Temporary ID
               levelId,
               ...sectionData,
+              id: sectionData.id || `temp-${Date.now()}`, // Use provided ID or temporary
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
@@ -176,60 +176,112 @@ export const useDeleteSectionMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => sectionService.deleteSection(id),
-    onMutate: async (deletedId) => {
-      // Get the section data before removing it to access levelId
+    mutationFn: ({ levelId, id }: { levelId: string; id: string }) => sectionService.deleteSection(levelId, id),
+    onMutate: async ({ levelId, id: deletedId }) => {
+      // Get the section data before removing it
       const sectionData = queryClient.getQueryData(queryKeys.sections.detail(deletedId)) as Section;
       
-      if (sectionData?.levelId) {
-        // Cancel any outgoing refetches
-        await queryClient.cancelQueries({ queryKey: queryKeys.sections.list(sectionData.levelId) });
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.sections.list(levelId) });
 
-        // Snapshot the previous value
-        const previousSections = queryClient.getQueryData(queryKeys.sections.list(sectionData.levelId));
+      // Snapshot the previous value
+      const previousSections = queryClient.getQueryData(queryKeys.sections.list(levelId));
 
-        // Optimistically update by removing the section
-        if (previousSections) {
-          queryClient.setQueryData(queryKeys.sections.list(sectionData.levelId), (old: any) => ({
-            ...old,
-            data: old.data.filter((section: Section) => section.id !== deletedId),
-            total: old.total - 1,
-          }));
-        }
-
-        return { previousSections, sectionData };
+      // Optimistically update by removing the section
+      if (previousSections) {
+        queryClient.setQueryData(queryKeys.sections.list(levelId), (old: any) => ({
+          ...old,
+          data: old.data.filter((section: Section) => section.id !== deletedId),
+          total: old.total - 1,
+        }));
       }
 
-      return { sectionData };
+      return { previousSections, sectionData, levelId };
     },
-    onSuccess: (_, deletedId: string) => {
-      // Get the section data before removing it to access levelId
-      const sectionData = queryClient.getQueryData(queryKeys.sections.detail(deletedId)) as Section;
-      
+    onSuccess: (_, { levelId, id: deletedId }) => {
       // Remove the section from cache
       queryClient.removeQueries({ queryKey: queryKeys.sections.detail(deletedId) });
       
       // Invalidate sections list to reflect deletion
       queryClient.invalidateQueries({ queryKey: queryKeys.sections.lists() });
-      if (sectionData?.levelId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(sectionData.levelId) });
-        // Invalidate level detail if it includes section count
-        queryClient.invalidateQueries({ queryKey: queryKeys.levels.detail(sectionData.levelId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(levelId) });
+      // Invalidate level detail if it includes section count
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.detail(levelId) });
     },
-    onError: (error, _deletedId, context) => {
+    onError: (error, { levelId }, context) => {
       // If the mutation fails, use the context to roll back
-      if (context?.previousSections && context?.sectionData?.levelId) {
-        queryClient.setQueryData(queryKeys.sections.list(context.sectionData.levelId), context.previousSections);
+      if (context?.previousSections) {
+        queryClient.setQueryData(queryKeys.sections.list(levelId), context.previousSections);
       }
       console.error('Failed to delete section:', error);
     },
-    onSettled: (_, __, deletedId) => {
+    onSettled: (_, __, { levelId }) => {
       // Always refetch after error or success
-      const sectionData = queryClient.getQueryData(queryKeys.sections.detail(deletedId)) as Section;
-      if (sectionData?.levelId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(sectionData.levelId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(levelId) });
+    },
+  });
+};
+
+/**
+ * Hook for reordering sections within a level
+ * @returns Mutation object with mutate function and states
+ */
+export const useReorderSectionsMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ levelId, sectionIds }: { levelId: string; sectionIds: string[] }) => 
+      sectionService.reorderSections(levelId, sectionIds),
+    onMutate: async ({ levelId, sectionIds }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.sections.list(levelId) });
+
+      // Snapshot the previous value
+      const previousSections = queryClient.getQueryData(queryKeys.sections.list(levelId));
+
+      // Optimistically update the order
+      if (previousSections) {
+        queryClient.setQueryData(queryKeys.sections.list(levelId), (old: any) => {
+          const reorderedSections = sectionIds.map((id, index) => {
+            const section = old.data.find((s: Section) => s.id === id);
+            return section ? { ...section, order: index + 1 } : null;
+          }).filter(Boolean);
+
+          return {
+            ...old,
+            data: reorderedSections,
+          };
+        });
       }
+
+      return { previousSections, levelId };
+    },
+    onSuccess: (reorderedSections: Section[], { levelId }) => {
+      // Update the sections list with the new order
+      queryClient.setQueryData(queryKeys.sections.list(levelId), (old: any) => ({
+        ...old,
+        data: reorderedSections,
+      }));
+
+      // Update individual section caches with new order
+      reorderedSections.forEach(section => {
+        queryClient.setQueryData(queryKeys.sections.detail(section.id), section);
+      });
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.detail(levelId) });
+    },
+    onError: (error, { levelId }, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousSections) {
+        queryClient.setQueryData(queryKeys.sections.list(levelId), context.previousSections);
+      }
+      console.error('Failed to reorder sections:', error);
+    },
+    onSettled: (_, __, { levelId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(levelId) });
     },
   });
 };
@@ -241,4 +293,5 @@ export default {
   useCreateSectionMutation,
   useUpdateSectionMutation,
   useDeleteSectionMutation,
+  useReorderSectionsMutation,
 };

@@ -68,6 +68,7 @@ import {
   LessonQuerySchema,
   AssignExerciseToLessonSchema,
   ReorderExercisesSchema,
+  ReorderLessonsSchema,
   ModuleParamSchema,
   LessonParamSchema,
   ExerciseParamSchema,
@@ -286,6 +287,80 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
 
   /**
    * @swagger
+   * /api/v1/modules/{moduleId}/lessons/reorder:
+   *   put:
+   *     tags:
+   *       - Content
+   *       - Modules
+   *       - Lessons
+   *     summary: Reorder module lessons
+   *     description: Update the order of lessons within a module (requires content_creator or admin role)
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: moduleId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Module ID
+   *         example: "module-001"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               lesson_ids:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 description: Array of lesson IDs in desired order
+   *                 example: ["lesson-001", "lesson-003", "lesson-002"]
+   *             required:
+   *               - lesson_ids
+   *     responses:
+   *       200:
+   *         description: Module lessons reordered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Module lessons reordered successfully
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                   example: "2024-01-01T00:00:00.000Z"
+   *       400:
+   *         description: Invalid module ID or lesson order data
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (content_creator or admin required)
+   *       404:
+   *         description: Module not found or lessons not found
+   *       422:
+   *         description: Duplicate order values or missing lessons
+   */
+  router.put('/modules/:moduleId/lessons/reorder',
+    authenticateToken,
+    requireRole(['admin', 'content_creator']),
+    validate({
+      params: ModuleParamSchema,
+      body: ReorderLessonsSchema
+    }),
+    lessonController.reorderModuleLessons
+  );
+
+  /**
+   * @swagger
    * /api/v1/modules/{moduleId}/lessons/{id}:
    *   get:
    *     tags:
@@ -476,6 +551,8 @@ export function createLessonRoutes(prisma: PrismaClient): Router {
     }),
     lessonController.deleteLesson
   );
+
+
 
   // Lesson-Exercise assignment routes
 

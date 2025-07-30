@@ -13,6 +13,7 @@ interface ModulesSectionProps {
   onCreateModule: () => void;
   onEditModule: (module: Module) => void;
   onDeleteModule: (module: Module) => void;
+  enableDragDrop?: boolean;
 }
 
 /**

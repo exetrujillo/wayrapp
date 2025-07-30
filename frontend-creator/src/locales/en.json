@@ -26,12 +26,22 @@
       "noData": "No data available",
       "missingId": "ID is missing"
     },
+    "form": {
+      "requiredFields": "Required Fields"
+    },
     "navigation": {
       "dashboard": "Dashboard",
       "courses": "Courses",
+      "levels": "Levels",
+      "sections": "Sections",
+      "modules": "Modules",
       "lessons": "Lessons",
       "exercises": "Exercises",
-      "profile": "Profile"
+      "profile": "Profile",
+      "edit": "Edit",
+      "backToCourse": "Back to Course",
+      "backToLevel": "Back to Level",
+      "backToSection": "Back to Section"
     }
   },
   "creator": {
@@ -48,6 +58,7 @@
         "passwordMinLength": "Password must be at least 8 characters"
       }
     },
+
     "dashboard": {
       "title": "Creator Dashboard",
       "welcome": "Welcome to WayrApp Creator",
@@ -61,17 +72,14 @@
       "completionRate": "Completion Rate",
       "activity": {
         "courseCreated": "New course created",
-        "courseCreatedDesc": "Euskera Basics course was created",
         "lessonAdded": "Lesson added",
-        "lessonAddedDesc": "Added \"Greetings\" lesson to Euskera Basics",
-        "exerciseCreated": "Exercise created",
-        "exerciseCreatedDesc": "Translation exercise for \"Hello\" created"
+        "exerciseCreated": "Exercise created"
       },
       "actions": {
         "createCourse": "Create Course",
         "createCourseDesc": "Start a new language learning course",
         "createLesson": "Create Lesson",
-        "createLessonDesc": "Add a new lesson to your course",
+        "createLessonDesc": "Add a new lesson to your module",
         "createExercise": "Create Exercise",
         "createExerciseDesc": "Build interactive learning exercises",
         "manageCourses": "Manage Courses",
@@ -82,9 +90,7 @@
         "manageExercisesDesc": "Review and update your exercises"
       }
     },
-    "exercises": {
-      "createNew": "Create New Exercise"
-    },
+
     "pages": {
       "courses": {
         "searchPlaceholder": "Search courses...",
@@ -100,9 +106,34 @@
       "exercises": {
         "searchPlaceholder": "Search exercises...",
         "noExercises": "No exercises found. Create your first exercise!"
-      }
-    },
-    "pages": {
+      },
+      "createCourse": {
+        "title": "Create Course",
+        "description": "Create a new course to start building educational content for your students."
+      },
+      "editCourse": {
+        "title": "Edit Course: {{courseName}}",
+        "titleLoading": "Edit Course",
+        "description": "Update your course information and settings.",
+        "loading": "Loading Course...",
+        "error": "Course Not Found",
+        "successMessage": "Course updated successfully!"
+      },
+      "levelDetail": {
+        "loading": "Loading Level...",
+        "error": "Level Not Found",
+        "description": "Manage sections within this level"
+      },
+      "sectionDetail": {
+        "loading": "Loading Section...",
+        "error": "Section Not Found",
+        "description": "Manage modules within this section"
+      },
+      "moduleDetail": {
+        "loading": "Loading Module...",
+        "error": "Module Not Found",
+        "description": "Manage lessons within this module"
+      },
       "createExercise": {
         "title": "Create Exercise"
       },
@@ -139,7 +170,70 @@
         }
       }
     },
+
+    "course": {
+      "sourceLanguage": "Source Lang",
+      "targetLanguage": "Target Lang",
+      "private": "Private"
+    },
+
+    "level": {
+      "code": "Code",
+      "order": "Order"
+    },
+
+    "section": {
+      "order": "Order",
+      "level": "Level"
+    },
+
+    "module": {
+      "type": "Type",
+      "order": "Order",
+      "section": "Section"
+    },
+
+    "exercises": {
+      "createNew": "Create New Exercise"
+    },
+
     "components": {
+      "levelsSection": {
+        "title": "Course Levels",
+        "addLevel": "Add Level",
+        "noLevels": "No levels found. Create your first level!",
+        "createFirst": "Create First Level",
+        "loadError": "Failed to load levels",
+        "dragHint": "Drag and drop to reorder levels",
+        "reorderError": "Failed to reorder levels",
+        "bulkDeleteConfirm": "Are you sure you want to delete {{count}} level(s)? This action cannot be undone.",
+        "bulkDelete": "Delete Selected",
+        "searchPlaceholder": "Search levels..."
+      },
+      "levelCard": {
+        "code": "Code",
+        "order": "Order",
+        "id": "ID",
+        "created": "Created",
+        "deleteConfirm": "Are you sure you want to delete this level?",
+        "selectLevel": "Select level {{name}}"
+      },
+      "sectionsSection": {
+        "title": "Level Sections",
+        "addSection": "Add Section",
+        "noSections": "No sections found. Create your first section!",
+        "createFirst": "Create First Section",
+        "loadError": "Failed to load sections",
+        "dragHint": "Drag and drop to reorder sections",
+        "reorderError": "Failed to reorder sections"
+      },
+      "sectionCard": {
+        "order": "Order",
+        "id": "ID",
+        "created": "Created",
+        "deleteConfirm": "Are you sure you want to delete this section?",
+        "dragHandle": "Drag to reorder"
+      },
       "lessonCard": {
         "moduleId": "Module",
         "order": "Order",
@@ -245,14 +339,82 @@
         }
       }
     },
+
+    "modals": {
+      "level": {
+        "createTitle": "Create New Level",
+        "editTitle": "Edit Level"
+      },
+      "section": {
+        "createTitle": "Create New Section",
+        "editTitle": "Edit Section"
+      }
+    },
+
     "forms": {
       "course": {
         "title": "Create Course",
+        "submit": "Create Course",
+        "update": "Update Course",
+        "submitting": "Creating Course...",
+        "updating": "Updating Course...",
+        "successMessage": "Course created successfully!",
+        "updateSuccessMessage": "Course updated successfully!",
+        "id": "Course ID",
+        "idPlaceholder": "e.g., basic-spanish",
+        "idHelp": "Unique identifier for the course (max 20 characters)",
+        "idHelpEdit": "Course ID cannot be changed after creation",
         "name": "Course Name",
+        "namePlaceholder": "e.g., Basic Spanish",
+        "nameHelp": "Display name for the course (max 100 characters)",
         "sourceLanguage": "Source Language",
         "targetLanguage": "Target Language",
+        "languagePlaceholder": "Search or enter BCP 47 code (e.g., en, es-MX)",
         "description": "Description",
-        "isPublic": "Make Public"
+        "descriptionPlaceholder": "Enter course description...",
+        "isPublic": "Make Public",
+        "errors": {
+          "duplicate": "A course with this ID already exists",
+          "updateConflict": "Unable to update course due to conflicts",
+          "validation": "Please check your input and try again",
+          "unauthorized": "You are not authorized to create courses",
+          "unauthorizedUpdate": "You are not authorized to update this course",
+          "server": "Server error. Please try again later"
+        }
+      },
+      "level": {
+        "create": "Create Level",
+        "update": "Update Level",
+        "createSuccessMessage": "Level created successfully!",
+        "updateSuccessMessage": "Level updated successfully!",
+        "code": "Level Code",
+        "codeHelp": "Uppercase letters and numbers only (e.g., A1, B2)",
+        "name": "Level Name",
+        "nameHelp": "Descriptive name for the level (min 3 characters)",
+        "order": "Order",
+        "orderHelp": "Display order (1-999)",
+        "existingCodes": "Existing codes: {{codes}}",
+        "existingOrders": "Existing orders: {{orders}}",
+        "suggestedOrder": "Suggested next order: {{order}}"
+      },
+      "section": {
+        "create": "Create Section",
+        "update": "Update Section",
+        "createSuccessMessage": "Section created successfully!",
+        "updateSuccessMessage": "Section updated successfully!",
+        "id": "Section ID",
+        "idHelp": "Unique identifier for the section (auto-generated from name, or enter manually)",
+        "name": "Section Name",
+        "nameHelp": "Descriptive name for the section (3-150 characters)",
+        "order": "Order",
+        "orderHelp": "Display order within the level (1-999)",
+        "validation": {
+          "idRequired": "Section ID is required",
+          "idFormat": "ID must contain only lowercase letters, numbers, and hyphens",
+          "nameRequired": "Section name is required",
+          "nameLength": "Name must be 3-150 characters",
+          "orderValid": "Order must be a valid number (1-999)"
+        }
       },
       "exerciseAssignment": {
         "title": "Assign Exercises to Lesson",
@@ -361,21 +523,19 @@
         "submit": "Create Exercise",
         "successMessage": "Exercise created successfully!"
       }
-    }
-  },
-  "pages": {
-    "lessons": {
-      "createButton": "Create Lesson",
-      "noLessons": "No lessons found. Create your first lesson!",
-      "deleteConfirm": "Are you sure you want to delete this lesson?"
     },
-    "createLesson": {
-      "title": "Create New Lesson",
-      "description": "Create a new lesson and assign it to a module."
-    },
-    "createExercise": {
-      "title": "Create Exercise",
-      "description": "Create a new exercise with dynamic content based on type."
+
+    "validation": {
+      "level": {
+        "codeRequired": "Level code is required",
+        "codeFormat": "Level code must contain only uppercase letters and numbers",
+        "codeLength": "Level code must be 10 characters or less",
+        "codeDuplicate": "A level with this code already exists in the course",
+        "orderRequired": "Order is required",
+        "orderMin": "Order must be at least 1",
+        "orderMax": "Order cannot exceed 999",
+        "orderInteger": "Order must be a whole number"
+      }
     }
   }
 }

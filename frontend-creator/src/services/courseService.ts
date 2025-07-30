@@ -67,9 +67,17 @@ class CourseService {
    * @returns {Course} Course object formatted for frontend consumption
    */
   private transformCourseFromApi(apiCourse: any): Course {
-    // Currently, our types are aligned with the backend, so no transformation needed
-    // This method is here for future use if data transformation becomes necessary
-    return apiCourse as Course;
+    // Transform snake_case API response to camelCase frontend format
+    return {
+      id: apiCourse.id,
+      name: apiCourse.name,
+      sourceLanguage: apiCourse.source_language || apiCourse.sourceLanguage,
+      targetLanguage: apiCourse.target_language || apiCourse.targetLanguage,
+      description: apiCourse.description,
+      isPublic: apiCourse.is_public !== undefined ? apiCourse.is_public : apiCourse.isPublic,
+      createdAt: apiCourse.created_at || apiCourse.createdAt,
+      updatedAt: apiCourse.updated_at || apiCourse.updatedAt,
+    } as Course;
   }
 
   /**
@@ -185,14 +193,21 @@ class CourseService {
     }
 
     try {
-      const response = await apiClient.get<Course>(API_ENDPOINTS.COURSES.DETAIL(id));
+      const response = await apiClient.get<any>(API_ENDPOINTS.COURSES.DETAIL(id));
+
+      // Debug: Log the actual response to understand the structure (can be removed in production)
+      console.log('API Response for course:', response);
+
+      // Handle both wrapped and unwrapped responses (same pattern as createCourse)
+      const courseData = response.data || response;
 
       // Validate response structure
-      if (!response || !response.id) {
+      if (!courseData || !courseData.id) {
+        console.error('Invalid response structure:', response);
         throw new Error('Invalid course data received from API');
       }
 
-      return this.transformCourseFromApi(response);
+      return this.transformCourseFromApi(courseData);
     } catch (error: any) {
       console.error(`Failed to fetch course ${id}:`, error);
 
@@ -326,14 +341,17 @@ class CourseService {
 
     try {
       const transformedData = this.transformCourseToApi(courseData);
-      const response = await apiClient.put<Course>(API_ENDPOINTS.COURSES.DETAIL(id), transformedData);
+      const response = await apiClient.put<any>(API_ENDPOINTS.COURSES.DETAIL(id), transformedData);
+
+      // Handle both wrapped and unwrapped responses (same pattern as createCourse)
+      const updatedCourseData = response.data || response;
 
       // Validate response structure
-      if (!response || !response.id) {
+      if (!updatedCourseData || !updatedCourseData.id) {
         throw new Error('Invalid response from course update API');
       }
 
-      return this.transformCourseFromApi(response);
+      return this.transformCourseFromApi(updatedCourseData);
     } catch (error: any) {
       console.error(`Failed to update course ${id}:`, error);
 

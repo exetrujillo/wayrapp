@@ -13,11 +13,16 @@ interface LevelCardProps {
   onView?: (level: Level) => void;
   showActions?: boolean;
   showSelection?: boolean;
+  enableDragHandle?: boolean;
 }
 
 /**
- * Card component for displaying Level information
- * Follows the same pattern as CourseCard for consistency
+ * Enhanced card component for displaying Level information
+ * Features:
+ * - Drag handle for reordering
+ * - Selection checkbox for bulk operations
+ * - Level-specific validation indicators
+ * - Responsive design with touch-friendly interactions
  */
 export const LevelCard: React.FC<LevelCardProps> = ({
   level,
@@ -28,6 +33,7 @@ export const LevelCard: React.FC<LevelCardProps> = ({
   onView,
   showActions = true,
   showSelection = false,
+  enableDragHandle = false,
 }) => {
   const { t } = useTranslation();
 
@@ -57,12 +63,21 @@ export const LevelCard: React.FC<LevelCardProps> = ({
 
   return (
     <Card
-      className={`level-card transition-all duration-200 ${
+      className={`level-card relative transition-all duration-200 ${
         isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
       } ${showSelection || onView ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
+        {/* Drag Handle */}
+        {enableDragHandle && (
+          <div className="mr-3 pt-1 cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            </svg>
+          </div>
+        )}
+
         {/* Selection Checkbox */}
         {showSelection && (
           <div className="mr-4 pt-1">
@@ -72,6 +87,7 @@ export const LevelCard: React.FC<LevelCardProps> = ({
               onChange={() => onSelect?.(level)}
               onClick={(e) => e.stopPropagation()}
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+              aria-label={t('creator.components.levelCard.selectLevel', 'Select level {{name}}', { name: level.name })}
             />
           </div>
         )}

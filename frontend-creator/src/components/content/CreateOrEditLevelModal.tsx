@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { LevelForm } from '../forms/LevelForm';
+import { EnhancedLevelForm } from '../forms/EnhancedLevelForm';
 import { useCreateLevelMutation, useUpdateLevelMutation } from '../../hooks/useLevels';
 import { Level } from '../../utils/types';
 import { LevelFormData } from '../../utils/validation';
@@ -16,7 +16,7 @@ interface CreateOrEditLevelModalProps {
 
 /**
  * Modal component for creating or editing levels
- * Uses Modal component from src/components/ui and LevelForm
+ * Uses Modal component from src/components/ui and EnhancedLevelForm (DRY implementation)
  */
 export const CreateOrEditLevelModal: React.FC<CreateOrEditLevelModalProps> = ({
   isOpen,
@@ -34,13 +34,20 @@ export const CreateOrEditLevelModal: React.FC<CreateOrEditLevelModalProps> = ({
   const handleSubmit = async (data: LevelFormData): Promise<Level> => {
     if (isEditing && initialData?.id) {
       return updateLevelMutation.mutateAsync({
+        courseId,
         id: initialData.id,
         levelData: data,
       });
     } else {
+      // Generate a unique ID for the level based on course ID and level code
+      const levelId = `${courseId}-${data.code.toLowerCase()}`;
+      
       return createLevelMutation.mutateAsync({
         courseId,
-        levelData: data,
+        levelData: {
+          ...data,
+          id: levelId,
+        },
       });
     }
   };
@@ -65,7 +72,7 @@ export const CreateOrEditLevelModal: React.FC<CreateOrEditLevelModalProps> = ({
       title={title}
       size="md"
     >
-      <LevelForm
+      <EnhancedLevelForm
         courseId={courseId}
         initialData={initialData}
         onSubmit={handleSubmit}

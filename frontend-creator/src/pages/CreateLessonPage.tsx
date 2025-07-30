@@ -1,7 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LessonForm } from '../components/forms';
+import { EnhancedLessonForm } from '../components/forms';
+import { useCreateLessonMutation } from '../hooks/useLessons';
+import { LessonFormData } from '../utils/validation';
 
 const CreateLessonPage: React.FC = () => {
   const { t } = useTranslation();
@@ -10,6 +12,15 @@ const CreateLessonPage: React.FC = () => {
   
   // Get moduleId from URL params
   const moduleId = searchParams.get('moduleId') || '';
+
+  const createLessonMutation = useCreateLessonMutation();
+
+  const handleSubmit = async (data: LessonFormData) => {
+    return await createLessonMutation.mutateAsync({
+      moduleId,
+      lessonData: data
+    });
+  };
 
   const handleSuccess = () => {
     // Navigate to lessons list page after successful creation
@@ -52,8 +63,9 @@ const CreateLessonPage: React.FC = () => {
       </div>
       
       <div className="max-w-3xl">
-        <LessonForm 
+        <EnhancedLessonForm 
           moduleId={moduleId}
+          onSubmit={handleSubmit}
           onSuccess={handleSuccess} 
           onCancel={handleCancel} 
         />

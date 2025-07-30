@@ -523,4 +523,73 @@ export class LessonRepository {
 
     return lessonExercise;
   }
+
+  /**
+   * Reorders lessons within a module using atomic transaction operations.
+   * Updates the order positions of all specified lessons to match the provided sequence,
+   * ensuring data consistency through database transaction isolation.
+   * 
+   * This method performs atomic updates of lesson order values within a single transaction,
+   * preventing race conditions and maintaining referential integrity. Each lesson's order
+   * is updated based on its position in the provided lesson IDs array, starting from 1.
+   * 
+   * @param {string} moduleId - The unique module identifier containing the lessons
+   * @param {string[]} lessonIds - Array of lesson IDs in their new desired order sequence
+   * @returns {Promise<boolean>} Promise resolving to true if reordering succeeded, false if failed
+   * @throws {Error} When transaction fails or lesson assignments don't exist
+   * 
+   * @example
+   * // Reorder lessons within a module
+   * const success = await lessonRepository.reorderLessons('module-basic-conversation', [
+   *   'lesson-greetings',
+   *   'lesson-introductions', 
+   *   'lesson-farewells'
+   * ]);
+   * // Lessons are now ordered: greetings (1), introductions (2), farewells (3)
+   */
+  async reorderLessons(
+    moduleId: string,
+    lessonIds: string[],
+  ): Promise<boolean> {
+    try {
+      // Use a transaction to ensure atomicity
+      await this.prisma.$transaction(async (tx) => {
+        // First, set all lessons to temporary negative orders to avoid constraint violations
+        for (let i = 0; i < lessonIds.length; i++) {
+          const lessonId = lessonIds[i];
+          if (lessonId) {
+            await tx.lesson.update({
+              where: {
+                id: lessonId,
+                moduleId: moduleId, // Ensure lesson belongs to the specified module
+              },
+              data: {
+                order: -(i + 1), // Use negative order temporarily
+              },
+            });
+          }
+        }
+
+        // Then, update each lesson with its final positive order
+        for (let i = 0; i < lessonIds.length; i++) {
+          const lessonId = lessonIds[i];
+          if (lessonId) {
+            await tx.lesson.update({
+              where: {
+                id: lessonId,
+                moduleId: moduleId,
+              },
+              data: {
+                order: i + 1, // Final positive order
+              },
+            });
+          }
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to reorder lessons:', error);
+      return false;
+    }
+  }
 }

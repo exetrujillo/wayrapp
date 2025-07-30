@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { SectionForm } from '../forms/SectionForm';
+import { EnhancedSectionForm } from '../forms/EnhancedSectionForm';
 import { useCreateSectionMutation, useUpdateSectionMutation } from '../../hooks/useSections';
 import { Section } from '../../utils/types';
 import { SectionFormData } from '../../utils/validation';
@@ -16,7 +16,7 @@ interface CreateOrEditSectionModalProps {
 
 /**
  * Modal component for creating or editing sections
- * Uses Modal component from src/components/ui and SectionForm
+ * Uses Modal component from src/components/ui and EnhancedSectionForm (DRY implementation)
  */
 export const CreateOrEditSectionModal: React.FC<CreateOrEditSectionModalProps> = ({
   isOpen,
@@ -65,7 +65,7 @@ export const CreateOrEditSectionModal: React.FC<CreateOrEditSectionModalProps> =
       title={title}
       size="md"
     >
-      <SectionForm
+      <EnhancedSectionForm
         levelId={levelId}
         initialData={initialData}
         onSubmit={handleSubmit}

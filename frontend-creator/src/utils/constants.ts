@@ -97,6 +97,7 @@ export const API_ENDPOINTS = {
     BASE: '/levels',
     DETAIL: (id: string) => `/levels/${id}`,
     SECTIONS: (levelId: string) => `/levels/${levelId}/sections`,
+    REORDER: (courseId: string) => `/courses/${courseId}/levels/reorder`,
   },
   SECTIONS: {
     BASE: '/sections',

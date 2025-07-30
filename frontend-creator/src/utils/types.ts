@@ -105,6 +105,7 @@ export interface Level {
 }
 
 export interface CreateLevelRequest {
+  id: string;
   code: string;
   name: string;
   order: number;
@@ -127,6 +128,7 @@ export interface Section {
 }
 
 export interface CreateSectionRequest {
+  id: string;
   name: string;
   order: number;
 }

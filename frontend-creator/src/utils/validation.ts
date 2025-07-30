@@ -70,19 +70,24 @@ export const levelSchema = z.object({
     .refine(val => val.trim().length >= 3, 'Level name must be at least 3 characters (excluding whitespace)'),
   order: z.number()
     .int('Order must be a whole number')
-    .nonnegative('Order must be a non-negative number')
+    .min(1, 'Order must be at least 1')
     .max(999, 'Order cannot exceed 999'),
 });
 
 // Section creation schema with enhanced validation
 export const sectionSchema = z.object({
+  id: z.string()
+    .min(1, 'Section ID is required')
+    .max(40, 'Section ID must be 40 characters or less')
+    .regex(/^[a-z0-9-]+$/, 'Section ID must contain only lowercase letters, numbers, and hyphens')
+    .refine(val => val.trim().length > 0, 'Section ID cannot be only whitespace'),
   name: z.string()
     .min(3, 'Section name must be at least 3 characters')
     .max(150, 'Section name must be 150 characters or less')
     .refine(val => val.trim().length >= 3, 'Section name must be at least 3 characters (excluding whitespace)'),
   order: z.number()
     .int('Order must be a whole number')
-    .nonnegative('Order must be a non-negative number')
+    .min(1, 'Order must be at least 1')
     .max(999, 'Order cannot exceed 999'),
 });
 

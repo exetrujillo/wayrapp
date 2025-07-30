@@ -116,14 +116,6 @@ All API endpoints must include comprehensive Swagger documentation.
  */
 ```
 
-### 3. README Documentation
-Each module should include a README.md explaining:
-- Purpose and scope
-- Key components
-- Usage examples
-- Integration points
-- Testing approach
-
 ## Documentation Tools & Configuration
 
 ### TypeDoc Configuration

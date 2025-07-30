@@ -65,6 +65,7 @@ import {
     LessonQuery,
     AssignExerciseToLessonSchema,
     ReorderExercisesSchema,
+    ReorderLessonsSchema,
     CreateLessonDto,
 } from "../schemas";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
@@ -582,6 +583,59 @@ export class LessonController {
             const response: ApiResponse = {
                 success: true,
                 message: "Lesson exercises reordered successfully",
+                timestamp: new Date().toISOString(),
+            };
+
+            res.status(HttpStatus.OK).json(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    /**
+     * Reorders lessons within a module by updating their position sequence.
+     * 
+     * Extracts module ID from URL parameters, validates request body against ReorderLessonsSchema,
+     * delegates lesson reordering to the service layer, and returns a standardized API response
+     * with HTTP 200 status indicating successful reordering operation.
+     * 
+     * @param {Request} req - Express request object containing moduleId in params and lesson_ids array in body
+     * @param {Response} res - Express response object for sending HTTP response
+     * @param {NextFunction} next - Express next function for error handling middleware
+     * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
+     * @throws {AppError} When module ID is missing from URL parameters
+     * @throws {Error} When request body validation fails against ReorderLessonsSchema
+     * @throws {Error} When service layer lesson reordering fails
+     * 
+     * @example
+     * // PUT /api/modules/module-basic-conversation/lessons/reorder
+     * // Request body: { "lesson_ids": ["lesson-greetings", "lesson-introductions", "lesson-farewells"] }
+     * // Response: { "success": true, "message": "Module lessons reordered successfully", "timestamp": "2024-01-01T00:00:00.000Z" }
+     */
+    reorderModuleLessons = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const moduleId = req.params["moduleId"];
+            if (!moduleId) {
+                throw new AppError(
+                    "Module ID is required",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR
+                );
+            }
+
+            const validatedData = ReorderLessonsSchema.parse(req.body);
+            await this.lessonService.reorderLessons(
+                moduleId,
+                validatedData.lesson_ids
+            );
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Module lessons reordered successfully",
                 timestamp: new Date().toISOString(),
             };
 

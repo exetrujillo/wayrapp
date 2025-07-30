@@ -4,7 +4,7 @@
  */
 
 import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
-import { CourseForm } from '../../components/forms/CourseForm';
+import { EnhancedCourseForm } from '../../components/forms';
 import { courseService } from '../../services/courseService';
 
 // Mock the course service
@@ -25,7 +25,7 @@ describe('Form Integration Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('CourseForm', () => {
+  describe('EnhancedCourseForm', () => {
     it('successfully submits course creation form', async () => {
       const mockCourse = {
         id: '1',
@@ -41,9 +41,14 @@ describe('Form Integration Tests', () => {
       mockCourseService.createCourse.mockResolvedValue(mockCourse);
 
       const onSuccess = jest.fn();
-      render(<CourseForm onSuccess={onSuccess} />);
+      const onSubmit = jest.fn().mockResolvedValue(mockCourse);
+      render(<EnhancedCourseForm onSubmit={onSubmit} onSuccess={onSuccess} />);
 
       // Fill out the form
+      fireEvent.change(screen.getByLabelText(/course id/i), {
+        target: { value: 'test-course' },
+      });
+
       fireEvent.change(screen.getByLabelText(/course name/i), {
         target: { value: 'Test Course' },
       });
@@ -63,11 +68,12 @@ describe('Form Integration Tests', () => {
       fireEvent.click(screen.getByLabelText(/make public/i));
 
       // Submit the form
-      fireEvent.click(screen.getByRole('button', { name: /create course/i }));
+      fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
       // Wait for API call and success
       await waitFor(() => {
         expect(mockCourseService.createCourse).toHaveBeenCalledWith({
+          id: 'test-course',
           name: 'Test Course',
           sourceLanguage: 'en',
           targetLanguage: 'es',
@@ -85,7 +91,8 @@ describe('Form Integration Tests', () => {
     });
 
     it('displays validation errors for invalid form data', async () => {
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       // Submit form without filling required fields
       fireEvent.click(screen.getByRole('button', { name: /create course/i }));
@@ -106,7 +113,8 @@ describe('Form Integration Tests', () => {
         new Error('Course name already exists')
       );
 
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       // Fill out valid form data
       fireEvent.change(screen.getByLabelText(/course name/i), {
@@ -148,7 +156,8 @@ describe('Form Integration Tests', () => {
         }), 100))
       );
 
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       // Fill out form
       fireEvent.change(screen.getByLabelText(/course name/i), {
@@ -192,7 +201,8 @@ describe('Form Integration Tests', () => {
 
       mockCourseService.createCourse.mockResolvedValue(mockCourse);
 
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       const nameInput = screen.getByLabelText(/course name/i) as HTMLInputElement;
       const sourceInput = screen.getByLabelText(/source language/i) as HTMLInputElement;
@@ -221,7 +231,8 @@ describe('Form Integration Tests', () => {
 
     it('handles cancel action correctly', () => {
       const onCancel = jest.fn();
-      render(<CourseForm onCancel={onCancel} />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} onCancel={onCancel} />);
 
       // Fill out some form data
       fireEvent.change(screen.getByLabelText(/course name/i), {
@@ -239,7 +250,8 @@ describe('Form Integration Tests', () => {
     });
 
     it('validates BCP 47 language codes correctly', async () => {
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       // Test invalid language codes
       fireEvent.change(screen.getByLabelText(/source language/i), {
@@ -273,7 +285,8 @@ describe('Form Integration Tests', () => {
     });
 
     it('provides language suggestions from datalist', () => {
-      render(<CourseForm />);
+      const onSubmit = jest.fn();
+      render(<EnhancedCourseForm onSubmit={onSubmit} />);
 
       // Check that datalist elements exist
       expect(document.getElementById('source_languages')).toBeInTheDocument();

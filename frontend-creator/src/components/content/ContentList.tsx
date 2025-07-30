@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { LoadingSpinner, ListSkeleton } from "../ui";
@@ -7,12 +8,12 @@ import { ErrorDisplay } from "../error";
 import { PaginatedResponse, PaginationParams } from "../../utils/types";
 
 interface ContentListProps<T> {
-  title: string;
-  items: T[];
+  title?: string;
+  data: T[]; // Changed from items to data for consistency
   isLoading: boolean;
   error: any; // Changed from string | null to any for better error handling
   pagination: PaginatedResponse<T>["meta"] | null;
-  onRefresh: (params?: PaginationParams) => void;
+  onRefresh?: (params?: PaginationParams) => void;
   onSearch: (query: string) => void;
   onPageChange: (page: number) => void;
   onItemSelect?: (item: T) => void;
@@ -43,11 +44,16 @@ interface ContentListProps<T> {
   maxRetries?: number;
   showSkeletonOnLoad?: boolean;
   skeletonCount?: number;
+  // New props for drag-and-drop support
+  enableDragDrop?: boolean;
+  onDragEnd?: (result: DropResult) => void;
+  dragDisabled?: boolean;
+  droppableId?: string;
 }
 
 export function ContentList<T extends { id: string }>({
   title,
-  items,
+  data,
   isLoading,
   error,
   pagination,
@@ -66,6 +72,10 @@ export function ContentList<T extends { id: string }>({
   maxRetries = 3,
   showSkeletonOnLoad = true,
   skeletonCount = 3,
+  enableDragDrop = false,
+  onDragEnd,
+  dragDisabled = false,
+  droppableId = 'content-list',
 }: ContentListProps<T>) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,10 +124,10 @@ export function ContentList<T extends { id: string }>({
 
   // Handle select all
   const handleSelectAll = () => {
-    if (selectedItems.size === items.length) {
+    if (selectedItems.size === data.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(items.map(item => item.id)));
+      setSelectedItems(new Set(data.map(item => item.id)));
     }
   };
 
@@ -137,7 +147,7 @@ export function ContentList<T extends { id: string }>({
       if (!confirmed) return;
     }
 
-    const selectedItemObjects = items.filter(item =>
+    const selectedItemObjects = data.filter(item =>
       selectedItems.has(item.id)
     );
     onBulkAction?.(actionId, selectedItemObjects);
@@ -241,7 +251,7 @@ export function ContentList<T extends { id: string }>({
         </div>
         <Button
           variant="outline"
-          onClick={() => onRefresh()}
+          onClick={() => onRefresh?.()}
           leftIcon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -290,7 +300,7 @@ export function ContentList<T extends { id: string }>({
         <div className="mb-6">
           <ErrorDisplay
             error={error}
-            onRetry={() => onRefresh()}
+            onRetry={() => onRefresh?.()}
             retryCount={retryCount}
             maxRetries={maxRetries}
             variant="card"
@@ -311,7 +321,7 @@ export function ContentList<T extends { id: string }>({
             <span className="ml-3 text-gray-600">Loading content...</span>
           </div>
         )
-      ) : items.length === 0 && !error ? (
+      ) : data.length === 0 && !error ? (
         /* Empty State */
         <div className="bg-white shadow rounded-lg p-12 text-center">
           <div className="text-neutral-400 mb-4">
@@ -336,7 +346,7 @@ export function ContentList<T extends { id: string }>({
             <div className="flex items-center p-4 bg-neutral-50 rounded-component">
               <input
                 type="checkbox"
-                checked={selectedItems.size === items.length && items.length > 0}
+                checked={selectedItems.size === data.length && data.length > 0}
                 onChange={handleSelectAll}
                 className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
@@ -347,11 +357,46 @@ export function ContentList<T extends { id: string }>({
           )}
 
           {/* Items */}
-          {items.map((item) => (
-            <div key={item.id}>
-              {renderItem(item, selectedItems.has(item.id), handleItemSelect)}
-            </div>
-          ))}
+          {enableDragDrop && onDragEnd ? (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId={droppableId} isDropDisabled={dragDisabled}>
+                {(provided, snapshot) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
+                  >
+                    {data.map((item, index) => (
+                      <Draggable
+                        key={item.id}
+                        draggableId={item.id}
+                        index={index}
+                        isDragDisabled={dragDisabled}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`${snapshot.isDragging ? 'rotate-1 shadow-lg' : ''}`}
+                          >
+                            {renderItem(item, selectedItems.has(item.id), handleItemSelect)}
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          ) : (
+            data.map((item) => (
+              <div key={item.id}>
+                {renderItem(item, selectedItems.has(item.id), handleItemSelect)}
+              </div>
+            ))
+          )}
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import Breadcrumb from './Breadcrumb';
+import { HierarchicalBreadcrumb } from '../navigation/HierarchicalBreadcrumb';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,7 +30,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
         <main className="flex-1">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Breadcrumb */}
-            {title && <Breadcrumb title={title} />}
+            <HierarchicalBreadcrumb title={title || undefined} />
 
             {/* Page title */}
             {title && (

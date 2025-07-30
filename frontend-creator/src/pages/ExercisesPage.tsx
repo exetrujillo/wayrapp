@@ -184,7 +184,7 @@ const ExercisesPage: React.FC = () => {
       <Layout title={pageTitle}>
         <ContentList
           title={pageTitle}
-          items={exercises}
+          data={exercises}
           isLoading={isLoading}
           error={error?.message || null}
           pagination={pagination}

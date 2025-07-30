@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { ModuleForm } from '../forms/ModuleForm';
+import { EnhancedModuleForm } from '../forms/EnhancedModuleForm';
 import { useCreateModuleMutation, useUpdateModuleMutation } from '../../hooks/useModules';
 import { Module } from '../../utils/types';
 import { ModuleFormData } from '../../utils/validation';
@@ -16,7 +16,7 @@ interface CreateOrEditModuleModalProps {
 
 /**
  * Modal component for creating or editing modules
- * Uses Modal component from src/components/ui and ModuleForm
+ * Uses Modal component from src/components/ui and EnhancedModuleForm (DRY implementation)
  */
 export const CreateOrEditModuleModal: React.FC<CreateOrEditModuleModalProps> = ({
   isOpen,
@@ -68,7 +68,7 @@ export const CreateOrEditModuleModal: React.FC<CreateOrEditModuleModalProps> = (
       title={title}
       size="md"
     >
-      <ModuleForm
+      <EnhancedModuleForm
         sectionId={sectionId}
         initialData={initialData}
         onSubmit={handleSubmit}

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Layout } from '../components/layout/Layout';
 
-import Breadcrumb from '../components/layout/Breadcrumb';
+
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Feedback } from '../components/ui/Feedback';
@@ -102,10 +102,6 @@ export const LessonDetailPage: React.FC = () => {
 
       <Layout>
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Breadcrumb Navigation */}
-          <div className="mb-6">
-            <Breadcrumb title={t('creator.pages.lessonDetail.breadcrumb.lesson', 'Lesson {{id}}', { id: lesson.id })} />
-          </div>
 
           {/* Page Header */}
           <div className="mb-8">

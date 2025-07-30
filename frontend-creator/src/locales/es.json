@@ -8,20 +8,40 @@
       "create": "Crear",
       "connect": "Conectar",
       "continue": "Continuar",
-      "start": "Comenzar"
+      "start": "Comenzar",
+      "back": "Atrás",
+      "remove": "Quitar",
+      "view": "Ver",
+      "refresh": "Refrescar",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "retry": "Reintentar",
+      "getStarted": "Comenzar",
+      "goBack": "Ir Atrás"
     },
     "messages": {
       "loading": "Cargando...",
       "error": "Ha ocurrido un error",
       "success": "¡Éxito!",
-      "noData": "No hay datos disponibles"
+      "noData": "No hay datos disponibles",
+      "missingId": "ID no encontrado"
+    },
+    "form": {
+      "requiredFields": "Campos Requeridos"
     },
     "navigation": {
       "dashboard": "Panel",
       "courses": "Cursos",
+      "levels": "Niveles",
+      "sections": "Secciones",
+      "modules": "Módulos",
       "lessons": "Lecciones",
       "exercises": "Ejercicios",
-      "profile": "Perfil"
+      "profile": "Perfil",
+      "edit": "Editar",
+      "backToCourse": "Volver al Curso",
+      "backToLevel": "Volver al Nivel",
+      "backToSection": "Back to Section"
     }
   },
   "creator": {
@@ -32,23 +52,141 @@
       "email": "Correo electrónico",
       "password": "Contraseña",
       "rememberMe": "Recordarme",
-      "forgotPassword": "¿Olvidaste tu contraseña?"
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "validation": {
+        "emailRequired": "PPor favor ingresa un email válido",
+        "passwordMinLength": "La contraseña debe tener al menos 8 caracteres"
+      }
     },
     "dashboard": {
-      "title": "Panel",
+      "title": "Panel Creator",
+      "welcome": "Bienvenid_ al WayrApp Creator",
+      "subtitle": "Crea y gestiona el contenido",
       "createNew": "Crear Nuevo",
       "totalCourses": "Total de Cursos",
+      "totalLessons": "Total de Lecciones",
+      "totalExercises": "Total de Ejercicios",
+      "publicCourses": "Cursos Publicados",
       "activeLearners": "Estudiantes Activos",
-      "completionRate": "Tasa de Finalización"
+      "completionRate": "Tasa de Finalización",
+      "activity": {
+        "courseCreated": "Nuevo curso creado",
+        "lessonAdded": "Lección añadida",
+        "exerciseCreated": "Ejercicio creado"
+      },
+      "actions": {
+        "createCourse": "Crear Curso",
+        "createCourseDesc": "Iniciar un nuevo curso",
+        "createLesson": "Crear Lección",
+        "createLessonDesc": "Añadir una nueva lección a tu módulo",
+        "createExercise": "Create Exercise",
+        "createExerciseDesc": "Construir ejercicios interactivos",
+        "manageCourses": "Gestionar Cursos",
+        "manageCoursesDesc": "Ver y editar tus cursos existentes",
+        "manageLessons": "Gestionar Lecciones",
+        "manageLessonsDesc": "Organizar y editar tus lecciones",
+        "manageExercises": "Gestionar Ejercicios",
+        "manageExercisesDesc": "Revisar y actualizar tus ejercicios"
+      }
+    },
+    "pages": {
+      "createCourse": {
+        "title": "Crear Curso",
+        "description": "Crea un nuevo curso para comenzar a construir contenido educativo para tus estudiantes."
+      },
+      "courseDetail": {
+        "courseStructure": "Estructura del Curso",
+        "loading": "Cargando Curso..."
+      }
+    },
+    "course": {
+      "sourceLanguage": "Origen",
+      "targetLanguage": "Destino",
+      "private": "Privado"
+    },
+    "level": {
+      "code": "Código",
+      "order": "Orden"
+    },
+    "section": {
+      "order": "Orden",
+      "level": "Nivel"
+    },
+    "module": {
+      "type": "Tipo",
+      "order": "Orden",
+      "section": "Sección"
+    },
+    "exercises": {
+      "createNew": "Crear Ejercicio Nuevo"
+    },
+    "components": {
+      "courseCard": {
+        "manageContent": "Gestionar Contenido"
+      },
+      "sectionsSection": {
+        "title": "Secciones del Nivel",
+        "addSection": "Agregar Sección",
+        "noSections": "No se encontraron secciones. ¡Crea tu primera sección!",
+        "createFirst": "Crear Primera Sección",
+        "loadError": "Error al cargar las secciones",
+        "dragHint": "Arrastra y suelta para reordenar secciones",
+        "reorderError": "Error al reordenar las secciones"
+      },
+      "sectionCard": {
+        "order": "Orden",
+        "id": "ID",
+        "created": "Creado",
+        "deleteConfirm": "¿Estás seguro de que quieres eliminar esta sección?",
+        "dragHandle": "Arrastra para reordenar"
+      }
+    },
+    "modals": {
+      "level": {
+        "createTitle": "Crear Nuevo Nivel",
+        "editTitle": "Editar Nivel"
+      },
+      "section": {
+        "createTitle": "Crear Nueva Sección",
+        "editTitle": "Editar Sección"
+      }
     },
     "forms": {
       "course": {
         "title": "Crear Curso",
+        "create": "Crear Curso",
+        "submit": "Crear Curso",
+        "id": "ID del Curso",
+        "idPlaceholder": "ej., español-básico",
+        "idHelp": "Identificador único para el curso (máximo 20 caracteres)",
         "name": "Nombre del Curso",
+        "namePlaceholder": "ej., Español Básico",
+        "nameHelp": "Nombre para mostrar del curso (máximo 100 caracteres)",
         "sourceLanguage": "Idioma de Origen",
         "targetLanguage": "Idioma Objetivo",
+        "languagePlaceholder": "Buscar o ingresar código BCP 47 (ej., en, es-MX)",
         "description": "Descripción",
+        "descriptionPlaceholder": "Ingresa la descripción del curso...",
         "isPublic": "Hacer Público"
+      },
+      "section": {
+        "create": "Crear Sección",
+        "update": "Actualizar Sección",
+        "createSuccessMessage": "¡Sección creada exitosamente!",
+        "updateSuccessMessage": "¡Sección actualizada exitosamente!",
+        "id": "ID de la Sección",
+        "idHelp": "Identificador único para la sección (auto-generado del nombre, o ingresa manualmente)",
+        "name": "Nombre de la Sección",
+        "nameHelp": "Nombre descriptivo para la sección (3-150 caracteres)",
+        "order": "Orden",
+        "orderHelp": "Orden de visualización dentro del nivel (1-999)",
+        "validation": {
+          "idRequired": "El ID de la sección es requerido",
+          "idFormat": "El ID debe contener solo letras minúsculas, números y guiones",
+          "nameRequired": "El nombre de la sección es requerido",
+          "nameLength": "El nombre debe tener entre 3-150 caracteres",
+          "orderValid": "El orden debe ser un número válido (1-999)"
+        }
       },
       "lesson": {
         "title": "Crear Lección",

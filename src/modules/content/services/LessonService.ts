@@ -477,4 +477,89 @@ export class LessonService {
       throw new Error(`Failed to reorder exercises for lesson '${lessonId}'`);
     }
   }
+
+  /**
+   * Reorders lessons within a module by updating their position sequence.
+   * 
+   * Validates module existence, ensures all provided lesson IDs are currently assigned
+   * to the module, validates completeness of the reorder list, and prevents duplicates
+   * before applying the new lesson order.
+   * 
+   * @param {string} moduleId - The unique module identifier
+   * @param {string[]} lessonIds - Array of lesson IDs in their new desired order
+   * @returns {Promise<void>} Resolves when reordering is complete
+   * @throws {Error} When module with the specified ID is not found
+   * @throws {Error} When provided lesson IDs are not assigned to the module
+   * @throws {Error} When reorder list is incomplete (missing currently assigned lessons)
+   * @throws {Error} When duplicate lesson IDs are provided in the reorder list
+   * @throws {Error} When reordering operation fails
+   * 
+   * @example
+   * // Reorder lessons in a module
+   * await lessonService.reorderLessons('module-basic-conversation', [
+   *   'lesson-greetings',
+   *   'lesson-introductions',
+   *   'lesson-farewells'
+   * ]);
+   * // Lessons are now in the specified order
+   */
+  async reorderLessons(moduleId: string, lessonIds: string[]): Promise<void> {
+    // Check if module exists
+    const moduleExists = await this.moduleRepository.exists(moduleId);
+    if (!moduleExists) {
+      throw new AppError(
+        `Module with ID '${moduleId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Get current lessons in the module
+    const currentLessons = await this.lessonRepository.findByModuleId(moduleId, {
+      page: 1,
+      limit: 1000, // Get all lessons
+      sortBy: 'order',
+      sortOrder: 'asc'
+    });
+
+    // Validate that all provided lesson IDs are currently assigned to this module
+    const currentLessonIds = currentLessons.data.map(lesson => lesson.id);
+    const missingLessons = lessonIds.filter(id => !currentLessonIds.includes(id));
+    if (missingLessons.length > 0) {
+      throw new AppError(
+        `Lessons not assigned to module '${moduleId}': ${missingLessons.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all currently assigned lessons are included in the reorder
+    const extraLessons = currentLessonIds.filter(id => !lessonIds.includes(id));
+    if (extraLessons.length > 0) {
+      throw new AppError(
+        `Missing lessons in reorder for module '${moduleId}': ${extraLessons.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate no duplicates in the provided list
+    const uniqueIds = new Set(lessonIds);
+    if (uniqueIds.size !== lessonIds.length) {
+      throw new AppError(
+        'Duplicate lesson IDs provided in reorder list',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    const success = await this.lessonRepository.reorderLessons(moduleId, lessonIds);
+    if (!success) {
+      throw new AppError(
+        `Failed to reorder lessons for module '${moduleId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
+    }
+  }
 }

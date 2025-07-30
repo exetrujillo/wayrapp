@@ -122,7 +122,7 @@ const CoursesPage: React.FC = () => {
         >
           <ContentList
             title={pageTitle}
-            items={courses}
+            data={courses}
             isLoading={isLoading}
             error={error}
             pagination={pagination}

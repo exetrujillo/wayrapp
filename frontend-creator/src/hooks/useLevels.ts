@@ -32,16 +32,17 @@ export const useLevelsQuery = (courseId: string, params?: PaginationParams, enab
 };
 
 /**
- * Hook for fetching a single level by ID
+ * Hook for fetching a single level by ID within a course
+ * @param courseId Course ID
  * @param id Level ID
  * @param enabled Whether the query should be enabled
  * @returns Query result with level data, loading, and error states
  */
-export const useLevelQuery = (id: string, enabled: boolean = true) => {
+export const useLevelQuery = (courseId: string, id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.levels.detail(id),
-    queryFn: () => levelService.getLevel(id),
-    enabled: enabled && !!id,
+    queryFn: () => levelService.getLevel(courseId, id),
+    enabled: enabled && !!courseId && !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on 4xx errors except 401
@@ -77,9 +78,14 @@ export const useCreateLevelMutation = () => {
           data: [
             ...old.data,
             {
-              id: `temp-${Date.now()}`, // Temporary ID
+              // SECURITY_AUDIT_TODO: Potential information disclosure through predictable temporary IDs.
+              // Using Date.now() for temporary IDs could potentially leak timing information and be predictable.
+              // While this is only used for optimistic updates in the frontend cache and not sent to the server,
+              // consider using a more secure random ID generation method like crypto.randomUUID() if available.
+              // Recommendation: Replace with crypto.randomUUID() or a more secure random ID generator.
               courseId,
               ...levelData,
+              id: levelData.id || `temp-${Date.now()}`, // Temporary ID
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
@@ -124,9 +130,9 @@ export const useUpdateLevelMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, levelData }: { id: string; levelData: UpdateLevelRequest }) => 
-      levelService.updateLevel(id, levelData),
-    onMutate: async ({ id, levelData }) => {
+    mutationFn: ({ courseId, id, levelData }: { courseId: string; id: string; levelData: UpdateLevelRequest }) => 
+      levelService.updateLevel(courseId, id, levelData),
+    onMutate: async ({ courseId, id, levelData }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.levels.detail(id) });
 
@@ -142,7 +148,7 @@ export const useUpdateLevelMutation = () => {
         }));
       }
 
-      return { previousLevel, id };
+      return { previousLevel, courseId, id };
     },
     onSuccess: (updatedLevel: Level) => {
       // Update the specific level in cache
@@ -177,60 +183,113 @@ export const useDeleteLevelMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => levelService.deleteLevel(id),
-    onMutate: async (deletedId) => {
+    mutationFn: ({ courseId, id }: { courseId: string; id: string }) => levelService.deleteLevel(courseId, id),
+    onMutate: async ({ courseId, id: deletedId }) => {
       // Get the level data before removing it to access courseId
       const levelData = queryClient.getQueryData(queryKeys.levels.detail(deletedId)) as Level;
       
-      if (levelData?.courseId) {
-        // Cancel any outgoing refetches
-        await queryClient.cancelQueries({ queryKey: queryKeys.levels.list(levelData.courseId) });
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.levels.list(courseId) });
 
-        // Snapshot the previous value
-        const previousLevels = queryClient.getQueryData(queryKeys.levels.list(levelData.courseId));
+      // Snapshot the previous value
+      const previousLevels = queryClient.getQueryData(queryKeys.levels.list(courseId));
 
-        // Optimistically update by removing the level
-        if (previousLevels) {
-          queryClient.setQueryData(queryKeys.levels.list(levelData.courseId), (old: any) => ({
-            ...old,
-            data: old.data.filter((level: Level) => level.id !== deletedId),
-            total: old.total - 1,
-          }));
-        }
-
-        return { previousLevels, levelData };
+      // Optimistically update by removing the level
+      if (previousLevels) {
+        queryClient.setQueryData(queryKeys.levels.list(courseId), (old: any) => ({
+          ...old,
+          data: old.data.filter((level: Level) => level.id !== deletedId),
+          total: old.total - 1,
+        }));
       }
 
-      return { levelData };
+      return { previousLevels, levelData, courseId };
     },
-    onSuccess: (_, deletedId: string) => {
-      // Get the level data before removing it to access courseId
-      const levelData = queryClient.getQueryData(queryKeys.levels.detail(deletedId)) as Level;
-      
+    onSuccess: (_, { courseId, id: deletedId }) => {
       // Remove the level from cache
       queryClient.removeQueries({ queryKey: queryKeys.levels.detail(deletedId) });
       
       // Invalidate levels list to reflect deletion
       queryClient.invalidateQueries({ queryKey: queryKeys.levels.lists() });
-      if (levelData?.courseId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.levels.list(levelData.courseId) });
-        // Invalidate course detail if it includes level count
-        queryClient.invalidateQueries({ queryKey: queryKeys.courses.detail(levelData.courseId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.list(courseId) });
+      // Invalidate course detail if it includes level count
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.detail(courseId) });
     },
-    onError: (error, _deletedId, context) => {
+    onError: (error, { courseId }, context) => {
       // If the mutation fails, use the context to roll back
-      if (context?.previousLevels && context?.levelData?.courseId) {
-        queryClient.setQueryData(queryKeys.levels.list(context.levelData.courseId), context.previousLevels);
+      if (context?.previousLevels) {
+        queryClient.setQueryData(queryKeys.levels.list(courseId), context.previousLevels);
       }
       console.error('Failed to delete level:', error);
     },
-    onSettled: (_, __, deletedId) => {
+    onSettled: (_, __, { courseId }) => {
       // Always refetch after error or success
-      const levelData = queryClient.getQueryData(queryKeys.levels.detail(deletedId)) as Level;
-      if (levelData?.courseId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.levels.list(levelData.courseId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.list(courseId) });
+    },
+  });
+};
+
+/**
+ * Hook for reordering levels within a course
+ * @returns Mutation object with mutate function and states
+ */
+export const useReorderLevelsMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ courseId, orderedIds }: { courseId: string; orderedIds: string[] }) => 
+      levelService.reorderLevels(courseId, orderedIds),
+    onMutate: async ({ courseId, orderedIds }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.levels.list(courseId) });
+
+      // Snapshot the previous value
+      const previousLevels = queryClient.getQueryData(queryKeys.levels.list(courseId));
+
+      // Optimistically update the order
+      if (previousLevels) {
+        queryClient.setQueryData(queryKeys.levels.list(courseId), (old: any) => {
+          const levelMap = new Map(old.data.map((level: Level) => [level.id, level]));
+          const reorderedLevels = orderedIds.map((id, index) => {
+            const level = levelMap.get(id);
+            return level ? { ...level, order: index + 1 } : null;
+          }).filter((level): level is Level => level !== null);
+
+          return {
+            ...old,
+            data: reorderedLevels,
+          };
+        });
       }
+
+      return { previousLevels, courseId };
+    },
+    onSuccess: (reorderedLevels, { courseId }) => {
+      // Update the levels list cache with the new order
+      queryClient.setQueryData(queryKeys.levels.list(courseId), (old: any) => ({
+        ...old,
+        data: reorderedLevels,
+      }));
+
+      // Update individual level caches
+      reorderedLevels.forEach(level => {
+        queryClient.setQueryData(queryKeys.levels.detail(level.id), level);
+      });
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.detail(courseId) });
+    },
+    onError: (error, { courseId }, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousLevels) {
+        queryClient.setQueryData(queryKeys.levels.list(courseId), context.previousLevels);
+      }
+      console.error('Failed to reorder levels:', error);
+    },
+    onSettled: (_, __, { courseId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: queryKeys.levels.list(courseId) });
     },
   });
 };
@@ -242,4 +301,5 @@ export default {
   useCreateLevelMutation,
   useUpdateLevelMutation,
   useDeleteLevelMutation,
+  useReorderLevelsMutation,
 };
