@@ -97,6 +97,36 @@ class ModuleService {
       throw error;
     }
   }
+
+  /**
+   * Reorder modules within a section
+   * @param sectionId Section ID
+   * @param moduleIds Array of module IDs in the desired order
+   * @returns Success response
+   */
+  async reorderModules(sectionId: string, moduleIds: string[]): Promise<void> {
+    try {
+      if (!sectionId || typeof sectionId !== 'string') {
+        throw new Error('Section ID is required and must be a string');
+      }
+
+      if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+        throw new Error('Module IDs array is required and cannot be empty');
+      }
+
+      // Validate that all module IDs are strings
+      if (!moduleIds.every(id => typeof id === 'string' && id.length > 0)) {
+        throw new Error('All module IDs must be non-empty strings');
+      }
+
+      await apiClient.put(API_ENDPOINTS.SECTIONS.REORDER_MODULES(sectionId), {
+        module_ids: moduleIds
+      });
+    } catch (error) {
+      console.error(`Failed to reorder modules in section ${sectionId}:`, error);
+      throw error;
+    }
+  }
 }
 
 // Create and export module service instance

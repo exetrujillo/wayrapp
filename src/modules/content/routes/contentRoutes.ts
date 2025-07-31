@@ -69,6 +69,9 @@ import {
   CreateModuleSchema,
   UpdateModuleSchema,
   ModuleQuerySchema,
+  ReorderModulesSchema,
+  ReorderSectionsSchema,
+  ReorderLevelsSchema,
   CourseParamSchema,
   LevelParamSchema,
   SectionParamSchema,
@@ -1015,6 +1018,81 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *       409:
    *         description: Level with this code already exists in the course
    */
+
+  /**
+   * @swagger
+   * /api/v1/courses/{courseId}/levels/reorder:
+   *   put:
+   *     tags:
+   *       - Content
+   *       - Courses
+   *       - Levels
+   *     summary: Reorder course levels
+   *     description: Update the order of levels within a course (requires content_creator or admin role)
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: courseId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Course ID
+   *         example: "course-001"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               level_ids:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 description: Array of level IDs in desired order
+   *                 example: ["level-001", "level-003", "level-002"]
+   *             required:
+   *               - level_ids
+   *     responses:
+   *       200:
+   *         description: Course levels reordered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Course levels reordered successfully
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                   example: "2024-01-01T00:00:00.000Z"
+   *       400:
+   *         description: Invalid course ID or level order data
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (content_creator or admin required)
+   *       404:
+   *         description: Course not found or levels not found
+   *       422:
+   *         description: Duplicate order values or missing levels
+   */
+  router.put('/courses/:courseId/levels/reorder',
+    authenticateToken,
+    requireRole(['admin', 'content_creator']),
+    validate({
+      params: CourseParamSchema,
+      body: ReorderLevelsSchema
+    }),
+    contentController.reorderCourseLevels
+  );
+
   router.put('/courses/:courseId/levels/:id',
     authenticateToken,
     requireRole(['admin', 'content_creator']),
@@ -1387,6 +1465,81 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: Level or section not found
    */
+
+  /**
+   * @swagger
+   * /api/v1/levels/{levelId}/sections/reorder:
+   *   put:
+   *     tags:
+   *       - Content
+   *       - Levels
+   *       - Sections
+   *     summary: Reorder level sections
+   *     description: Update the order of sections within a level (requires content_creator or admin role)
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: levelId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Level ID
+   *         example: "level-001"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               section_ids:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 description: Array of section IDs in desired order
+   *                 example: ["section-001", "section-003", "section-002"]
+   *             required:
+   *               - section_ids
+   *     responses:
+   *       200:
+   *         description: Level sections reordered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Level sections reordered successfully
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                   example: "2024-01-01T00:00:00.000Z"
+   *       400:
+   *         description: Invalid level ID or section order data
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (content_creator or admin required)
+   *       404:
+   *         description: Level not found or sections not found
+   *       422:
+   *         description: Duplicate order values or missing sections
+   */
+  router.put('/levels/:levelId/sections/reorder',
+    authenticateToken,
+    requireRole(['admin', 'content_creator']),
+    validate({
+      params: LevelParamSchema,
+      body: ReorderSectionsSchema
+    }),
+    contentController.reorderLevelSections
+  );
+
   router.put('/levels/:levelId/sections/:id',
     authenticateToken,
     requireRole(['admin', 'content_creator']),
@@ -1784,6 +1937,81 @@ export function createContentRoutes(prisma: PrismaClient): Router {
    *       404:
    *         description: Section or module not found
    */
+
+  /**
+   * @swagger
+   * /api/v1/sections/{sectionId}/modules/reorder:
+   *   put:
+   *     tags:
+   *       - Content
+   *       - Sections
+   *       - Modules
+   *     summary: Reorder section modules
+   *     description: Update the order of modules within a section (requires content_creator or admin role)
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: sectionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Section ID
+   *         example: "section-001"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               module_ids:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 description: Array of module IDs in desired order
+   *                 example: ["module-001", "module-003", "module-002"]
+   *             required:
+   *               - module_ids
+   *     responses:
+   *       200:
+   *         description: Section modules reordered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Section modules reordered successfully
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                   example: "2024-01-01T00:00:00.000Z"
+   *       400:
+   *         description: Invalid section ID or module order data
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (content_creator or admin required)
+   *       404:
+   *         description: Section not found or modules not found
+   *       422:
+   *         description: Duplicate order values or missing modules
+   */
+  router.put('/sections/:sectionId/modules/reorder',
+    authenticateToken,
+    requireRole(['admin', 'content_creator']),
+    validate({
+      params: SectionParamSchema,
+      body: ReorderModulesSchema
+    }),
+    contentController.reorderSectionModules
+  );
+
   router.put('/sections/:sectionId/modules/:id',
     authenticateToken,
     requireRole(['admin', 'content_creator']),

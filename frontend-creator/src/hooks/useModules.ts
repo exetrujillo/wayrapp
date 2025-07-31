@@ -234,6 +234,67 @@ export const useDeleteModuleMutation = () => {
   });
 };
 
+/**
+ * Hook for reordering modules within a section
+ * @returns Mutation object with mutate function and states
+ */
+export const useReorderModulesMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sectionId, moduleIds }: { sectionId: string; moduleIds: string[] }) => 
+      moduleService.reorderModules(sectionId, moduleIds),
+    onMutate: async ({ sectionId, moduleIds }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.modules.list(sectionId) });
+
+      // Snapshot the previous value
+      const previousModules = queryClient.getQueryData(queryKeys.modules.list(sectionId));
+
+      // Optimistically update to the new order
+      if (previousModules) {
+        queryClient.setQueryData(queryKeys.modules.list(sectionId), (old: any) => {
+          const moduleMap = new Map(old.data.map((module: Module) => [module.id, module]));
+          const reorderedModules = moduleIds.map((id, index) => {
+            const module = moduleMap.get(id);
+            if (!module) return null;
+            return {
+              ...module,
+              order: index + 1,
+            };
+          }).filter(Boolean);
+
+          return {
+            ...old,
+            data: reorderedModules,
+          };
+        });
+      }
+
+      return { previousModules, sectionId };
+    },
+    onSuccess: (_, { sectionId }) => {
+      // Invalidate and refetch modules list for the section
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(sectionId) });
+      
+      // Invalidate section detail if it includes module count
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.detail(sectionId) });
+    },
+    onError: (error, { sectionId }, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousModules) {
+        queryClient.setQueryData(queryKeys.modules.list(sectionId), context.previousModules);
+      }
+      console.error('Failed to reorder modules:', error);
+    },
+    onSettled: (_, __, { sectionId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(sectionId) });
+    },
+  });
+};
+
 // Export all hooks for easy importing
 export default {
   useModulesQuery,
@@ -241,4 +302,5 @@ export default {
   useCreateModuleMutation,
   useUpdateModuleMutation,
   useDeleteModuleMutation,
+  useReorderModulesMutation,
 };

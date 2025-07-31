@@ -73,7 +73,8 @@ import {
   Exercise,
   CreateExerciseDto
 } from '../types';
-import { PaginatedResult, QueryOptions } from '../../../shared/types';
+import { PaginatedResult, QueryOptions, HttpStatus, ErrorCodes } from '../../../shared/types';
+import { AppError } from '../../../shared/middleware/errorHandler';
 
 /**
  * Service class for comprehensive exercise management operations within the WayrApp content system.
@@ -125,7 +126,11 @@ export class ExerciseService {
     // Check if exercise with same ID already exists
     const existingExercise = await this.exerciseRepository.exists(data.id);
     if (existingExercise) {
-      throw new Error(`Exercise with ID '${data.id}' already exists`);
+      throw new AppError(
+        `Exercise with ID '${data.id}' already exists`,
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
     }
 
     // Validate exercise data based on type
@@ -149,7 +154,11 @@ export class ExerciseService {
   async getExercise(id: string): Promise<Exercise> {
     const exercise = await this.exerciseRepository.findById(id);
     if (!exercise) {
-      throw new Error(`Exercise with ID '${id}' not found`);
+      throw new AppError(
+        `Exercise with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
     return exercise;
   }
@@ -206,7 +215,11 @@ export class ExerciseService {
     // Validate exercise type
     const validTypes = ['translation', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering'];
     if (!validTypes.includes(exerciseType)) {
-      throw new Error(`Invalid exercise type '${exerciseType}'. Valid types: ${validTypes.join(', ')}`);
+      throw new AppError(
+        `Invalid exercise type '${exerciseType}'. Valid types: ${validTypes.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     return await this.exerciseRepository.findByType(exerciseType, options);
@@ -240,7 +253,11 @@ export class ExerciseService {
     // Check if exercise exists
     const existingExercise = await this.exerciseRepository.exists(id);
     if (!existingExercise) {
-      throw new Error(`Exercise with ID '${id}' not found`);
+      throw new AppError(
+        `Exercise with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
 
     // Validate exercise data if provided
@@ -275,12 +292,20 @@ export class ExerciseService {
   async deleteExercise(id: string): Promise<void> {
     const existingExercise = await this.exerciseRepository.exists(id);
     if (!existingExercise) {
-      throw new Error(`Exercise with ID '${id}' not found`);
+      throw new AppError(
+        `Exercise with ID '${id}' not found`,
+        HttpStatus.NOT_FOUND,
+        ErrorCodes.NOT_FOUND
+      );
     }
 
     const success = await this.exerciseRepository.delete(id);
     if (!success) {
-      throw new Error(`Failed to delete exercise with ID '${id}'`);
+      throw new AppError(
+        `Failed to delete exercise with ID '${id}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
     }
   }
 
@@ -325,7 +350,11 @@ export class ExerciseService {
    */
   private validateExerciseData(exerciseType: string, data: any): void {
     if (!data || typeof data !== 'object') {
-      throw new Error('Exercise data must be a valid object');
+      throw new AppError(
+        'Exercise data must be a valid object',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     switch (exerciseType) {
@@ -348,8 +377,19 @@ export class ExerciseService {
         this.validateOrderingData(data);
         break;
       default:
-        throw new Error(`Unknown exercise type: ${exerciseType}`);
+        throw new AppError(
+          `Unknown exercise type: ${exerciseType}`,
+          HttpStatus.BAD_REQUEST,
+          ErrorCodes.VALIDATION_ERROR
+        );
     }
+  }
+
+  /**
+   * Helper method to throw validation errors consistently.
+   */
+  private throwValidationError(message: string): never {
+    throw new AppError(message, HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR);
   }
 
   /**
@@ -367,13 +407,25 @@ export class ExerciseService {
    */
   private validateTranslationData(data: any): void {
     if (!data.source_text || typeof data.source_text !== 'string') {
-      throw new Error('Translation exercise must have a valid source_text');
+      throw new AppError(
+        'Translation exercise must have a valid source_text',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
     if (!data.target_text || typeof data.target_text !== 'string') {
-      throw new Error('Translation exercise must have a valid target_text');
+      throw new AppError(
+        'Translation exercise must have a valid target_text',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
     if (data.hints && !Array.isArray(data.hints)) {
-      throw new Error('Translation exercise hints must be an array');
+      throw new AppError(
+        'Translation exercise hints must be an array',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
   }
 
@@ -396,21 +448,21 @@ export class ExerciseService {
    */
   private validateFillInTheBlankData(data: any): void {
     if (!data.text || typeof data.text !== 'string') {
-      throw new Error('Fill-in-the-blank exercise must have a valid text');
+      this.throwValidationError('Fill-in-the-blank exercise must have a valid text');
     }
     if (!data.blanks || !Array.isArray(data.blanks)) {
-      throw new Error('Fill-in-the-blank exercise must have a valid blanks array');
+      this.throwValidationError('Fill-in-the-blank exercise must have a valid blanks array');
     }
 
     data.blanks.forEach((blank: any, index: number) => {
       if (typeof blank.position !== 'number') {
-        throw new Error(`Blank at index ${index} must have a valid position number`);
+        this.throwValidationError(`Blank at index ${index} must have a valid position number`);
       }
       if (!blank.correct_answers || !Array.isArray(blank.correct_answers) || blank.correct_answers.length === 0) {
-        throw new Error(`Blank at index ${index} must have at least one correct answer`);
+        this.throwValidationError(`Blank at index ${index} must have at least one correct answer`);
       }
       if (blank.hints && !Array.isArray(blank.hints)) {
-        throw new Error(`Blank at index ${index} hints must be an array`);
+        this.throwValidationError(`Blank at index ${index} hints must be an array`);
       }
     });
   }
@@ -430,13 +482,13 @@ export class ExerciseService {
    */
   private validateVofData(data: any): void {
     if (!data.statement || typeof data.statement !== 'string') {
-      throw new Error('VOF exercise must have a valid statement');
+      this.throwValidationError('VOF exercise must have a valid statement');
     }
     if (typeof data.is_true !== 'boolean') {
-      throw new Error('VOF exercise must have a valid is_true boolean value');
+      this.throwValidationError('VOF exercise must have a valid is_true boolean value');
     }
     if (data.explanation && typeof data.explanation !== 'string') {
-      throw new Error('VOF exercise explanation must be a string');
+      this.throwValidationError('VOF exercise explanation must be a string');
     }
   }
 
@@ -456,18 +508,18 @@ export class ExerciseService {
    */
   private validatePairsData(data: any): void {
     if (!data.pairs || !Array.isArray(data.pairs)) {
-      throw new Error('Pairs exercise must have a valid pairs array');
+      this.throwValidationError('Pairs exercise must have a valid pairs array');
     }
     if (data.pairs.length === 0) {
-      throw new Error('Pairs exercise must have at least one pair');
+      this.throwValidationError('Pairs exercise must have at least one pair');
     }
 
     data.pairs.forEach((pair: any, index: number) => {
       if (!pair.left || typeof pair.left !== 'string') {
-        throw new Error(`Pair at index ${index} must have a valid left value`);
+        this.throwValidationError(`Pair at index ${index} must have a valid left value`);
       }
       if (!pair.right || typeof pair.right !== 'string') {
-        throw new Error(`Pair at index ${index} must have a valid right value`);
+        this.throwValidationError(`Pair at index ${index} must have a valid right value`);
       }
     });
   }
@@ -485,10 +537,10 @@ export class ExerciseService {
    */
   private validateInformativeData(data: any): void {
     if (!data.content || typeof data.content !== 'string') {
-      throw new Error('Informative exercise must have valid content');
+      this.throwValidationError('Informative exercise must have valid content');
     }
     if (data.title && typeof data.title !== 'string') {
-      throw new Error('Informative exercise title must be a string');
+      this.throwValidationError('Informative exercise title must be a string');
     }
   }
 
@@ -509,18 +561,18 @@ export class ExerciseService {
    */
   private validateOrderingData(data: any): void {
     if (!data.items || !Array.isArray(data.items)) {
-      throw new Error('Ordering exercise must have a valid items array');
+      this.throwValidationError('Ordering exercise must have a valid items array');
     }
     if (data.items.length < 2) {
-      throw new Error('Ordering exercise must have at least 2 items');
+      this.throwValidationError('Ordering exercise must have at least 2 items');
     }
 
     data.items.forEach((item: any, index: number) => {
       if (!item.text || typeof item.text !== 'string') {
-        throw new Error(`Item at index ${index} must have valid text`);
+        this.throwValidationError(`Item at index ${index} must have valid text`);
       }
       if (typeof item.correct_order !== 'number') {
-        throw new Error(`Item at index ${index} must have a valid correct_order number`);
+        this.throwValidationError(`Item at index ${index} must have a valid correct_order number`);
       }
     });
 
@@ -528,7 +580,7 @@ export class ExerciseService {
     const orders = data.items.map((item: any) => item.correct_order).sort((a: number, b: number) => a - b);
     for (let i = 0; i < orders.length; i++) {
       if (orders[i] !== i + 1) {
-        throw new Error('Ordering exercise correct_order values must form a sequence starting from 1');
+        this.throwValidationError('Ordering exercise correct_order values must form a sequence starting from 1');
       }
     }
   }

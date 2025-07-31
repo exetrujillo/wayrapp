@@ -13,7 +13,7 @@ import {
 } from '../../../shared/utils/repositoryHelpers';
 
 export class SectionRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
   async create(data: CreateSectionDto): Promise<Section> {
     const section = await this.prisma.section.create({
@@ -136,7 +136,7 @@ export class SectionRepository {
 
   async update(id: string, data: Partial<Omit<CreateSectionDto, 'id' | 'level_id'>>): Promise<Section> {
     const updateData: any = {};
-    
+
     if (data.name) updateData.name = data.name;
     if (data.order !== undefined) updateData.order = data.order;
 
@@ -182,6 +182,81 @@ export class SectionRepository {
 
     const count = await this.prisma.section.count({ where });
     return count > 0;
+  }
+
+  /**
+   * Reorders sections within a level using atomic transaction operations.
+   * Updates the order positions of all specified sections to match the provided sequence,
+   * ensuring data consistency through database transaction isolation.
+   * 
+   * @param {string} levelId - The unique identifier of the level containing the sections
+   * @param {string[]} sectionIds - Array of section IDs in their new desired order
+   * @returns {Promise<boolean>} True if reordering was successful, false otherwise
+   * @throws {Error} When database transaction fails or constraint violations occur
+   * 
+   * @example
+   * // Reorder sections within a level
+   * const success = await sectionRepository.reorderSections('level-basic-grammar', [
+   *   'section-present-tense',
+   *   'section-past-tense', 
+   *   'section-future-tense'
+   * ]);
+   * // Sections are now ordered: present-tense (1), past-tense (2), future-tense (3)
+   */
+  async reorderSections(
+    levelId: string, // Used for validation in service layer
+    sectionIds: string[],
+  ): Promise<boolean> {
+    try {
+      // Use a transaction to ensure atomicity
+      await this.prisma.$transaction(async (tx) => {
+        // Validate that all sections belong to the specified level
+        for (const sectionId of sectionIds) {
+          const section = await tx.section.findUnique({
+            where: { id: sectionId },
+            select: { levelId: true }
+          });
+
+          if (!section || section.levelId !== levelId) {
+            throw new Error(`Section ${sectionId} does not belong to level ${levelId}`);
+          }
+        }
+
+        // First, set all sections to temporary negative orders to avoid constraint violations
+        for (let i = 0; i < sectionIds.length; i++) {
+          const sectionId = sectionIds[i];
+          if (sectionId) {
+            await tx.section.update({
+              where: {
+                id: sectionId,
+              },
+              data: {
+                order: -(i + 1), // Use negative order temporarily
+              },
+            });
+          }
+        }
+
+        // Then, update each section with its final positive order
+        for (let i = 0; i < sectionIds.length; i++) {
+          const sectionId = sectionIds[i];
+          if (sectionId) {
+            await tx.section.update({
+              where: {
+                id: sectionId,
+              },
+              data: {
+                order: i + 1, // Final positive order
+              },
+            });
+          }
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to reorder sections:', error);
+      return false;
+    }
   }
 
   private mapPrismaToModel(section: PrismaSection): Section {

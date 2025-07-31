@@ -103,11 +103,13 @@ export const API_ENDPOINTS = {
     BASE: '/sections',
     DETAIL: (id: string) => `/sections/${id}`,
     MODULES: (id: string) => `/sections/${id}/modules`,
+    REORDER_MODULES: (id: string) => `/sections/${id}/modules/reorder`,
   },
   MODULES: {
     BASE: '/modules',
     DETAIL: (id: string) => `/modules/${id}`,
     LESSONS: (id: string) => `/modules/${id}/lessons`,
+    REORDER_LESSONS: (id: string) => `/modules/${id}/lessons/reorder`,
   },
   LESSONS: {
     BASE: '/lessons',

@@ -14,11 +14,14 @@ interface ModuleCardProps {
   onView?: (module: Module) => void;
   showActions?: boolean;
   showSelection?: boolean;
+  dragHandleProps?: any;
+  isDragging?: boolean;
 }
 
 /**
  * Card component for displaying Module information
  * Follows the same pattern as CourseCard for consistency
+ * Supports drag-and-drop functionality when dragHandleProps are provided
  */
 export const ModuleCard: React.FC<ModuleCardProps> = ({
   module,
@@ -29,6 +32,8 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
   onView,
   showActions = true,
   showSelection = false,
+  dragHandleProps,
+  isDragging = false,
 }) => {
   const { t } = useTranslation();
 
@@ -96,10 +101,25 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
     <Card
       className={`module-card transition-all duration-200 ${
         isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
-      } ${showSelection || onView ? 'cursor-pointer' : ''}`}
+      } ${showSelection || onView ? 'cursor-pointer' : ''} ${
+        isDragging ? 'shadow-xl bg-white' : ''
+      }`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
+        {/* Drag Handle */}
+        {dragHandleProps && (
+          <div
+            {...dragHandleProps}
+            className="mr-3 pt-1 cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600"
+            title="Drag to reorder"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            </svg>
+          </div>
+        )}
+
         {/* Selection Checkbox */}
         {showSelection && (
           <div className="mr-4 pt-1">

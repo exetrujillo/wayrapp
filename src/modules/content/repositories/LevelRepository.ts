@@ -200,6 +200,81 @@ export class LevelRepository {
     return count > 0;
   }
 
+  /**
+   * Reorders levels within a course using atomic transaction operations.
+   * Updates the order positions of all specified levels to match the provided sequence,
+   * ensuring data consistency through database transaction isolation.
+   * 
+   * @param {string} courseId - The unique identifier of the course containing the levels
+   * @param {string[]} levelIds - Array of level IDs in their new desired order
+   * @returns {Promise<boolean>} True if reordering was successful, false otherwise
+   * @throws {Error} When database transaction fails or constraint violations occur
+   * 
+   * @example
+   * // Reorder levels within a course
+   * const success = await levelRepository.reorderLevels('course-spanish-101', [
+   *   'level-beginner',
+   *   'level-intermediate', 
+   *   'level-advanced'
+   * ]);
+   * // Levels are now ordered: beginner (1), intermediate (2), advanced (3)
+   */
+  async reorderLevels(
+    courseId: string, // Used for validation in service layer
+    levelIds: string[],
+  ): Promise<boolean> {
+    try {
+      // Use a transaction to ensure atomicity
+      await this.prisma.$transaction(async (tx) => {
+        // Validate that all levels belong to the specified course
+        for (const levelId of levelIds) {
+          const level = await tx.level.findUnique({
+            where: { id: levelId },
+            select: { courseId: true }
+          });
+          
+          if (!level || level.courseId !== courseId) {
+            throw new Error(`Level ${levelId} does not belong to course ${courseId}`);
+          }
+        }
+
+        // First, set all levels to temporary negative orders to avoid constraint violations
+        for (let i = 0; i < levelIds.length; i++) {
+          const levelId = levelIds[i];
+          if (levelId) {
+            await tx.level.update({
+              where: {
+                id: levelId,
+              },
+              data: {
+                order: -(i + 1), // Use negative order temporarily
+              },
+            });
+          }
+        }
+
+        // Then, update each level with its final positive order
+        for (let i = 0; i < levelIds.length; i++) {
+          const levelId = levelIds[i];
+          if (levelId) {
+            await tx.level.update({
+              where: {
+                id: levelId,
+              },
+              data: {
+                order: i + 1, // Final positive order
+              },
+            });
+          }
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to reorder levels:', error);
+      return false;
+    }
+  }
+
   private mapPrismaToModel(level: PrismaLevel): Level {
     return {
       id: level.id,

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Lesson } from '../../utils/types';
-import { useLessonsQuery } from '../../hooks/useLessons';
+import { useLessonsQuery, useReorderLessonsMutation } from '../../hooks/useLessons';
 import { LessonCard } from './LessonCard';
+import { LessonPreviewModal } from './LessonPreviewModal';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Feedback } from '../ui/Feedback';
 
@@ -12,11 +14,16 @@ interface LessonsSectionProps {
   onCreateLesson: () => void;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (lesson: Lesson) => void;
+  enableDragDrop?: boolean;
 }
 
 /**
- * Section component for displaying and managing lessons within a module
- * Uses LessonCard for consistent UI patterns
+ * Enhanced section component for displaying and managing lessons within a module
+ * Features:
+ * - Drag-and-drop reordering with react-beautiful-dnd
+ * - Experience points configuration and validation
+ * - Lesson preview functionality
+ * - Uses LessonCard for consistent UI patterns
  */
 export const LessonsSection: React.FC<LessonsSectionProps> = ({
   moduleId,
@@ -24,8 +31,12 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
   onCreateLesson,
   onEditLesson,
   onDeleteLesson,
+  enableDragDrop = true,
 }) => {
   const { t } = useTranslation();
+  const [dragDisabled, setDragDisabled] = useState(false);
+  const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const {
     data: lessonsResponse,
@@ -34,11 +45,57 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
     refetch,
   } = useLessonsQuery(moduleId);
 
+  const reorderLessonsMutation = useReorderLessonsMutation();
   const lessons = lessonsResponse?.data || [];
 
   const handleLessonView = (lesson: Lesson) => {
     onLessonClick(lesson.id);
   };
+
+  const handleLessonPreview = (lesson: Lesson) => {
+    setPreviewLesson(lesson);
+    setIsPreviewOpen(true);
+  };
+
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
+    setPreviewLesson(null);
+  };
+
+  /**
+   * Handle drag and drop reordering of lessons
+   */
+  const handleDragEnd = useCallback(async (result: DropResult) => {
+    const { destination, source } = result;
+
+    // If dropped outside the list or in the same position, do nothing
+    if (!destination || destination.index === source.index) {
+      return;
+    }
+
+    // Create a new array with reordered lessons
+    const reorderedLessons = Array.from(lessons);
+    const [removed] = reorderedLessons.splice(source.index, 1);
+    if (removed) {
+      reorderedLessons.splice(destination.index, 0, removed);
+    }
+
+    // Extract lesson IDs in the new order
+    const lessonIds = reorderedLessons.map(lesson => lesson.id);
+
+    try {
+      setDragDisabled(true);
+      await reorderLessonsMutation.mutateAsync({
+        moduleId,
+        lessonIds,
+      });
+    } catch (error) {
+      console.error('Failed to reorder lessons:', error);
+      // The mutation will handle rollback via onError
+    } finally {
+      setDragDisabled(false);
+    }
+  }, [lessons, moduleId, reorderLessonsMutation]);
 
   if (isLoading) {
     return (
@@ -89,13 +146,58 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
             {t('creator.components.lessonsSection.createFirst', 'Create First Lesson')}
           </button>
         </div>
+      ) : enableDragDrop ? (
+        // Drag and drop enabled
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="lessons-list" isDropDisabled={dragDisabled}>
+            {(provided, snapshot) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className={`space-y-3 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
+              >
+                {lessons.map((lesson, index) => (
+                  <Draggable
+                    key={lesson.id}
+                    draggableId={lesson.id}
+                    index={index}
+                    isDragDisabled={dragDisabled}
+                  >
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`${snapshot.isDragging ? 'rotate-1 shadow-lg' : ''}`}
+                      >
+                        <LessonCard
+                          lesson={lesson}
+                          onView={handleLessonView}
+                          onPreview={handleLessonPreview}
+                          onEdit={onEditLesson}
+                          onDelete={onDeleteLesson}
+                          showSelection={false}
+                          showActions={true}
+                          dragHandleProps={provided.dragHandleProps}
+                          isDragging={snapshot.isDragging}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       ) : (
+        // Drag and drop disabled
         <div className="space-y-3">
           {lessons.map((lesson) => (
             <LessonCard
               key={lesson.id}
               lesson={lesson}
               onView={handleLessonView}
+              onPreview={handleLessonPreview}
               onEdit={onEditLesson}
               onDelete={onDeleteLesson}
               showSelection={false}
@@ -104,6 +206,14 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
           ))}
         </div>
       )}
+
+      {/* Lesson Preview Modal */}
+      <LessonPreviewModal
+        lesson={previewLesson}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        onEdit={onEditLesson}
+      />
     </div>
   );
 };

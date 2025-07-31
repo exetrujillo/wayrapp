@@ -67,7 +67,10 @@ import {
     CreateCourseSchema,
     CreateLevelDto,
     CreateSectionDto,
-    CreateModuleDto
+    CreateModuleDto,
+    ReorderModulesSchema,
+    ReorderSectionsSchema,
+    ReorderLevelsSchema
 } from "../schemas";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
@@ -1070,6 +1073,165 @@ export class ContentController {
             const response: ApiResponse = {
                 success: true,
                 message: "Module deleted successfully",
+                timestamp: new Date().toISOString(),
+            };
+
+            res.status(HttpStatus.OK).json(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    /**
+     * Reorders modules within a section by updating their position sequence.
+     * 
+     * Extracts section ID from URL parameters, validates request body against ReorderModulesSchema,
+     * delegates module reordering to the service layer, and returns a standardized API response
+     * with HTTP 200 status indicating successful reordering operation.
+     * 
+     * @param {Request} req - Express request object containing sectionId in params and module_ids array in body
+     * @param {Response} res - Express response object for sending HTTP response
+     * @param {NextFunction} next - Express next function for error handling middleware
+     * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
+     * @throws {AppError} When section ID is missing from URL parameters
+     * @throws {Error} When request body validation fails against ReorderModulesSchema
+     * @throws {Error} When service layer module reordering fails
+     * 
+     * @example
+     * // PUT /api/sections/section-basic-conversation/modules/reorder
+     * // Request body: { "module_ids": ["module-greetings", "module-introductions", "module-farewells"] }
+     * // Response: { "success": true, "message": "Section modules reordered successfully", "timestamp": "2024-01-01T00:00:00.000Z" }
+     */
+    reorderSectionModules = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const sectionId = req.params['sectionId'];
+            if (!sectionId) {
+                throw new AppError(
+                    "Section ID is required",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR
+                );
+            }
+
+            const validatedData = ReorderModulesSchema.parse(req.body);
+            await this.contentService.reorderModules(
+                sectionId,
+                validatedData.module_ids
+            );
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Section modules reordered successfully",
+                timestamp: new Date().toISOString(),
+            };
+
+            res.status(HttpStatus.OK).json(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    /**
+     * Reorders sections within a level by updating their position sequence.
+     * 
+     * Extracts level ID from URL parameters, validates request body against ReorderSectionsSchema,
+     * delegates section reordering to the service layer, and returns a standardized API response
+     * with HTTP 200 status indicating successful reordering operation.
+     * 
+     * @param {Request} req - Express request object containing level ID in params and section IDs in body
+     * @param {Response} res - Express response object for sending the API response
+     * @param {NextFunction} next - Express next function for error handling middleware
+     * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
+     * @throws {AppError} When level ID is missing from URL parameters
+     * @throws {Error} When request body validation fails against ReorderSectionsSchema
+     * @throws {Error} When service layer section reordering fails
+     * 
+     * @example
+     * // PUT /api/levels/level-basic-conversation/sections/reorder
+     * // Request body: { "section_ids": ["section-greetings", "section-introductions", "section-farewells"] }
+     * // Response: { "success": true, "message": "Level sections reordered successfully", "timestamp": "2024-01-01T00:00:00.000Z" }
+     */
+    reorderLevelSections = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const levelId = req.params['levelId'];
+            if (!levelId) {
+                throw new AppError(
+                    "Level ID is required",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR
+                );
+            }
+
+            const validatedData = ReorderSectionsSchema.parse(req.body);
+            await this.contentService.reorderSections(
+                levelId,
+                validatedData.section_ids
+            );
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Level sections reordered successfully",
+                timestamp: new Date().toISOString(),
+            };
+
+            res.status(HttpStatus.OK).json(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    /**
+     * Reorders levels within a course by updating their position sequence.
+     * 
+     * Extracts course ID from URL parameters, validates request body against ReorderLevelsSchema,
+     * delegates level reordering to the service layer, and returns a standardized API response
+     * with HTTP 200 status indicating successful reordering operation.
+     * 
+     * @param {Request} req - Express request object containing course ID in params and level IDs in body
+     * @param {Response} res - Express response object for sending the API response
+     * @param {NextFunction} next - Express next function for error handling middleware
+     * @returns {Promise<void>} Resolves when response is sent or error is passed to middleware
+     * @throws {AppError} When course ID is missing from URL parameters
+     * @throws {Error} When request body validation fails against ReorderLevelsSchema
+     * @throws {Error} When service layer level reordering fails
+     * 
+     * @example
+     * // PUT /api/courses/course-spanish-101/levels/reorder
+     * // Request body: { "level_ids": ["level-beginner", "level-intermediate", "level-advanced"] }
+     * // Response: { "success": true, "message": "Course levels reordered successfully", "timestamp": "2024-01-01T00:00:00.000Z" }
+     */
+    reorderCourseLevels = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const courseId = req.params['courseId'];
+            if (!courseId) {
+                throw new AppError(
+                    "Course ID is required",
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodes.VALIDATION_ERROR
+                );
+            }
+
+            const validatedData = ReorderLevelsSchema.parse(req.body);
+            await this.contentService.reorderLevels(
+                courseId,
+                validatedData.level_ids
+            );
+
+            const response: ApiResponse = {
+                success: true,
+                message: "Course levels reordered successfully",
                 timestamp: new Date().toISOString(),
             };
 

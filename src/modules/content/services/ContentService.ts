@@ -926,6 +926,279 @@ export class ContentService {
   }
 
   /**
+   * Reorders modules within a section by updating their position sequence.
+   * 
+   * Validates section existence, ensures all provided module IDs are currently assigned
+   * to the section, validates completeness of the reorder list, and prevents duplicates
+   * before applying the new module order.
+   * 
+   * @param {string} sectionId - The unique section identifier
+   * @param {string[]} moduleIds - Array of module IDs in their new desired order
+   * @returns {Promise<void>} Resolves when reordering is complete
+   * @throws {AppError} When section with the specified ID is not found
+   * @throws {AppError} When provided module IDs are not assigned to the section
+   * @throws {AppError} When reorder list is incomplete (missing currently assigned modules)
+   * @throws {AppError} When duplicate module IDs are provided in the reorder list
+   * @throws {AppError} When reordering operation fails
+   * 
+   * @example
+   * // Reorder modules in a section
+   * await contentService.reorderModules('section-basic-grammar', [
+   *   'module-present-tense',
+   *   'module-past-tense',
+   *   'module-future-tense'
+   * ]);
+   * // Modules are now in the specified order
+   */
+  async reorderModules(sectionId: string, moduleIds: string[]): Promise<void> {
+    // Check if section exists
+    const sectionExists = await this.sectionRepository.exists(sectionId);
+    if (!sectionExists) {
+      throw new AppError(
+        `Section with ID '${sectionId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Get current modules in the section
+    const currentModules = await this.moduleRepository.findBySectionId(sectionId, {
+      page: 1,
+      limit: 1000, // Get all modules
+      sortBy: 'order',
+      sortOrder: 'asc'
+    });
+
+    // Validate that all provided module IDs are currently assigned to this section
+    const currentModuleIds = currentModules.data.map((module: any) => module.id);
+    const missingModules = moduleIds.filter((id: string) => !currentModuleIds.includes(id));
+    if (missingModules.length > 0) {
+      throw new AppError(
+        `Modules not assigned to section '${sectionId}': ${missingModules.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all currently assigned modules are included in the reorder
+    const extraModules = currentModuleIds.filter((id: string) => !moduleIds.includes(id));
+    if (extraModules.length > 0) {
+      throw new AppError(
+        `Missing modules in reorder for section '${sectionId}': ${extraModules.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate no duplicates in the provided list
+    const uniqueIds = new Set(moduleIds);
+    if (uniqueIds.size !== moduleIds.length) {
+      throw new AppError(
+        'Duplicate module IDs provided in reorder list',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    const success = await this.moduleRepository.reorderModules(sectionId, moduleIds);
+    if (!success) {
+      throw new AppError(
+        `Failed to reorder modules for section '${sectionId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
+    }
+
+    // Invalidate packaged course cache
+    const section = await this.sectionRepository.findById(sectionId);
+    if (section) {
+      const level = await this.levelRepository.findById(section.level_id);
+      if (level) {
+        await this.invalidatePackagedCourseCache(level.course_id);
+      }
+    }
+  }
+
+  /**
+   * Reorders sections within a level by updating their position sequence.
+   * 
+   * Validates level existence, ensures all provided section IDs are currently assigned
+   * to the level, validates completeness of the reorder list, and prevents duplicates
+   * before applying the new section order.
+   * 
+   * @param {string} levelId - The unique level identifier
+   * @param {string[]} sectionIds - Array of section IDs in their new desired order
+   * @returns {Promise<void>} Resolves when reordering is complete
+   * @throws {AppError} When level with the specified ID is not found
+   * @throws {AppError} When provided section IDs are not assigned to the level
+   * @throws {AppError} When reorder list is incomplete (missing currently assigned sections)
+   * @throws {AppError} When duplicate section IDs are provided in the reorder list
+   * @throws {AppError} When reordering operation fails
+   * 
+   * @example
+   * // Reorder sections in a level
+   * await contentService.reorderSections('level-basic-grammar', [
+   *   'section-present-tense',
+   *   'section-past-tense',
+   *   'section-future-tense'
+   * ]);
+   * // Sections are now in the specified order
+   */
+  async reorderSections(levelId: string, sectionIds: string[]): Promise<void> {
+    // Check if level exists
+    const levelExists = await this.levelRepository.exists(levelId);
+    if (!levelExists) {
+      throw new AppError(
+        `Level with ID '${levelId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Get current sections in the level
+    const currentSections = await this.sectionRepository.findByLevelId(levelId, {
+      page: 1,
+      limit: 1000, // Get all sections
+      sortBy: 'order',
+      sortOrder: 'asc'
+    });
+
+    // Validate that all provided section IDs are currently assigned to this level
+    const currentSectionIds = currentSections.data.map((section: any) => section.id);
+    const missingSections = sectionIds.filter((id: string) => !currentSectionIds.includes(id));
+    if (missingSections.length > 0) {
+      throw new AppError(
+        `Sections not assigned to level '${levelId}': ${missingSections.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all currently assigned sections are included in the reorder
+    const extraSections = currentSectionIds.filter((id: string) => !sectionIds.includes(id));
+    if (extraSections.length > 0) {
+      throw new AppError(
+        `Missing sections in reorder for level '${levelId}': ${extraSections.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate no duplicates in the provided list
+    const uniqueIds = new Set(sectionIds);
+    if (uniqueIds.size !== sectionIds.length) {
+      throw new AppError(
+        'Duplicate section IDs provided in reorder list',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    const success = await this.sectionRepository.reorderSections(levelId, sectionIds);
+    if (!success) {
+      throw new AppError(
+        `Failed to reorder sections for level '${levelId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
+    }
+
+    // Invalidate packaged course cache
+    const level = await this.levelRepository.findById(levelId);
+    if (level) {
+      await this.invalidatePackagedCourseCache(level.course_id);
+    }
+  }
+
+  /**
+   * Reorders levels within a course by updating their position sequence.
+   * 
+   * Validates course existence, ensures all provided level IDs are currently assigned
+   * to the course, validates completeness of the reorder list, and prevents duplicates
+   * before applying the new level order.
+   * 
+   * @param {string} courseId - The unique course identifier
+   * @param {string[]} levelIds - Array of level IDs in their new desired order
+   * @returns {Promise<void>} Resolves when reordering is complete
+   * @throws {AppError} When course with the specified ID is not found
+   * @throws {AppError} When provided level IDs are not assigned to the course
+   * @throws {AppError} When reorder list is incomplete (missing currently assigned levels)
+   * @throws {AppError} When duplicate level IDs are provided in the reorder list
+   * @throws {AppError} When reordering operation fails
+   * 
+   * @example
+   * // Reorder levels in a course
+   * await contentService.reorderLevels('course-spanish-101', [
+   *   'level-beginner',
+   *   'level-intermediate',
+   *   'level-advanced'
+   * ]);
+   * // Levels are now in the specified order
+   */
+  async reorderLevels(courseId: string, levelIds: string[]): Promise<void> {
+    // Check if course exists
+    const courseExists = await this.courseRepository.exists(courseId);
+    if (!courseExists) {
+      throw new AppError(
+        `Course with ID '${courseId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Get current levels in the course
+    const currentLevels = await this.levelRepository.findByCourseId(courseId, {
+      page: 1,
+      limit: 1000, // Get all levels
+      sortBy: 'order',
+      sortOrder: 'asc'
+    });
+
+    // Validate that all provided level IDs are currently assigned to this course
+    const currentLevelIds = currentLevels.data.map((level: any) => level.id);
+    const missingLevels = levelIds.filter((id: string) => !currentLevelIds.includes(id));
+    if (missingLevels.length > 0) {
+      throw new AppError(
+        `Levels not assigned to course '${courseId}': ${missingLevels.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all currently assigned levels are included in the reorder
+    const extraLevels = currentLevelIds.filter((id: string) => !levelIds.includes(id));
+    if (extraLevels.length > 0) {
+      throw new AppError(
+        `Missing levels in reorder for course '${courseId}': ${extraLevels.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate no duplicates in the provided list
+    const uniqueIds = new Set(levelIds);
+    if (uniqueIds.size !== levelIds.length) {
+      throw new AppError(
+        'Duplicate level IDs provided in reorder list',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    const success = await this.levelRepository.reorderLevels(courseId, levelIds);
+    if (!success) {
+      throw new AppError(
+        `Failed to reorder levels for course '${courseId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
+    }
+
+    // Invalidate packaged course cache
+    await this.invalidatePackagedCourseCache(courseId);
+  }
+
+  /**
    * Invalidates the packaged course cache when content is updated.
    * 
    * This method is automatically called by all content modification operations

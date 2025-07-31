@@ -12,13 +12,17 @@ interface LessonCardProps {
   onEdit?: (lesson: Lesson) => void;
   onDelete?: (lesson: Lesson) => void;
   onView?: (lesson: Lesson) => void;
+  onPreview?: (lesson: Lesson) => void;
   showActions?: boolean;
   showSelection?: boolean;
+  dragHandleProps?: any;
+  isDragging?: boolean;
 }
 
 /**
  * Card component for displaying Lesson information
  * Follows the same pattern as CourseCard for consistency
+ * Enhanced with drag-and-drop support for reordering
  */
 export const LessonCard: React.FC<LessonCardProps> = ({
   lesson,
@@ -27,8 +31,11 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   onEdit,
   onDelete,
   onView,
+  onPreview,
   showActions = true,
   showSelection = false,
+  dragHandleProps,
+  isDragging = false,
 }) => {
   const { t } = useTranslation();
 
@@ -60,10 +67,25 @@ export const LessonCard: React.FC<LessonCardProps> = ({
     <Card
       className={`lesson-card transition-all duration-200 ${
         isSelected ? 'ring-2 ring-primary-500 bg-primary-50' : 'hover:shadow-lg'
-      } ${showSelection || onView ? 'cursor-pointer' : ''}`}
+      } ${showSelection || onView ? 'cursor-pointer' : ''} ${
+        isDragging ? 'shadow-xl bg-white border-primary-300' : ''
+      }`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
+        {/* Drag Handle */}
+        {dragHandleProps && (
+          <div 
+            {...dragHandleProps}
+            className="mr-3 pt-1 cursor-grab active:cursor-grabbing"
+            title={t('creator.components.lessonCard.dragToReorder', 'Drag to reorder')}
+          >
+            <svg className="w-5 h-5 text-neutral-400 hover:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            </svg>
+          </div>
+        )}
+
         {/* Selection Checkbox */}
         {showSelection && (
           <div className="mr-4 pt-1">
@@ -104,6 +126,22 @@ export const LessonCard: React.FC<LessonCardProps> = ({
             {/* Actions */}
             {showActions && (
               <div className="flex space-x-2 ml-4">
+                {onPreview && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPreview(lesson);
+                    }}
+                    title={t('creator.components.lessonCard.preview', 'Preview')}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </Button>
+                )}
                 {onView && (
                   <Button
                     variant="outline"
@@ -115,8 +153,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({
                     title={t('common.buttons.view', 'View')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </Button>
                 )}

@@ -101,10 +101,15 @@
 
 - [x] 2.4 Implement Module management within sections
 
-
-
-
-
+  **Implementation Summary:**
+  - ✅ Enhanced Module Service with `reorderModules()` method for drag-and-drop
+  - ✅ Added `useReorderModulesMutation()` hook with optimistic updates
+  - ✅ Enhanced ModulesSection component with `react-beautiful-dnd` integration
+  - ✅ Added drag handle support to ModuleCard component
+  - ✅ Updated localization files with drag-and-drop translations (English and Spanish)
+  - ✅ Created comprehensive test suite for ModulesSection component
+  - ✅ Fixed integration test course ID length validation issue
+  - ✅ Maintained existing navigation between sections and modules
 
   - Create Module CRUD components with module type selection (informative, basic_lesson, reading, dialogue, exam)
   - Add Module-specific validation including type-based business rules
@@ -112,7 +117,10 @@
   - Create type-specific UI indicators and behaviors
   - _Requirements: 2.1, 2.3, 2.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [ ] 2.5 Enhance Lesson management within modules
+- [x] 2.5 Enhance Lesson management within modules
+
+
+
   - Upgrade existing lesson components to use new generic patterns
   - Add experience points configuration and validation
   - Implement drag-and-drop reordering for lessons within modules

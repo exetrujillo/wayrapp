@@ -116,19 +116,31 @@ export class LessonService {
     // Check if parent module exists
     const moduleExists = await this.moduleRepository.exists(data.module_id);
     if (!moduleExists) {
-      throw new Error(`Module with ID '${data.module_id}' not found`);
+      throw new AppError(
+        `Module with ID '${data.module_id}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Check if lesson with same ID already exists
     const existingLesson = await this.lessonRepository.exists(data.id);
     if (existingLesson) {
-      throw new Error(`Lesson with ID '${data.id}' already exists`);
+      throw new AppError(
+        `Lesson with ID '${data.id}' already exists`,
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
     }
 
     // Check if order already exists in the module
     const orderExists = await this.moduleRepository.existsLessonOrderInModule(data.module_id, data.order);
     if (orderExists) {
-      throw new Error(`Lesson with order '${data.order}' already exists in module '${data.module_id}'`);
+      throw new AppError(
+        `Lesson with order '${data.order}' already exists in module '${data.module_id}'`,
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
     }
 
     return await this.lessonRepository.create(data);
@@ -188,7 +200,11 @@ export class LessonService {
     // Check if module exists
     const moduleExists = await this.moduleRepository.exists(moduleId);
     if (!moduleExists) {
-      throw new Error(`Module with ID '${moduleId}' not found`);
+      throw new AppError(
+        `Module with ID '${moduleId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     return await this.lessonRepository.findByModuleId(moduleId, options);
@@ -254,7 +270,11 @@ export class LessonService {
     if (data.order !== undefined) {
       const orderExists = await this.moduleRepository.existsLessonOrderInModule(moduleId, data.order, id);
       if (orderExists) {
-        throw new Error(`Lesson with order '${data.order}' already exists in module '${moduleId}'`);
+        throw new AppError(
+          `Lesson with order '${data.order}' already exists in module '${moduleId}'`,
+          HttpStatus.CONFLICT,
+          ErrorCodes.CONFLICT
+        );
       }
     }
 
@@ -291,7 +311,11 @@ export class LessonService {
 
     const success = await this.lessonRepository.delete(id, moduleId);
     if (!success) {
-      throw new Error(`Failed to delete lesson with ID '${id}'`);
+      throw new AppError(
+        `Failed to delete lesson with ID '${id}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
     }
   }
 
@@ -323,26 +347,42 @@ export class LessonService {
     // Check if lesson exists
     const lessonExists = await this.lessonRepository.exists(lessonId);
     if (!lessonExists) {
-      throw new Error(`Lesson with ID '${lessonId}' not found`);
+      throw new AppError(
+        `Lesson with ID '${lessonId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Check if exercise exists
     const exerciseExists = await this.exerciseRepository.exists(data.exercise_id);
     if (!exerciseExists) {
-      throw new Error(`Exercise with ID '${data.exercise_id}' not found`);
+      throw new AppError(
+        `Exercise with ID '${data.exercise_id}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Check if exercise is already assigned to this lesson
     const existingAssignment = await this.lessonRepository.getLessonExercises(lessonId);
     const alreadyAssigned = existingAssignment.some(le => le.exercise_id === data.exercise_id);
     if (alreadyAssigned) {
-      throw new Error(`Exercise '${data.exercise_id}' is already assigned to lesson '${lessonId}'`);
+      throw new AppError(
+        `Exercise '${data.exercise_id}' is already assigned to lesson '${lessonId}'`,
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
     }
 
     // Check if order already exists for this lesson
     const orderExists = existingAssignment.some(le => le.order === data.order);
     if (orderExists) {
-      throw new Error(`Exercise with order '${data.order}' already exists in lesson '${lessonId}'`);
+      throw new AppError(
+        `Exercise with order '${data.order}' already exists in lesson '${lessonId}'`,
+        HttpStatus.CONFLICT,
+        ErrorCodes.CONFLICT
+      );
     }
 
     return await this.lessonRepository.assignExercise(lessonId, data.exercise_id, data.order);
@@ -370,25 +410,41 @@ export class LessonService {
     // Check if lesson exists
     const lessonExists = await this.lessonRepository.exists(lessonId);
     if (!lessonExists) {
-      throw new Error(`Lesson with ID '${lessonId}' not found`);
+      throw new AppError(
+        `Lesson with ID '${lessonId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Check if exercise exists
     const exerciseExists = await this.exerciseRepository.exists(exerciseId);
     if (!exerciseExists) {
-      throw new Error(`Exercise with ID '${exerciseId}' not found`);
+      throw new AppError(
+        `Exercise with ID '${exerciseId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Check if exercise is assigned to this lesson
     const existingAssignment = await this.lessonRepository.getLessonExercises(lessonId);
     const isAssigned = existingAssignment.some(le => le.exercise_id === exerciseId);
     if (!isAssigned) {
-      throw new Error(`Exercise '${exerciseId}' is not assigned to lesson '${lessonId}'`);
+      throw new AppError(
+        `Exercise '${exerciseId}' is not assigned to lesson '${lessonId}'`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     const success = await this.lessonRepository.unassignExercise(lessonId, exerciseId);
     if (!success) {
-      throw new Error(`Failed to unassign exercise '${exerciseId}' from lesson '${lessonId}'`);
+      throw new AppError(
+        `Failed to unassign exercise '${exerciseId}' from lesson '${lessonId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
     }
   }
 
@@ -412,7 +468,11 @@ export class LessonService {
     // Check if lesson exists
     const lessonExists = await this.lessonRepository.exists(lessonId);
     if (!lessonExists) {
-      throw new Error(`Lesson with ID '${lessonId}' not found`);
+      throw new AppError(
+        `Lesson with ID '${lessonId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     return await this.lessonRepository.getLessonExercises(lessonId);
@@ -447,7 +507,11 @@ export class LessonService {
     // Check if lesson exists
     const lessonExists = await this.lessonRepository.exists(lessonId);
     if (!lessonExists) {
-      throw new Error(`Lesson with ID '${lessonId}' not found`);
+      throw new AppError(
+        `Lesson with ID '${lessonId}' not found`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Get current lesson exercises
@@ -457,24 +521,40 @@ export class LessonService {
     const currentExerciseIds = currentExercises.map(le => le.exercise_id);
     const missingExercises = exerciseIds.filter(id => !currentExerciseIds.includes(id));
     if (missingExercises.length > 0) {
-      throw new Error(`Exercises not assigned to lesson '${lessonId}': ${missingExercises.join(', ')}`);
+      throw new AppError(
+        `Exercises not assigned to lesson '${lessonId}': ${missingExercises.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Validate that all currently assigned exercises are included in the reorder
     const extraExercises = currentExerciseIds.filter(id => !exerciseIds.includes(id));
     if (extraExercises.length > 0) {
-      throw new Error(`Missing exercises in reorder for lesson '${lessonId}': ${extraExercises.join(', ')}`);
+      throw new AppError(
+        `Missing exercises in reorder for lesson '${lessonId}': ${extraExercises.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     // Validate no duplicates in the provided list
     const uniqueIds = new Set(exerciseIds);
     if (uniqueIds.size !== exerciseIds.length) {
-      throw new Error('Duplicate exercise IDs provided in reorder list');
+      throw new AppError(
+        'Duplicate exercise IDs provided in reorder list',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
     }
 
     const success = await this.lessonRepository.reorderExercises(lessonId, exerciseIds);
     if (!success) {
-      throw new Error(`Failed to reorder exercises for lesson '${lessonId}'`);
+      throw new AppError(
+        `Failed to reorder exercises for lesson '${lessonId}'`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        ErrorCodes.DATABASE_ERROR
+      );
     }
   }
 

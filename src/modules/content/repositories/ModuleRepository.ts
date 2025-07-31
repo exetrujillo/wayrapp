@@ -231,4 +231,73 @@ export class ModuleRepository {
       updated_at: module.updatedAt,
     };
   }
+
+  /**
+   * Reorders modules within a section using atomic transaction operations.
+   * Updates the order positions of all specified modules to match the provided sequence,
+   * ensuring data consistency through database transaction isolation.
+   * 
+   * This method performs atomic updates of module order values within a single transaction,
+   * preventing race conditions and maintaining referential integrity. Each module's order
+   * is updated based on its position in the provided module IDs array, starting from 1.
+   * 
+   * @param {string} sectionId - The unique section identifier containing the modules
+   * @param {string[]} moduleIds - Array of module IDs in their new desired order sequence
+   * @returns {Promise<boolean>} Promise resolving to true if reordering succeeded, false if failed
+   * @throws {Error} When transaction fails or module assignments don't exist
+   * 
+   * @example
+   * // Reorder modules within a section
+   * const success = await moduleRepository.reorderModules('section-basic-grammar', [
+   *   'module-present-tense',
+   *   'module-past-tense', 
+   *   'module-future-tense'
+   * ]);
+   * // Modules are now ordered: present-tense (1), past-tense (2), future-tense (3)
+   */
+  async reorderModules(
+    sectionId: string,
+    moduleIds: string[],
+  ): Promise<boolean> {
+    try {
+      // Use a transaction to ensure atomicity
+      await this.prisma.$transaction(async (tx) => {
+        // First, set all modules to temporary negative orders to avoid constraint violations
+        for (let i = 0; i < moduleIds.length; i++) {
+          const moduleId = moduleIds[i];
+          if (moduleId) {
+            await tx.module.update({
+              where: {
+                id: moduleId,
+                sectionId: sectionId, // Ensure module belongs to the specified section
+              },
+              data: {
+                order: -(i + 1), // Use negative order temporarily
+              },
+            });
+          }
+        }
+
+        // Then, update each module with its final positive order
+        for (let i = 0; i < moduleIds.length; i++) {
+          const moduleId = moduleIds[i];
+          if (moduleId) {
+            await tx.module.update({
+              where: {
+                id: moduleId,
+                sectionId: sectionId,
+              },
+              data: {
+                order: i + 1, // Final positive order
+              },
+            });
+          }
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to reorder modules:', error);
+      return false;
+    }
+  }
 }

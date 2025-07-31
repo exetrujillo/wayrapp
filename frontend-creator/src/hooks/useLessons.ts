@@ -469,6 +469,70 @@ export const useReorderExercisesMutation = () => {
   });
 };
 
+/**
+ * Hook for reordering lessons within a module (e.g., drag-and-drop)
+ * @returns Mutation object with mutate function and states
+ */
+export const useReorderLessonsMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ moduleId, lessonIds }: { moduleId: string; lessonIds: string[] }) => 
+      lessonService.reorderLessons(moduleId, lessonIds),
+    onMutate: async ({ moduleId, lessonIds }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.lessons.list(moduleId) });
+
+      // Snapshot the previous value
+      const previousLessons = queryClient.getQueryData(queryKeys.lessons.list(moduleId));
+
+      // Optimistically update the order
+      if (previousLessons) {
+        queryClient.setQueryData(queryKeys.lessons.list(moduleId), (old: any) => {
+          // Create a map for quick lookup
+          const lessonMap = new Map(old.data.map((lesson: Lesson) => [lesson.id, lesson]));
+          
+          // Reorder based on the new lessonIds array
+          const reorderedLessons = lessonIds.map((lessonId, index) => {
+            const lesson = lessonMap.get(lessonId);
+            return lesson ? {
+              ...lesson,
+              order: index + 1,
+              updatedAt: new Date().toISOString(),
+            } : null;
+          }).filter(Boolean); // Remove any null entries
+
+          return {
+            ...old,
+            data: reorderedLessons,
+          };
+        });
+      }
+
+      return { previousLessons, moduleId };
+    },
+    onSuccess: (_, { moduleId }) => {
+      // Invalidate lessons list to reflect the reorder
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(moduleId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.lists() });
+      
+      // Invalidate module detail if it includes lesson count
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.detail(moduleId) });
+    },
+    onError: (error, { moduleId }, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousLessons) {
+        queryClient.setQueryData(queryKeys.lessons.list(moduleId), context.previousLessons);
+      }
+      console.error('Failed to reorder lessons:', error);
+    },
+    onSettled: (_, __, { moduleId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(moduleId) });
+    },
+  });
+};
+
 // Export all hooks for easy importing
 export default {
   useLessonsQuery,
@@ -481,4 +545,5 @@ export default {
   useRemoveExerciseAssignmentMutation,
   useUpdateExerciseAssignmentMutation,
   useReorderExercisesMutation,
+  useReorderLessonsMutation,
 };

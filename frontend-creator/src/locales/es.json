@@ -139,6 +139,22 @@
         "created": "Creado",
         "deleteConfirm": "¿Estás seguro de que quieres eliminar esta sección?",
         "dragHandle": "Arrastra para reordenar"
+      },
+      "modulesSection": {
+        "title": "Módulos de la Sección",
+        "addModule": "Agregar Módulo",
+        "noModules": "No se encontraron módulos. ¡Crea tu primer módulo!",
+        "createFirst": "Crear Primer Módulo",
+        "loadError": "Error al cargar los módulos",
+        "dragHint": "Arrastra y suelta para reordenar módulos",
+        "reorderError": "Error al reordenar los módulos"
+      },
+      "moduleCard": {
+        "order": "Orden",
+        "id": "ID",
+        "created": "Creado",
+        "deleteConfirm": "¿Estás seguro de que quieres eliminar este módulo?",
+        "dragHandle": "Arrastra para reordenar"
       }
     },
     "modals": {

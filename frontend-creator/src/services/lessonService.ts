@@ -203,6 +203,31 @@ class LessonService {
       throw error;
     }
   }
+
+  /**
+   * Reorder lessons within a module
+   * @param moduleId Module ID
+   * @param lessonIds Array of lesson IDs in the new order
+   * @returns Success response
+   */
+  async reorderLessons(moduleId: string, lessonIds: string[]): Promise<void> {
+    if (!moduleId || typeof moduleId !== 'string') {
+      throw new Error('Module ID is required and must be a string');
+    }
+
+    if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
+      throw new Error('Lesson IDs array is required and must not be empty');
+    }
+
+    try {
+      await apiClient.put(API_ENDPOINTS.MODULES.REORDER_LESSONS(moduleId), {
+        lesson_ids: lessonIds
+      });
+    } catch (error) {
+      console.error(`Failed to reorder lessons in module ${moduleId}:`, error);
+      throw error;
+    }
+  }
 }
 
 // Create and export lesson service instance

@@ -58,7 +58,6 @@
         "passwordMinLength": "Password must be at least 8 characters"
       }
     },
-
     "dashboard": {
       "title": "Creator Dashboard",
       "welcome": "Welcome to WayrApp Creator",
@@ -90,7 +89,6 @@
         "manageExercisesDesc": "Review and update your exercises"
       }
     },
-
     "pages": {
       "courses": {
         "searchPlaceholder": "Search courses...",
@@ -170,33 +168,27 @@
         }
       }
     },
-
     "course": {
       "sourceLanguage": "Source Lang",
       "targetLanguage": "Target Lang",
       "private": "Private"
     },
-
     "level": {
       "code": "Code",
       "order": "Order"
     },
-
     "section": {
       "order": "Order",
       "level": "Level"
     },
-
     "module": {
       "type": "Type",
       "order": "Order",
       "section": "Section"
     },
-
     "exercises": {
       "createNew": "Create New Exercise"
     },
-
     "components": {
       "levelsSection": {
         "title": "Course Levels",
@@ -232,6 +224,22 @@
         "id": "ID",
         "created": "Created",
         "deleteConfirm": "Are you sure you want to delete this section?",
+        "dragHandle": "Drag to reorder"
+      },
+      "modulesSection": {
+        "title": "Section Modules",
+        "addModule": "Add Module",
+        "noModules": "No modules found. Create your first module!",
+        "createFirst": "Create First Module",
+        "loadError": "Failed to load modules",
+        "dragHint": "Drag and drop to reorder modules",
+        "reorderError": "Failed to reorder modules"
+      },
+      "moduleCard": {
+        "order": "Order",
+        "id": "ID",
+        "created": "Created",
+        "deleteConfirm": "Are you sure you want to delete this module?",
         "dragHandle": "Drag to reorder"
       },
       "lessonCard": {
@@ -339,7 +347,6 @@
         }
       }
     },
-
     "modals": {
       "level": {
         "createTitle": "Create New Level",
@@ -350,7 +357,6 @@
         "editTitle": "Edit Section"
       }
     },
-
     "forms": {
       "course": {
         "title": "Create Course",
@@ -524,7 +530,6 @@
         "successMessage": "Exercise created successfully!"
       }
     },
-
     "validation": {
       "level": {
         "codeRequired": "Level code is required",

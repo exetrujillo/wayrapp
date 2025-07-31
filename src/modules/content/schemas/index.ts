@@ -164,6 +164,24 @@ export const ReorderLessonsSchema = z.object({
     .min(1, "At least one lesson ID is required"),
 });
 
+export const ReorderModulesSchema = z.object({
+  module_ids: z
+    .array(z.string().min(1).max(50))
+    .min(1, "At least one module ID is required"),
+});
+
+export const ReorderSectionsSchema = z.object({
+  section_ids: z
+    .array(z.string().min(1).max(40))
+    .min(1, "At least one section ID is required"),
+});
+
+export const ReorderLevelsSchema = z.object({
+  level_ids: z
+    .array(z.string().min(1).max(30))
+    .min(1, "At least one level ID is required"),
+});
+
 // Parameter validation schemas
 export const CourseParamSchema = z.object({
   courseId: z
@@ -237,3 +255,6 @@ export type AssignExerciseToLessonDto = z.infer<
 >;
 export type ReorderExercisesDto = z.infer<typeof ReorderExercisesSchema>;
 export type ReorderLessonsDto = z.infer<typeof ReorderLessonsSchema>;
+export type ReorderModulesDto = z.infer<typeof ReorderModulesSchema>;
+export type ReorderSectionsDto = z.infer<typeof ReorderSectionsSchema>;
+export type ReorderLevelsDto = z.infer<typeof ReorderLevelsSchema>;
