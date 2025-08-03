@@ -168,11 +168,6 @@ export const HierarchicalBreadcrumb: React.FC<HierarchicalBreadcrumbProps> = ({
         );
     };
 
-    // Don't render if no path is provided
-    if (!effectivePath.courseId) {
-        return null;
-    }
-
     return (
         <nav
             className={`flex items-center space-x-1 text-sm mb-4 ${className}`}
@@ -182,7 +177,7 @@ export const HierarchicalBreadcrumb: React.FC<HierarchicalBreadcrumbProps> = ({
                 {showHomeIcon && (
                     <li className="flex items-center">
                         <Link
-                            to="/courses"
+                            to="/dashboard"
                             className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded p-1 transition-colors duration-200"
                             aria-label="Go to courses home"
                         >
@@ -194,10 +189,40 @@ export const HierarchicalBreadcrumb: React.FC<HierarchicalBreadcrumbProps> = ({
                     </li>
                 )}
 
+                {/* Show "Courses" breadcrumb */}
+                {!effectivePath.courseId ? (
+                    // When on courses page, show "Courses" as current page
+                    <li className="flex items-center">
+                        <span className="text-gray-900 font-medium" aria-current="page">
+                            Courses
+                        </span>
+                    </li>
+                ) : (
+                    // When in hierarchy, show "Courses" as clickable link
+                    <li className="flex items-center">
+                        <Link
+                            to="/courses"
+                            className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded px-1 py-0.5 transition-colors duration-200"
+                            aria-label="Go to courses list"
+                        >
+                            Courses
+                        </Link>
+                        {breadcrumbs.length > 0 && (
+                            <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-2" />
+                        )}
+                    </li>
+                )}
+
                 {breadcrumbs.map((item, index) => renderBreadcrumbItem(item, index))}
                 
-                {/* Add title as final breadcrumb item if provided */}
+                {/* Add title as final breadcrumb item if provided and it's different from the last breadcrumb */}
                 {title && (
+                    // Only show title if:
+                    // 1. It's different from the last breadcrumb item, AND
+                    // 2. We're not on the courses page with a "Courses" title (to avoid duplication)
+                    (breadcrumbs.length === 0 || breadcrumbs[breadcrumbs.length - 1]?.label !== title) &&
+                    !(!effectivePath.courseId && (title === 'Courses' || title === 'courses'))
+                ) && (
                     <li className="flex items-center">
                         {breadcrumbs.length > 0 && (
                             <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-2" />

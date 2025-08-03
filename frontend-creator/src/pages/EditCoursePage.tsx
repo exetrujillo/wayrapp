@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 
-import { EnhancedCourseForm } from '../components/forms/EnhancedCourseForm';
+import { UnifiedEntityForm } from '../components/forms/UnifiedEntityForm';
 import { WithLoading } from '../components/ui/LoadingStateProvider';
 import { PageErrorBoundary } from '../components/error/ErrorBoundaryWrapper';
 import { useCourseQuery } from '../hooks/useCourses';
@@ -105,7 +105,9 @@ const EditCoursePage: React.FC = () => {
               </p>
             </div>
             
-            <EnhancedCourseForm 
+            <UnifiedEntityForm<CourseFormData>
+              entityType="course"
+              mode="edit"
               initialData={course}
               onSubmit={handleSubmit}
               onSuccess={handleSuccess}

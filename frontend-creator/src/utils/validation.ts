@@ -34,7 +34,32 @@ export const courseSchema = z.object({
     .max(20, 'Course ID must be 20 characters or less')
     .regex(/^[a-z0-9-]+$/, 'Course ID can only contain lowercase letters, numbers, and hyphens')
     .refine(val => !val.startsWith('-') && !val.endsWith('-'), 'Course ID cannot start or end with a hyphen')
-    .refine(val => !val.includes('--'), 'Course ID cannot contain consecutive hyphens'),
+    .refine(val => !val.includes('--'), 'Course ID cannot contain consecutive hyphens')
+    .optional(), // Make ID optional since it's auto-generated
+  name: z.string()
+    .min(1, 'Course name is required')
+    .max(100, 'Course name must be 100 characters or less')
+    .refine(val => val.trim().length > 0, 'Course name cannot be only whitespace'),
+  sourceLanguage: z.string()
+    .min(2, 'Source language code must be at least 2 characters')
+    .max(20, 'Source language code must not exceed 20 characters')
+    .regex(/^[a-z]{2,3}(-[A-Z]{2}|-[0-9]{3})?$/, 'Source language must follow BCP 47 format (e.g., "en", "qu", "es-ES", "es-419")'),
+  targetLanguage: z.string()
+    .min(2, 'Target language code must be at least 2 characters')
+    .max(20, 'Target language code must not exceed 20 characters')
+    .regex(/^[a-z]{2,3}(-[A-Z]{2}|-[0-9]{3})?$/, 'Target language must follow BCP 47 format (e.g., "en", "qu", "es-ES", "es-419")'),
+  description: z.string()
+    .max(255, 'Description cannot exceed 255 characters')
+    .optional()
+    .or(z.literal('')),
+  isPublic: z.boolean(),
+}).refine(data => data.sourceLanguage !== data.targetLanguage, {
+  message: 'Source and target languages must be different',
+  path: ['targetLanguage'],
+});
+
+// Schema for course creation with auto-generated ID
+export const courseCreationSchema = z.object({
   name: z.string()
     .min(1, 'Course name is required')
     .max(100, 'Course name must be 100 characters or less')
@@ -397,6 +422,7 @@ export const getSuccessMessage = (
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type CourseFormData = z.infer<typeof courseSchema>;
+export type CourseCreationFormData = z.infer<typeof courseCreationSchema>;
 export type LevelFormData = z.infer<typeof levelSchema>;
 export type SectionFormData = z.infer<typeof sectionSchema>;
 export type ModuleFormData = z.infer<typeof moduleSchema>;

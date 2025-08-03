@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { EnhancedModuleForm } from '../forms/EnhancedModuleForm';
+import { UnifiedEntityForm } from '../forms/UnifiedEntityForm';
 import { useCreateModuleMutation, useUpdateModuleMutation } from '../../hooks/useModules';
 import { Module } from '../../utils/types';
 import { ModuleFormData } from '../../utils/validation';
@@ -68,9 +68,11 @@ export const CreateOrEditModuleModal: React.FC<CreateOrEditModuleModalProps> = (
       title={title}
       size="md"
     >
-      <EnhancedModuleForm
-        sectionId={sectionId}
-        initialData={initialData}
+      <UnifiedEntityForm<ModuleFormData>
+        entityType="module"
+        mode={initialData?.id ? 'edit' : 'create'}
+        parentId={sectionId}
+        initialData={initialData as Partial<ModuleFormData>}
         onSubmit={handleSubmit}
         onSuccess={handleSuccess}
         onCancel={handleCancel}

@@ -6,6 +6,9 @@ export * from './useModules';
 export * from './useLessons';
 export * from './useExercises';
 
+// Export generic CRUD hooks factory
+export * from './useCrudHooks';
+
 // Export query keys factory
 export { queryKeys } from './queryKeys';
 

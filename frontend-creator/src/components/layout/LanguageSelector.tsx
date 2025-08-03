@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '../../utils/constants';
+import { LANGUAGES, getLanguageDisplayName } from '../../utils/languages';
 
 const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
@@ -57,7 +57,7 @@ const LanguageSelector: React.FC = () => {
                 onClick={() => changeLanguage(language.code)}
                 role="menuitem"
               >
-                {language.name}
+                {getLanguageDisplayName(language)}
               </button>
             ))}
           </div>

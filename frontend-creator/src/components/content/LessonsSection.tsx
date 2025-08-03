@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Lesson } from '../../utils/types';
 import { useLessonsQuery, useReorderLessonsMutation } from '../../hooks/useLessons';
 import { LessonCard } from './LessonCard';
 import { LessonPreviewModal } from './LessonPreviewModal';
+import { DroppableContainer } from './DroppableContainer';
+import { DraggableLessonItem } from './DraggableLessonItem';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Feedback } from '../ui/Feedback';
 
@@ -20,7 +21,7 @@ interface LessonsSectionProps {
 /**
  * Enhanced section component for displaying and managing lessons within a module
  * Features:
- * - Drag-and-drop reordering with react-beautiful-dnd
+ * - Drag-and-drop reordering with Pragmatic Drag and Drop
  * - Experience points configuration and validation
  * - Lesson preview functionality
  * - Uses LessonCard for consistent UI patterns
@@ -63,31 +64,26 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
   };
 
   /**
-   * Handle drag and drop reordering of lessons
+   * Handle drag and drop reordering of lessons with Pragmatic Drag and Drop
    */
-  const handleDragEnd = useCallback(async (result: DropResult) => {
-    const { destination, source } = result;
-
-    // If dropped outside the list or in the same position, do nothing
-    if (!destination || destination.index === source.index) {
+  const handleReorder = useCallback(async (startIndex: number, endIndex: number) => {
+    if (startIndex === endIndex) {
       return;
     }
 
     // Create a new array with reordered lessons
-    const reorderedLessons = Array.from(lessons);
-    const [removed] = reorderedLessons.splice(source.index, 1);
-    if (removed) {
-      reorderedLessons.splice(destination.index, 0, removed);
-    }
+    const reorderedLessons = [...lessons];
+    const [removed] = reorderedLessons.splice(startIndex, 1);
+    reorderedLessons.splice(endIndex, 0, removed);
 
     // Extract lesson IDs in the new order
-    const lessonIds = reorderedLessons.map(lesson => lesson.id);
+    const lesson_ids = reorderedLessons.map(lesson => lesson.id);
 
     try {
       setDragDisabled(true);
       await reorderLessonsMutation.mutateAsync({
         moduleId,
-        lessonIds,
+        lessonIds: lesson_ids, // Hook expects camelCase, service handles snake_case conversion
       });
     } catch (error) {
       console.error('Failed to reorder lessons:', error);
@@ -147,48 +143,23 @@ export const LessonsSection: React.FC<LessonsSectionProps> = ({
           </button>
         </div>
       ) : enableDragDrop ? (
-        // Drag and drop enabled
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="lessons-list" isDropDisabled={dragDisabled}>
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={`space-y-3 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
-              >
-                {lessons.map((lesson, index) => (
-                  <Draggable
-                    key={lesson.id}
-                    draggableId={lesson.id}
-                    index={index}
-                    isDragDisabled={dragDisabled}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`${snapshot.isDragging ? 'rotate-1 shadow-lg' : ''}`}
-                      >
-                        <LessonCard
-                          lesson={lesson}
-                          onView={handleLessonView}
-                          onPreview={handleLessonPreview}
-                          onEdit={onEditLesson}
-                          onDelete={onDeleteLesson}
-                          showSelection={false}
-                          showActions={true}
-                          dragHandleProps={provided.dragHandleProps}
-                          isDragging={snapshot.isDragging}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        // Drag and drop enabled with Pragmatic Drag and Drop
+        <DroppableContainer onReorder={handleReorder} className="space-y-3">
+          {lessons.map((lesson, index) => (
+            <DraggableLessonItem
+              key={lesson.id}
+              lesson={lesson}
+              index={index}
+              onView={handleLessonView}
+              onPreview={handleLessonPreview}
+              onEdit={onEditLesson}
+              onDelete={onDeleteLesson}
+              showActions={true}
+              showSelection={false}
+              isDragDisabled={dragDisabled}
+            />
+          ))}
+        </DroppableContainer>
       ) : (
         // Drag and drop disabled
         <div className="space-y-3">

@@ -1,5 +1,9 @@
 {
   "common": {
+    "create": "Create",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
     "buttons": {
       "save": "Save",
       "cancel": "Cancel",
@@ -542,5 +546,15 @@
         "orderInteger": "Order must be a whole number"
       }
     }
+  },
+  "hierarchicalNavigator": {
+    "title": "Content Navigator",
+    "searchPlaceholder": "Search content...",
+    "statistics": "Content Statistics",
+    "courses": "Courses",
+    "levels": "Levels",
+    "sections": "Sections",
+    "modules": "Modules",
+    "lessons": "Lessons"
   }
 }

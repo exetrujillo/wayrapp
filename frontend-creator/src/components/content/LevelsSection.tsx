@@ -1,14 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Level } from '../../utils/types';
 import { useLevelsQuery, useDeleteLevelMutation, useReorderLevelsMutation } from '../../hooks/useLevels';
 import { ContentList } from './ContentList';
 import { LevelCard } from './LevelCard';
+import { DraggableLevelItem } from './DraggableLevelItem';
+import { DroppableContainer } from './DroppableContainer';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Feedback } from '../ui/Feedback';
 import { Button } from '../ui/Button';
-import { useLevelHooks } from '../../hooks/useCrudHooks';
+
 
 interface LevelsSectionProps {
   courseId: string;
@@ -24,7 +25,7 @@ interface LevelsSectionProps {
 /**
  * Enhanced section component for displaying and managing levels within a course
  * Features:
- * - Drag-and-drop reordering with react-beautiful-dnd
+ * - Drag-and-drop reordering with Pragmatic Drag and Drop
  * - Bulk operations (delete, publish, etc.)
  * - Level-specific validation and error handling
  * - Integration with generic CRUD patterns
@@ -54,25 +55,20 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
 
   const deleteLevelMutation = useDeleteLevelMutation();
   const reorderLevelsMutation = useReorderLevelsMutation();
-  const levelHooks = useLevelHooks();
-  const reorderMutation = levelHooks.useReorder?.();
 
-  const levels = levelsResponse?.data || [];
+  const levels = useMemo(() => levelsResponse?.data || [], [levelsResponse?.data]);
   const pagination = levelsResponse?.meta || null;
 
-  // Handle drag and drop reordering
-  const handleDragEnd = useCallback(async (result: DropResult) => {
-    const { destination, source } = result;
-
-    // If dropped outside the list or in the same position, do nothing
-    if (!destination || destination.index === source.index) {
+  // Handle drag and drop reordering with Pragmatic Drag and Drop
+  const handleReorder = useCallback(async (startIndex: number, endIndex: number) => {
+    if (startIndex === endIndex) {
       return;
     }
 
     // Create new order array
-    const reorderedLevels = Array.from(levels);
-    const [removed] = reorderedLevels.splice(source.index, 1);
-    reorderedLevels.splice(destination.index, 0, removed);
+    const reorderedLevels = [...levels];
+    const [removed] = reorderedLevels.splice(startIndex, 1);
+    reorderedLevels.splice(endIndex, 0, removed);
 
     // Update order values based on new positions
     const orderedIds = reorderedLevels.map(level => level.id);
@@ -90,7 +86,7 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
       // courseId and that the user has reorder permissions for that course before processing the operation.
       await reorderLevelsMutation.mutateAsync({
         courseId,
-        orderedIds,
+        orderedIds, // Hook expects camelCase, service handles snake_case conversion
       });
     } catch (error: any) {
       console.error('Failed to reorder levels:', error);
@@ -100,7 +96,7 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
     } finally {
       setDragDisabled(false);
     }
-  }, [levels, courseId, reorderMutation, levelHooks, refetch, t]);
+  }, [levels, courseId, reorderLevelsMutation, refetch, t]);
 
   const handleLevelView = (level: Level) => {
     // SECURITY_AUDIT_TODO: Potential Insecure Direct Object Reference (IDOR) in level selection.
@@ -161,7 +157,8 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
   const renderLevelItem = (
     level: Level,
     isSelected: boolean,
-    onSelect: (level: Level) => void
+    onSelect: (level: Level) => void,
+    dragHandleProps?: any
   ) => (
     <LevelCard
       key={level.id}
@@ -174,6 +171,7 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
       showSelection={enableBulkOperations}
       showActions={true}
       enableDragHandle={enableDragDrop}
+      dragHandleProps={dragHandleProps}
     />
   );
 
@@ -201,24 +199,15 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
   return (
     <div className="levels-section">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-xl font-semibold text-neutral-900">
-            {t('creator.components.levelsSection.title', 'Course Levels')}
-          </h2>
-          {enableDragDrop && levels.length > 1 && (
-            <p className="text-sm text-neutral-600 mt-1">
-              {t('creator.components.levelsSection.dragHint', 'Drag and drop to reorder levels')}
-            </p>
-          )}
-        </div>
-        <Button
-          onClick={onCreateLevel}
-          variant="primary"
-          size="md"
-        >
-          {t('creator.components.levelsSection.addLevel', 'Add Level')}
-        </Button>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-neutral-900">
+          {t('creator.components.levelsSection.title', 'Course Levels')}
+        </h2>
+        {enableDragDrop && levels.length > 1 && (
+          <p className="text-sm text-neutral-600 mt-1">
+            {t('creator.components.levelsSection.dragHint', 'Drag and drop to reorder levels')}
+          </p>
+        )}
       </div>
 
       {/* Error Display */}
@@ -279,54 +268,32 @@ export const LevelsSection: React.FC<LevelsSectionProps> = ({
           searchPlaceholder={t('creator.components.levelsSection.searchPlaceholder', 'Search levels...')}
           emptyMessage={t('creator.components.levelsSection.noLevels', 'No levels found')}
           enableDragDrop={enableDragDrop}
-          onDragEnd={handleDragEnd}
+          onDragEnd={handleReorder}
           dragDisabled={dragDisabled}
         />
       ) : enableDragDrop ? (
-        // Drag and drop without bulk operations
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="levels-list" isDropDisabled={dragDisabled}>
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
-              >
-                {levels.map((level, index) => (
-                  <Draggable
-                    key={level.id}
-                    draggableId={level.id}
-                    index={index}
-                    isDragDisabled={dragDisabled}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`${snapshot.isDragging ? 'rotate-2 shadow-lg' : ''}`}
-                      >
-                        {renderLevelItem(level, false, () => {})}
-                        <div
-                          {...provided.dragHandleProps}
-                          className="absolute top-4 left-4 cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        // Drag and drop with Pragmatic Drag and Drop
+        <DroppableContainer onReorder={handleReorder} className="space-y-4">
+          {levels.map((level, index) => (
+            <DraggableLevelItem
+              key={level.id}
+              level={level}
+              index={index}
+              isSelected={selectedLevel === level.id}
+              onSelect={() => onLevelSelect(level.id)}
+              onView={handleLevelView}
+              onEdit={onEditLevel}
+              onDelete={onDeleteLevel}
+              showActions={true}
+              showSelection={false}
+              isDragDisabled={dragDisabled}
+            />
+          ))}
+        </DroppableContainer>
       ) : (
         // Simple list without drag-and-drop or bulk operations
         <div className="space-y-4">
-          {levels.map((level) => renderLevelItem(level, false, () => {}))}
+          {levels.map((level) => renderLevelItem(level, false, () => {}, undefined))}
         </div>
       )}
     </div>

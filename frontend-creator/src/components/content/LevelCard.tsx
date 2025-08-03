@@ -14,6 +14,7 @@ interface LevelCardProps {
   showActions?: boolean;
   showSelection?: boolean;
   enableDragHandle?: boolean;
+  dragHandleProps?: any;
 }
 
 /**
@@ -34,6 +35,7 @@ export const LevelCard: React.FC<LevelCardProps> = ({
   showActions = true,
   showSelection = false,
   enableDragHandle = false,
+  dragHandleProps,
 }) => {
   const { t } = useTranslation();
 
@@ -71,9 +73,13 @@ export const LevelCard: React.FC<LevelCardProps> = ({
       <div className="flex items-start justify-between">
         {/* Drag Handle */}
         {enableDragHandle && (
-          <div className="mr-3 pt-1 cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600">
+          <div 
+            {...dragHandleProps}
+            className="mr-3 pt-1 cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-600" 
+            title="Drag to reorder"
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </div>
         )}

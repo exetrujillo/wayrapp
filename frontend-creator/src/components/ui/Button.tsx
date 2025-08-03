@@ -39,6 +39,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * @param {React.ReactNode} props.children - The button text or content to display. Required prop that defines what the user sees
  * @param {string} [props.className=''] - Additional CSS classes to apply to the button for custom styling
  * @param {boolean} [props.disabled] - When true, disables the button and applies disabled styling
+ * @param {'button' | 'submit' | 'reset'} [props.type='button'] - The HTML button type attribute. Defaults to 'button' to prevent accidental form submissions, but can be set to 'submit' for form submission buttons
  * 
  * @example
  * // Primary action button (most common usage)
@@ -47,7 +48,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * </Button>
  * 
  * @example
- * // Loading state with form submission
+ * // Form submission button (type="submit" properly handled)
  * <Button 
  *   variant="primary" 
  *   isLoading={isSubmitting} 
@@ -99,6 +100,7 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   className = '',
   disabled,
+  type = 'button',
   ...props
 }: ButtonProps) => {
   const isLoadingState = isLoading || loading;
@@ -122,6 +124,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
+      type={type}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${disabledClass} ${className}`}
       disabled={disabled || isLoadingState}
       aria-disabled={disabled || isLoadingState}

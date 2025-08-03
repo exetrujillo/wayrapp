@@ -31,7 +31,7 @@ describe('Button', () => {
     render(<Button variant="primary">Primary Button</Button>);
     
     const button = screen.getByRole('button', { name: /primary button/i });
-    expect(button).toHaveClass('btn-primary');
+    expect(button).toHaveClass('bg-primary-400');
   });
 
   it('should apply size classes correctly', () => {

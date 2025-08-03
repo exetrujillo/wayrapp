@@ -138,11 +138,19 @@ export const parseUrlPath = (urlPath: string): HierarchyPath => {
   const segments = urlPath.split('/').filter(Boolean);
   const hierarchyPath: HierarchyPath = {};
 
+  // Special routes that should not be treated as entity IDs
+  const specialRoutes = ['create', 'edit', 'new', 'add'];
+
   for (let i = 0; i < segments.length; i += 2) {
     const entityType = segments[i];
     const entityId = segments[i + 1];
 
     if (!entityId) continue;
+
+    // Skip special routes that are not actual entity IDs
+    if (specialRoutes.includes(entityId)) {
+      continue;
+    }
 
     switch (entityType) {
       case 'courses':

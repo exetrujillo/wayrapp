@@ -1,4 +1,5 @@
-import { LANGUAGES, API_ENDPOINTS, MODULE_TYPES, EXERCISE_TYPES } from '../../utils/constants';
+import { API_ENDPOINTS, MODULE_TYPES, EXERCISE_TYPES } from '../../utils/constants';
+import { LANGUAGES } from '../../utils/languages';
 
 describe('Constants', () => {
   describe('LANGUAGES', () => {

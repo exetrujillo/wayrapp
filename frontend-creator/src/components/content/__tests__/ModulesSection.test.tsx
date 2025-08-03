@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { I18nextProvider } from 'react-i18next';
-import { DragDropContext } from 'react-beautiful-dnd';
+// DragDropContext import removed as it's not used in tests
 import { ModulesSection } from '../ModulesSection';
 import { Module } from '../../../utils/types';
 import i18n from '../../../i18n';
@@ -194,12 +194,7 @@ describe('ModulesSection', () => {
     const dragDropContext = screen.getByTestId('drag-drop-context');
     const onDragEnd = dragDropContext.getAttribute('data-on-drag-end');
     
-    // Mock drag result
-    const dragResult = {
-      destination: { index: 2 },
-      source: { index: 0 },
-      draggableId: 'module-1',
-    };
+    // Mock drag result (removed unused variable)
 
     // This would normally be called by react-beautiful-dnd
     // We're simulating the callback

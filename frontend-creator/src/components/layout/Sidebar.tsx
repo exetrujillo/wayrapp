@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/courses', label: t('common.navigation.courses'), icon: '📚' },
     { path: '/lessons', label: t('common.navigation.lessons'), icon: '📝' },
     { path: '/exercises', label: t('common.navigation.exercises'), icon: '🏋️' },
+    { path: '/demo/hierarchical-navigator', label: 'Navigator Demo', icon: '🗂️' },
   ];
 
   // Get user initials for avatar

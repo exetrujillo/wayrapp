@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { EnhancedLessonForm } from '../components/forms';
+import { UnifiedEntityForm } from '../components/forms/UnifiedEntityForm';
 import { useCreateLessonMutation } from '../hooks/useLessons';
 import { LessonFormData } from '../utils/validation';
 
@@ -63,8 +63,10 @@ const CreateLessonPage: React.FC = () => {
       </div>
       
       <div className="max-w-3xl">
-        <EnhancedLessonForm 
-          moduleId={moduleId}
+        <UnifiedEntityForm<LessonFormData>
+          entityType="lesson"
+          mode="create"
+          parentId={moduleId}
           onSubmit={handleSubmit}
           onSuccess={handleSuccess} 
           onCancel={handleCancel} 

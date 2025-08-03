@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Course } from '../../utils/types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { LANGUAGES } from '../../utils/constants';
+import { LANGUAGES, getLanguageDisplayName } from '../../utils/languages';
 
 interface CourseCardProps {
   course: Course;
@@ -32,7 +32,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   // Get language names from codes
   const getLanguageName = (code: string) => {
     const language = LANGUAGES.find(lang => lang.code === code);
-    return language ? language.name : code;
+    return language ? getLanguageDisplayName(language) : code;
   };
 
   const handleCardClick = () => {

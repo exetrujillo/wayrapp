@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { EnhancedLevelForm } from '../forms/EnhancedLevelForm';
+import { UnifiedEntityForm } from '../forms/UnifiedEntityForm';
 import { useCreateLevelMutation, useUpdateLevelMutation } from '../../hooks/useLevels';
 import { Level } from '../../utils/types';
 import { LevelFormData } from '../../utils/validation';
@@ -72,9 +72,11 @@ export const CreateOrEditLevelModal: React.FC<CreateOrEditLevelModalProps> = ({
       title={title}
       size="md"
     >
-      <EnhancedLevelForm
-        courseId={courseId}
-        initialData={initialData}
+      <UnifiedEntityForm<LevelFormData>
+        entityType="level"
+        mode={initialData?.id ? 'edit' : 'create'}
+        parentId={courseId}
+        initialData={initialData as Partial<LevelFormData>}
         onSubmit={handleSubmit}
         onSuccess={handleSuccess}
         onCancel={handleCancel}

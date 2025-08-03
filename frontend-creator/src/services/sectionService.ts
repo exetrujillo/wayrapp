@@ -335,7 +335,7 @@ class SectionService {
     try {
       const response = await apiClient.put<Section[]>(
         `/levels/${levelId}/sections/reorder`,
-        { sectionIds }
+        { section_ids: sectionIds }
       );
 
       // Handle both wrapped and unwrapped responses

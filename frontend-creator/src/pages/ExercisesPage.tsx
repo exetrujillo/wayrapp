@@ -3,7 +3,7 @@ import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import { ContentList, ExerciseCard } from '../components/content';
 import { Modal } from '../components/ui/Modal';
-import { DynamicExerciseForm } from '../components/forms';
+import { UnifiedEntityForm } from '../components/forms/UnifiedEntityForm';
 import { useTranslation } from 'react-i18next';
 import { 
   useExercisesQuery, 
@@ -220,10 +220,15 @@ const ExercisesPage: React.FC = () => {
           title={t('creator.exercises.createNew', 'Create New Exercise')}
           size="xl"
         >
-          <DynamicExerciseForm
+          <UnifiedEntityForm
+            entityType="exercise"
+            mode="create"
+            onSubmit={async (data) => {
+              // Handle exercise creation
+              console.log('Creating exercise:', data);
+            }}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
-            isModal={true}
           />
         </Modal>
 
@@ -235,11 +240,16 @@ const ExercisesPage: React.FC = () => {
             title={t('creator.exercises.editExercise', 'Edit Exercise')}
             size="xl"
           >
-            <DynamicExerciseForm
+            <UnifiedEntityForm
+              entityType="exercise"
+              mode="edit"
               initialData={editingExercise}
+              onSubmit={async (data) => {
+                // Handle exercise update
+                console.log('Updating exercise:', data);
+              }}
               onSuccess={handleFormSuccess}
               onCancel={handleFormCancel}
-              isModal={true}
             />
           </Modal>
         )}

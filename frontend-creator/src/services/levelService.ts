@@ -358,20 +358,14 @@ class LevelService {
     }
 
     try {
-      const response = await apiClient.post<any>(
+      await apiClient.put<any>(
         API_ENDPOINTS.LEVELS.REORDER(courseId),
-        { orderedIds }
+        { level_ids: orderedIds }
       );
 
-      // Handle both wrapped and unwrapped responses
-      const levelsData = response.data || response;
-
-      // Validate response structure
-      if (!Array.isArray(levelsData)) {
-        throw new Error('Invalid response from level reorder API');
-      }
-
-      return levelsData.map((level: any) => this.transformLevelFromApi(level));
+      // Backend returns success message, not the reordered levels
+      // We don't need to return the levels since TanStack Query will refetch them
+      return [];
     } catch (error: any) {
       console.error(`Failed to reorder levels in course ${courseId}:`, error);
 

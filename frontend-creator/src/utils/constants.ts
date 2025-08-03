@@ -26,9 +26,9 @@
  * const response = await apiClient.get(API_ENDPOINTS.COURSES.BASE);
  * 
  * @example
- * // Using language constants in a component
- * import { LANGUAGES } from '../utils/constants';
- * const languageOptions = LANGUAGES.map(lang => ({ value: lang.code, label: lang.name }));
+ * // Using language constants in a component (now from languages.ts)
+ * import { LANGUAGES, getLanguageDisplayName } from './languages';
+ * const languageOptions = LANGUAGES.map(lang => ({ value: lang.code, label: getLanguageDisplayName(lang) }));
  * 
  * @example
  * // Using storage keys for authentication
@@ -37,20 +37,14 @@
  */
 
 /**
- * BCP 47 language codes for supported languages in the platform.
- * Each language object contains a standardized language code and display name.
+ * Note: Language constants have been moved to languages.ts for better organization
+ * and comprehensive BCP 47 support. Import from there instead:
  * 
- * @constant {Array<{code: string, name: string}>} LANGUAGES
  * @example
- * // Used in LanguageSelector component and CourseForm
+ * // Import comprehensive language support
+ * import { LANGUAGES, getLanguageDisplayName } from './languages';
  * const selectedLanguage = LANGUAGES.find(lang => lang.code === 'en');
  */
-export const LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish (Español)' },
-  { code: 'eu', name: 'Basque (Euskera)' },
-  // Add more languages as needed
-];
 
 /**
  * Comprehensive API endpoint definitions organized by resource type.
@@ -222,7 +216,6 @@ export const STORAGE_KEYS = {
 };
 
 export default {
-  LANGUAGES,
   API_ENDPOINTS,
   MODULE_TYPES,
   EXERCISE_TYPES,

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
-import { DynamicExerciseForm } from '../components/forms';
+import { UnifiedEntityForm } from '../components/forms/UnifiedEntityForm';
 
 const CreateExercisePage: React.FC = () => {
   const { t } = useTranslation();
@@ -22,7 +22,16 @@ const CreateExercisePage: React.FC = () => {
     <>
       <PageTitle title={pageTitle} />
       <Layout title={pageTitle}>
-        <DynamicExerciseForm onSuccess={handleSuccess} onCancel={handleCancel} />
+        <UnifiedEntityForm
+          entityType="exercise"
+          mode="create"
+          onSubmit={async (data) => {
+            // Handle exercise creation
+            console.log('Creating exercise:', data);
+          }}
+          onSuccess={handleSuccess}
+          onCancel={handleCancel}
+        />
       </Layout>
     </>
   );

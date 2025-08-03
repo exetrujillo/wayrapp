@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Section } from '../../utils/types';
 import { useSectionsQuery, useReorderSectionsMutation } from '../../hooks/useSections';
 import { SectionCard } from './SectionCard';
+import { DroppableContainer } from './DroppableContainer';
+import { DraggableSectionItem } from './DraggableSectionItem';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Feedback } from '../ui/Feedback';
 
@@ -20,7 +21,7 @@ interface SectionsSectionProps {
 /**
  * Section component for displaying and managing sections within a level
  * Uses SectionCard for consistent UI patterns
- * Features drag-and-drop reordering with react-beautiful-dnd
+ * Features drag-and-drop reordering with Pragmatic Drag and Drop
  */
 export const SectionsSection: React.FC<SectionsSectionProps> = ({
   levelId,
@@ -50,12 +51,9 @@ export const SectionsSection: React.FC<SectionsSectionProps> = ({
     onSectionSelect(section.id);
   };
 
-  // Handle drag and drop reordering
-  const handleDragEnd = useCallback(async (result: DropResult) => {
-    const { destination, source } = result;
-
-    // Dropped outside the list or no movement
-    if (!destination || destination.index === source.index) {
+  // Handle drag and drop reordering with Pragmatic Drag and Drop
+  const handleReorder = useCallback(async (startIndex: number, endIndex: number) => {
+    if (startIndex === endIndex) {
       return;
     }
 
@@ -63,17 +61,17 @@ export const SectionsSection: React.FC<SectionsSectionProps> = ({
 
     try {
       // Create new order array
-      const reorderedSections = Array.from(sections);
-      const [removed] = reorderedSections.splice(source.index, 1);
-      reorderedSections.splice(destination.index, 0, removed);
+      const reorderedSections = [...sections];
+      const [removed] = reorderedSections.splice(startIndex, 1);
+      reorderedSections.splice(endIndex, 0, removed);
 
       // Extract section IDs in new order
-      const sectionIds = reorderedSections.map(section => section.id);
+      const section_ids = reorderedSections.map(section => section.id);
 
       // Execute reorder mutation
       await reorderSectionsMutation?.mutateAsync({
         levelId,
-        sectionIds,
+        sectionIds: section_ids, // Hook expects camelCase, service handles snake_case conversion
       });
     } catch (error: any) {
       console.error('Failed to reorder sections:', error);
@@ -168,38 +166,24 @@ export const SectionsSection: React.FC<SectionsSectionProps> = ({
           </button>
         </div>
       ) : enableDragDrop ? (
-        // Drag and drop enabled
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="sections-list" isDropDisabled={dragDisabled}>
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={`space-y-3 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
-              >
-                {sections.map((section, index) => (
-                  <Draggable
-                    key={section.id}
-                    draggableId={section.id}
-                    index={index}
-                    isDragDisabled={dragDisabled}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`${snapshot.isDragging ? 'rotate-2 shadow-lg' : ''}`}
-                      >
-                        {renderSectionItem(section, snapshot.isDragging, provided.dragHandleProps)}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        // Drag and drop enabled with Pragmatic Drag and Drop
+        <DroppableContainer onReorder={handleReorder} className="space-y-3">
+          {sections.map((section, index) => (
+            <DraggableSectionItem
+              key={section.id}
+              section={section}
+              index={index}
+              isSelected={selectedSection === section.id}
+              onSelect={() => onSectionSelect(section.id)}
+              onView={handleSectionView}
+              onEdit={onEditSection}
+              onDelete={onDeleteSection}
+              showActions={true}
+              showSelection={false}
+              isDragDisabled={dragDisabled}
+            />
+          ))}
+        </DroppableContainer>
       ) : (
         // Simple list without drag-and-drop
         <div className="space-y-3">

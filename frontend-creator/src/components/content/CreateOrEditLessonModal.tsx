@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { EnhancedLessonForm } from '../forms/EnhancedLessonForm';
+import { UnifiedEntityForm } from '../forms/UnifiedEntityForm';
 import { useCreateLessonMutation, useUpdateLessonMutation } from '../../hooks/useLessons';
 import { Lesson } from '../../utils/types';
 import { LessonFormData } from '../../utils/validation';
@@ -65,9 +65,11 @@ export const CreateOrEditLessonModal: React.FC<CreateOrEditLessonModalProps> = (
       title={title}
       size="md"
     >
-      <EnhancedLessonForm
-        moduleId={moduleId}
-        initialData={initialData}
+      <UnifiedEntityForm<LessonFormData>
+        entityType="lesson"
+        mode={isEditing ? 'edit' : 'create'}
+        parentId={moduleId}
+        initialData={initialData as Partial<LessonFormData>}
         onSubmit={handleSubmit}
         onSuccess={handleSuccess}
         onCancel={handleCancel}

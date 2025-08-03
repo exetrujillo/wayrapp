@@ -1,5 +1,5 @@
 import React from "react";
-import { DynamicExerciseForm } from "./DynamicExerciseForm";
+import { UnifiedEntityForm } from "./UnifiedEntityForm";
 import { Exercise } from "../../utils/types";
 
 interface ExerciseFormProps {
@@ -13,14 +13,19 @@ export const ExerciseForm: React.FC<ExerciseFormProps> = ({
   initialData,
   onSuccess,
   onCancel,
-  isModal = false,
+  isModal: _isModal = false,
 }) => {
   return (
-    <DynamicExerciseForm
-      initialData={initialData}
-      onSuccess={onSuccess}
-      onCancel={onCancel}
-      isModal={isModal}
+    <UnifiedEntityForm
+      entityType="exercise"
+      mode={initialData ? "edit" : "create"}
+      initialData={initialData || {}}
+      onSubmit={async (data) => {
+        // Handle exercise submission
+        console.log('Submitting exercise:', data);
+      }}
+      {...(onSuccess && { onSuccess: (_result, data) => onSuccess(data as Exercise) })}
+      {...(onCancel && { onCancel })}
     />
   );
 };

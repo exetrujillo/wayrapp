@@ -1,5 +1,9 @@
 {
   "common": {
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saving": "Guardando...",
     "buttons": {
       "save": "Guardar",
       "cancel": "Cancelar",
@@ -41,7 +45,7 @@
       "edit": "Editar",
       "backToCourse": "Volver al Curso",
       "backToLevel": "Volver al Nivel",
-      "backToSection": "Back to Section"
+      "backToSection": "Volver a la Sección"
     }
   },
   "creator": {
@@ -217,5 +221,15 @@
         "data": "Datos del Ejercicio"
       }
     }
+  },
+  "hierarchicalNavigator": {
+    "title": "Navegador de Contenido",
+    "searchPlaceholder": "Buscar contenido...",
+    "statistics": "Estadísticas de Contenido",
+    "courses": "Cursos",
+    "levels": "Niveles",
+    "sections": "Secciones",
+    "modules": "Módulos",
+    "lessons": "Lecciones"
   }
 }

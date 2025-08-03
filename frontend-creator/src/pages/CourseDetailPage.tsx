@@ -14,14 +14,12 @@ import { useEnhancedQuery } from '../hooks/useApiOperation';
 import { Level } from '../utils/types';
 
 /**
- * Central CourseDetailPage hub that manages the entire course hierarchy
+ * Course detail page that displays course information and manages levels
  * Features:
  * - Course header with metadata and edit options
- * - Hierarchical navigator with contextual sections
- * - Breadcrumb navigation for current selection
- * - Modal-based CRUD operations for all entities
- * - State management for current selection (level/section/module)
- * - URL synchronization for deep linking
+ * - Levels management section with CRUD operations
+ * - Modal-based level creation and editing
+ * - Breadcrumb navigation handled by Layout component
  */
 const CourseDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -50,8 +48,10 @@ const CourseDetailPage: React.FC = () => {
     showErrorToast: true,
     maxRetries: 3,
   });
-  
+
   const { data: course, isLoading, error } = enhancedQuery;
+
+
 
   // Modal states for CRUD operations
   const [levelModalOpen, setLevelModalOpen] = useState(false);
@@ -65,6 +65,8 @@ const CourseDetailPage: React.FC = () => {
   const handleLevelSelect = useCallback((levelId: string) => {
     navigate(`/courses/${course?.id}/levels/${levelId}`);
   }, [navigate, course?.id]);
+
+
 
 
 
@@ -154,13 +156,12 @@ const CourseDetailPage: React.FC = () => {
                   <span>
                     {t('creator.course.targetLanguage', 'Target')}: {course.targetLanguage}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    course.isPublic 
-                      ? 'bg-green-100 text-green-800' 
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${course.isPublic
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {course.isPublic 
-                      ? t('creator.course.public', 'Public') 
+                    }`}>
+                    {course.isPublic
+                      ? t('creator.course.public', 'Public')
                       : t('creator.course.private', 'Private')
                     }
                   </span>
@@ -182,16 +183,25 @@ const CourseDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Levels Management */}
-          <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-            <LevelsSection
-              courseId={course.id}
-              selectedLevel={undefined}
-              onLevelSelect={handleLevelSelect}
-              onCreateLevel={handleCreateLevel}
-              onEditLevel={handleEditLevel}
-              onDeleteLevel={handleDeleteLevel}
-            />
+          {/* Course Content Management */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+
+            {/* Levels Management */}
+            <div className="lg:col-span-4">
+              <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <LevelsSection
+                  courseId={course.id}
+                  selectedLevel={undefined}
+                  onLevelSelect={handleLevelSelect}
+                  onCreateLevel={handleCreateLevel}
+                  onEditLevel={handleEditLevel}
+                  onDeleteLevel={handleDeleteLevel}
+                  enableDragDrop={true}
+                  enableBulkOperations={true}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Level Modal */}

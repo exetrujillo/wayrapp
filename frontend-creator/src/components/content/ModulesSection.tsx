@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Module } from '../../utils/types';
 import { useModulesQuery, useReorderModulesMutation } from '../../hooks/useModules';
 import { ModuleCard } from './ModuleCard';
+import { DroppableContainer } from './DroppableContainer';
+import { DraggableModuleItem } from './DraggableModuleItem';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Feedback } from '../ui/Feedback';
 
@@ -19,7 +20,7 @@ interface ModulesSectionProps {
 
 /**
  * Section component for displaying and managing modules within a section
- * Uses ModuleCard for consistent UI patterns and supports drag-and-drop reordering
+ * Uses ModuleCard for consistent UI patterns and supports drag-and-drop reordering with Pragmatic Drag and Drop
  */
 export const ModulesSection: React.FC<ModulesSectionProps> = ({
   sectionId,
@@ -48,31 +49,24 @@ export const ModulesSection: React.FC<ModulesSectionProps> = ({
     onModuleSelect(module.id);
   };
 
-  const handleDragEnd = useCallback(async (result: DropResult) => {
-    if (!result.destination || !enableDragDrop) {
-      return;
-    }
-
-    const { source, destination } = result;
-
-    // If dropped in the same position, do nothing
-    if (source.index === destination.index) {
+  const handleReorder = useCallback(async (startIndex: number, endIndex: number) => {
+    if (startIndex === endIndex || !enableDragDrop) {
       return;
     }
 
     // Create new order array
-    const reorderedModules = Array.from(modules);
-    const [removed] = reorderedModules.splice(source.index, 1);
-    reorderedModules.splice(destination.index, 0, removed);
+    const reorderedModules = [...modules];
+    const [removed] = reorderedModules.splice(startIndex, 1);
+    reorderedModules.splice(endIndex, 0, removed);
 
     // Extract module IDs in new order
-    const moduleIds = reorderedModules.map(module => module.id);
+    const module_ids = reorderedModules.map(module => module.id);
 
     try {
       setDragDisabled(true);
       await reorderModulesMutation.mutateAsync({
         sectionId,
-        moduleIds,
+        moduleIds: module_ids, // Hook expects camelCase, service handles snake_case conversion
       });
     } catch (error) {
       console.error('Failed to reorder modules:', error);
@@ -132,51 +126,23 @@ export const ModulesSection: React.FC<ModulesSectionProps> = ({
           </button>
         </div>
       ) : enableDragDrop ? (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="modules-list" isDropDisabled={dragDisabled}>
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={`space-y-3 ${
-                  snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''
-                }`}
-              >
-                {modules.map((module, index) => (
-                  <Draggable
-                    key={module.id}
-                    draggableId={module.id}
-                    index={index}
-                    isDragDisabled={dragDisabled}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`${
-                          snapshot.isDragging ? 'shadow-lg rotate-2' : ''
-                        }`}
-                      >
-                        <ModuleCard
-                          module={module}
-                          isSelected={selectedModule === module.id}
-                          onView={handleModuleView}
-                          onEdit={onEditModule}
-                          onDelete={onDeleteModule}
-                          showSelection={false}
-                          showActions={true}
-                          dragHandleProps={provided.dragHandleProps}
-                          isDragging={snapshot.isDragging}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        <DroppableContainer onReorder={handleReorder} className="space-y-3">
+          {modules.map((module, index) => (
+            <DraggableModuleItem
+              key={module.id}
+              module={module}
+              index={index}
+              isSelected={selectedModule === module.id}
+              onSelect={() => onModuleSelect(module.id)}
+              onView={handleModuleView}
+              onEdit={onEditModule}
+              onDelete={onDeleteModule}
+              showActions={true}
+              showSelection={false}
+              isDragDisabled={dragDisabled}
+            />
+          ))}
+        </DroppableContainer>
       ) : (
         <div className="space-y-3">
           {modules.map((module) => (

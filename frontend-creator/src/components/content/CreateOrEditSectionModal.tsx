@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { EnhancedSectionForm } from '../forms/EnhancedSectionForm';
+import { UnifiedEntityForm } from '../forms/UnifiedEntityForm';
 import { useCreateSectionMutation, useUpdateSectionMutation } from '../../hooks/useSections';
 import { Section } from '../../utils/types';
 import { SectionFormData } from '../../utils/validation';
@@ -65,9 +65,11 @@ export const CreateOrEditSectionModal: React.FC<CreateOrEditSectionModalProps> =
       title={title}
       size="md"
     >
-      <EnhancedSectionForm
-        levelId={levelId}
-        initialData={initialData}
+      <UnifiedEntityForm<SectionFormData>
+        entityType="section"
+        mode={initialData?.id ? 'edit' : 'create'}
+        parentId={levelId}
+        initialData={initialData as Partial<SectionFormData>}
         onSubmit={handleSubmit}
         onSuccess={handleSuccess}
         onCancel={handleCancel}

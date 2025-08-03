@@ -1,5 +1,8 @@
-import React from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import React, { useEffect, useRef, useState } from 'react';
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { DropIndicator } from '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box';
 import { useTranslation } from 'react-i18next';
 import { ExerciseAssignment } from '../../utils/types';
 import { Button } from '../ui/Button';
@@ -13,20 +16,60 @@ interface AssignedExercisesListProps {
   exercises: ExerciseAssignment[];
 }
 
-interface ExerciseItemProps {
+interface DraggableExerciseItemProps {
   assignment: ExerciseAssignment;
   index: number;
   onUnassign: (assignmentId: string) => void;
+  isDragDisabled?: boolean;
 }
 
 /**
- * Individual exercise item component with drag handle and actions
+ * Individual draggable exercise item component with drag handle and actions
  */
-const ExerciseItem: React.FC<ExerciseItemProps> = ({ assignment, index, onUnassign }) => {
+const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({ 
+  assignment, 
+  index, 
+  onUnassign,
+  isDragDisabled = false 
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [closestEdge, setClosestEdge] = useState<'top' | 'bottom' | null>(null);
   const { t } = useTranslation();
   
   // Fetch exercise details
   const { data: exercise, isLoading } = useExerciseQuery(assignment.exercise_id);
+
+  // Set up drag and drop with Pragmatic Drag and Drop
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || isDragDisabled) return;
+
+    return combine(
+      draggable({
+        element,
+        getInitialData: () => ({ type: 'exercise', assignmentId: assignment.id, index }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => source.data.type === 'exercise',
+        getData: ({ input }) => 
+          attachClosestEdge({ type: 'exercise', assignmentId: assignment.id, index }, {
+            element,
+            input,
+            allowedEdges: ['top', 'bottom'],
+          }),
+        onDragEnter: ({ self }) => {
+          const edge = extractClosestEdge(self.data);
+          setClosestEdge(edge === 'top' || edge === 'bottom' ? edge : null);
+        },
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      })
+    );
+  }, [assignment.id, index, isDragDisabled]);
 
   const handleUnassign = () => {
     if (window.confirm(t('creator.components.assignedExercisesList.unassignConfirm', 'Are you sure you want to unassign this exercise?'))) {
@@ -124,19 +167,22 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ assignment, index, onUnassi
   }
 
   return (
-    <Draggable draggableId={assignment.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className={`bg-white border border-neutral-200 rounded-lg p-4 mb-3 transition-all duration-200 ${
-            snapshot.isDragging ? 'shadow-lg ring-2 ring-primary-500 ring-opacity-50' : 'hover:shadow-md'
-          }`}
-        >
-          <div className="flex items-start space-x-4">
-            {/* Drag Handle */}
+    <div
+      ref={ref}
+      className={`relative ${isDragging ? 'opacity-50' : ''}`}
+      data-testid={`draggable-exercise-${assignment.id}`}
+    >
+      {closestEdge === 'top' && <DropIndicator edge="top" />}
+      
+      <div
+        className={`bg-white border border-neutral-200 rounded-lg p-4 mb-3 transition-all duration-200 ${
+          isDragging ? 'shadow-lg ring-2 ring-primary-500 ring-opacity-50' : 'hover:shadow-md'
+        }`}
+      >
+        <div className="flex items-start space-x-4">
+          {/* Drag Handle */}
+          {!isDragDisabled && (
             <div
-              {...provided.dragHandleProps}
               className="flex-shrink-0 p-2 text-neutral-400 hover:text-neutral-600 cursor-grab active:cursor-grabbing"
               title={t('creator.components.assignedExercisesList.dragHandle', 'Drag to reorder')}
             >
@@ -144,10 +190,11 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ assignment, index, onUnassi
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
               </svg>
             </div>
+          )}
 
-            {/* Order Number */}
-            <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
-              {assignment.order}
+          {/* Order Number */}
+          <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
+            {assignment.order}
             </div>
 
             {/* Exercise Content */}
@@ -187,11 +234,75 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ assignment, index, onUnassi
               <div className="text-sm text-neutral-600 line-clamp-2">
                 {getPreviewContent()}
               </div>
-            </div>
           </div>
         </div>
-      )}
-    </Draggable>
+      </div>
+      
+      {closestEdge === 'bottom' && <DropIndicator edge="bottom" />}
+    </div>
+  );
+};
+
+/**
+ * Droppable container for exercise assignments
+ */
+interface DroppableExerciseContainerProps {
+  children: React.ReactNode;
+  onReorder: (startIndex: number, endIndex: number) => void;
+  className?: string;
+}
+
+const DroppableExerciseContainer: React.FC<DroppableExerciseContainerProps> = ({
+  children,
+  onReorder,
+  className = '',
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isDraggedOver, setIsDraggedOver] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === 'exercise',
+      onDragEnter: () => setIsDraggedOver(true),
+      onDragLeave: () => setIsDraggedOver(false),
+      onDrop: ({ source, location }) => {
+        setIsDraggedOver(false);
+        
+        const destination = location.current.dropTargets[0];
+        if (!destination) return;
+
+        const sourceIndex = source.data.index as number;
+        const destinationIndex = destination.data.index as number;
+        const edge = extractClosestEdge(destination.data);
+
+        let finalIndex = destinationIndex;
+        if (edge === 'bottom') {
+          finalIndex = destinationIndex + 1;
+        }
+
+        // Adjust for moving items down
+        if (sourceIndex < finalIndex) {
+          finalIndex = finalIndex - 1;
+        }
+
+        if (sourceIndex !== finalIndex) {
+          onReorder(sourceIndex, finalIndex);
+        }
+      },
+    });
+  }, [onReorder]);
+
+  return (
+    <div
+      ref={ref}
+      className={`${className} ${isDraggedOver ? 'bg-primary-50 rounded-lg' : ''}`}
+    >
+      {children}
+    </div>
   );
 };
 
@@ -201,7 +312,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ assignment, index, onUnassi
  * Features:
  * - Shows exercise details and order controls
  * - Handles reordering and unassignment actions
- * - Drag-and-drop interface using react-beautiful-dnd
+ * - Drag-and-drop interface using Pragmatic Drag and Drop
  */
 export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
   lessonId,
@@ -216,30 +327,23 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
   // Sort exercises by order
   const sortedExercises = [...exercises].sort((a, b) => a.order - b.order);
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-
-    if (sourceIndex === destinationIndex) {
+  const handleReorder = (startIndex: number, endIndex: number) => {
+    if (startIndex === endIndex) {
       return;
     }
 
     // Create new order based on drag result
-    const reorderedExercises = Array.from(sortedExercises);
-    const [removed] = reorderedExercises.splice(sourceIndex, 1);
-    reorderedExercises.splice(destinationIndex, 0, removed);
+    const reorderedExercises = [...sortedExercises];
+    const [removed] = reorderedExercises.splice(startIndex, 1);
+    reorderedExercises.splice(endIndex, 0, removed);
 
     // Extract exercise IDs in new order
-    const exerciseIds = reorderedExercises.map(assignment => assignment.exercise_id);
+    const exercise_ids = reorderedExercises.map(assignment => assignment.exercise_id);
 
     // Call reorder mutation
     reorderMutation.mutate({
       lessonId,
-      exerciseIds,
+      exerciseIds: exercise_ids, // Hook expects camelCase, service handles snake_case conversion
     });
   };
 
@@ -324,30 +428,21 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
         </div>
       </div>
 
-      {/* Drag and Drop Context */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="assigned-exercises">
-          {(provided, snapshot) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className={`min-h-32 transition-colors duration-200 ${
-                snapshot.isDraggingOver ? 'bg-primary-50' : ''
-              }`}
-            >
-              {sortedExercises.map((assignment, index) => (
-                <ExerciseItem
-                  key={assignment.id}
-                  assignment={assignment}
-                  index={index}
-                  onUnassign={handleUnassign}
-                />
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      {/* Drag and Drop Container */}
+      <DroppableExerciseContainer 
+        onReorder={handleReorder}
+        className="min-h-32 transition-colors duration-200"
+      >
+        {sortedExercises.map((assignment, index) => (
+          <DraggableExerciseItem
+            key={assignment.id}
+            assignment={assignment}
+            index={index}
+            onUnassign={handleUnassign}
+            isDragDisabled={reorderMutation.isPending || removeAssignmentMutation.isPending}
+          />
+        ))}
+      </DroppableExerciseContainer>
     </div>
   );
 };

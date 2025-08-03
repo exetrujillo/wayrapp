@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+// Drag and drop imports are handled by individual draggable components
+import { DroppableContainer } from './DroppableContainer';
+import { DraggableItem } from './DraggableItem';
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { LoadingSpinner, ListSkeleton } from "../ui";
@@ -21,7 +23,8 @@ interface ContentListProps<T> {
   renderItem: (
     item: T,
     isSelected: boolean,
-    onSelect: (item: T) => void
+    onSelect: (item: T) => void,
+    dragHandleProps?: any
   ) => React.ReactNode;
   createButton?: {
     label: string;
@@ -46,9 +49,8 @@ interface ContentListProps<T> {
   skeletonCount?: number;
   // New props for drag-and-drop support
   enableDragDrop?: boolean;
-  onDragEnd?: (result: DropResult) => void;
+  onDragEnd?: (startIndex: number, endIndex: number) => void;
   dragDisabled?: boolean;
-  droppableId?: string;
 }
 
 export function ContentList<T extends { id: string }>({
@@ -75,7 +77,6 @@ export function ContentList<T extends { id: string }>({
   enableDragDrop = false,
   onDragEnd,
   dragDisabled = false,
-  droppableId = 'content-list',
 }: ContentListProps<T>) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -358,42 +359,26 @@ export function ContentList<T extends { id: string }>({
 
           {/* Items */}
           {enableDragDrop && onDragEnd ? (
-            <DragDropContext onDragEnd={onDragEnd}>
-              <Droppable droppableId={droppableId} isDropDisabled={dragDisabled}>
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
-                  >
-                    {data.map((item, index) => (
-                      <Draggable
-                        key={item.id}
-                        draggableId={item.id}
-                        index={index}
-                        isDragDisabled={dragDisabled}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`${snapshot.isDragging ? 'rotate-1 shadow-lg' : ''}`}
-                          >
-                            {renderItem(item, selectedItems.has(item.id), handleItemSelect)}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+            <DroppableContainer 
+              onReorder={(startIndex, endIndex) => onDragEnd(startIndex, endIndex)}
+              className="space-y-4"
+            >
+              {data.map((item, index) => (
+                <DraggableItem
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  isSelected={selectedItems.has(item.id)}
+                  onSelect={handleItemSelect}
+                  renderItem={renderItem}
+                  isDragDisabled={dragDisabled}
+                />
+              ))}
+            </DroppableContainer>
           ) : (
             data.map((item) => (
               <div key={item.id}>
-                {renderItem(item, selectedItems.has(item.id), handleItemSelect)}
+                {renderItem(item, selectedItems.has(item.id), handleItemSelect, undefined)}
               </div>
             ))
           )}

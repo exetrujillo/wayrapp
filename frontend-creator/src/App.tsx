@@ -36,6 +36,8 @@ const ExercisesPage = lazy(() => import('./pages/ExercisesPage'));
 const CreateExercisePage = lazy(() => import('./pages/CreateExercisePage'));
 const ExerciseAssignmentPage = lazy(() => import('./pages/ExerciseAssignmentPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const HierarchicalNavigatorDemo = lazy(() => import('./pages/HierarchicalNavigatorDemo'));
+const UnifiedFormExample = lazy(() => import('./components/examples/UnifiedFormExample'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 /**
@@ -180,6 +182,18 @@ const AppRoutes: React.FC = () => {
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/demo/hierarchical-navigator" element={
+          <ProtectedRoute>
+            <HierarchicalNavigatorDemo />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/demo/unified-forms" element={
+          <ProtectedRoute>
+            <UnifiedFormExample />
           </ProtectedRoute>
         } />
 

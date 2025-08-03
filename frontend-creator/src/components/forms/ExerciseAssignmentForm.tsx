@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from 'react-beautiful-dnd';
+// TODO: Migrate to Pragmatic Drag and Drop
+// import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from 'react-beautiful-dnd';
 import { exerciseAssignmentSchema, ExerciseAssignmentFormData } from '../../utils/validation';
 import { lessonService } from '../../services/lessonService';
 import { exerciseService } from '../../services/exerciseService';
@@ -152,53 +153,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
         }
     };
 
-    const handleDragEnd = async (result: DropResult) => {
-        if (!result.destination) return;
-
-        const sourceIndex = result.source.index;
-        const destinationIndex = result.destination.index;
-
-        if (sourceIndex === destinationIndex) return;
-
-        // Reorder the assignments
-        const reorderedAssignments = Array.from(assignedExercises);
-        const [removed] = reorderedAssignments.splice(sourceIndex, 1);
-        if (removed) {
-            reorderedAssignments.splice(destinationIndex, 0, removed);
-        }
-
-        // Update the UI immediately for better UX
-        setAssignedExercises(reorderedAssignments);
-
-        // Update the order in the backend
-        try {
-            // Update the order for each affected assignment
-            const updatePromises = reorderedAssignments.map((assignment, index) =>
-                lessonService.updateExerciseAssignment(lessonId, assignment.id, { order: index })
-            );
-
-            await Promise.all(updatePromises);
-
-            setFeedback({
-                type: 'success',
-                message: t('creator.forms.exerciseAssignment.reorderSuccess', 'Exercise order updated successfully!'),
-            });
-
-            if (onSuccess) {
-                onSuccess(reorderedAssignments);
-            }
-        } catch (error: any) {
-            // If there's an error, revert to the previous state
-            setFeedback({
-                type: 'error',
-                message: error.message || t('common.messages.error', 'An error occurred'),
-            });
-
-            // Refetch the assignments to ensure we have the correct order
-            const assignments = await lessonService.getLessonExercises(lessonId);
-            setAssignedExercises(assignments);
-        }
-    };
+    // TODO: Migrate to Pragmatic Drag and Drop - handleDragEnd temporarily removed
 
     // Find exercise details by ID
     const getExerciseById = (id: string) => {
@@ -334,63 +289,47 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
                         {t('creator.forms.exerciseAssignment.noExercises', 'No exercises assigned to this lesson yet.')}
                     </p>
                 ) : (
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="exercises">
-                            {(provided: DroppableProvided) => (
-                                <div
-                                    {...provided.droppableProps}
-                                    ref={provided.innerRef}
-                                    className="space-y-2"
-                                >
-                                    {assignedExercises.map((assignment, index) => {
-                                        const exercise = getExerciseById(assignment.exercise_id);
+                    // TODO: Migrate to Pragmatic Drag and Drop - temporarily disabled drag-and-drop
+                    <div className="space-y-2">
+                        {assignedExercises.map((assignment, index) => {
+                            const exercise = getExerciseById(assignment.exercise_id);
 
-                                        return (
-                                            <Draggable key={assignment.id} draggableId={assignment.id} index={index}>
-                                                {(provided: DraggableProvided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        className="border border-neutral-200 rounded-lg p-4 bg-white flex justify-between items-center"
-                                                    >
-                                                        <div className="flex items-center space-x-2">
-                                                            <div className="bg-neutral-200 rounded-full w-6 h-6 flex items-center justify-center">
-                                                                {index + 1}
-                                                            </div>
-                                                            <div>
-                                                                {exercise ? (
-                                                                    <>
-                                                                        <p className="font-medium">
-                                                                            {getExerciseTypeName(exercise.exerciseType)}
-                                                                        </p>
-                                                                        <p className="text-sm text-neutral-600 truncate max-w-md">
-                                                                            {getExercisePreview(exercise)}
-                                                                        </p>
-                                                                    </>
-                                                                ) : (
-                                                                    <p className="text-error">
-                                                                        {t('creator.forms.exerciseAssignment.exerciseNotFound', 'Exercise not found')}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => handleRemoveAssignment(assignment.id)}
-                                                        >
-                                                            {t('common.buttons.remove', 'Remove')}
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        );
-                                    })}
-                                    {provided.placeholder}
+                            return (
+                                <div
+                                    key={assignment.id}
+                                    className="border border-neutral-200 rounded-lg p-4 bg-white flex justify-between items-center"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <div className="bg-neutral-200 rounded-full w-6 h-6 flex items-center justify-center">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            {exercise ? (
+                                                <>
+                                                    <p className="font-medium">
+                                                        {getExerciseTypeName(exercise.exerciseType)}
+                                                    </p>
+                                                    <p className="text-sm text-neutral-600 truncate max-w-md">
+                                                        {getExercisePreview(exercise)}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <p className="text-error">
+                                                    {t('creator.forms.exerciseAssignment.exerciseNotFound', 'Exercise not found')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleRemoveAssignment(assignment.id)}
+                                    >
+                                        {t('common.buttons.remove', 'Remove')}
+                                    </Button>
                                 </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
+                            );
+                        })}
+                    </div>
                 )}
             </Card>
         </div>
