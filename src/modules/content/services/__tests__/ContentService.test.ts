@@ -114,7 +114,7 @@ describe('ContentService', () => {
             it('should create a course successfully', async () => {
                 const courseData: CreateCourseDto = CourseFactory.buildDto();
                 const expectedCourse: Course = {
-                    id: courseData.id,
+                    id: courseData.id!,
                     source_language: courseData.source_language,
                     target_language: courseData.target_language,
                     name: courseData.name,
