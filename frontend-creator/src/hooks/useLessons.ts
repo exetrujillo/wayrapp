@@ -35,16 +35,17 @@ export const useLessonsQuery = (moduleId: string, params?: PaginationParams, ena
 };
 
 /**
- * Hook for fetching a single lesson by ID
+ * Hook for fetching a single lesson by ID within a module
+ * @param moduleId Module ID
  * @param id Lesson ID
  * @param enabled Whether the query should be enabled
  * @returns Query result with lesson data, loading, and error states
  */
-export const useLessonQuery = (id: string, enabled: boolean = true) => {
+export const useLessonQuery = (moduleId: string, id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.lessons.detail(id),
-    queryFn: () => lessonService.getLesson(id),
-    enabled: enabled && !!id,
+    queryFn: () => lessonService.getLesson(moduleId, id),
+    enabled: enabled && !!id && !!moduleId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on 4xx errors except 401
@@ -102,9 +103,9 @@ export const useCreateLessonMutation = () => {
           data: [
             ...old.data,
             {
-              id: `temp-${Date.now()}`, // Temporary ID
-              moduleId,
               ...lessonData,
+              id: lessonData.id || `temp-${Date.now()}`, // Use provided ID or temporary
+              moduleId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
@@ -148,9 +149,9 @@ export const useUpdateLessonMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, lessonData }: { id: string; lessonData: UpdateLessonRequest }) => 
-      lessonService.updateLesson(id, lessonData),
-    onMutate: async ({ id, lessonData }) => {
+    mutationFn: ({ moduleId, id, lessonData }: { moduleId: string; id: string; lessonData: UpdateLessonRequest }) => 
+      lessonService.updateLesson(moduleId, id, lessonData),
+    onMutate: async ({ moduleId, id, lessonData }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.lessons.detail(id) });
 
@@ -166,7 +167,7 @@ export const useUpdateLessonMutation = () => {
         }));
       }
 
-      return { previousLesson, id };
+      return { previousLesson, moduleId, id };
     },
     onSuccess: (updatedLesson: Lesson) => {
       // Update the specific lesson in cache
@@ -186,9 +187,11 @@ export const useUpdateLessonMutation = () => {
       }
       console.error('Failed to update lesson:', error);
     },
-    onSettled: (_, __, { id }) => {
+    onSettled: (_, __, { moduleId, id }) => {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.detail(id) });
+      // Also invalidate the module's lessons list
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(moduleId) });
     },
   });
 };
@@ -201,61 +204,49 @@ export const useDeleteLessonMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => lessonService.deleteLesson(id),
-    onMutate: async (deletedId) => {
-      // Get the lesson data before removing it to access moduleId
+    mutationFn: ({ moduleId, id }: { moduleId: string; id: string }) => lessonService.deleteLesson(moduleId, id),
+    onMutate: async ({ moduleId, id: deletedId }) => {
+      // Get the lesson data before removing it
       const lessonData = queryClient.getQueryData(queryKeys.lessons.detail(deletedId)) as Lesson;
       
-      if (lessonData?.moduleId) {
-        // Cancel any outgoing refetches
-        await queryClient.cancelQueries({ queryKey: queryKeys.lessons.list(lessonData.moduleId) });
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.lessons.list(moduleId) });
 
-        // Snapshot the previous value
-        const previousLessons = queryClient.getQueryData(queryKeys.lessons.list(lessonData.moduleId));
+      // Snapshot the previous value
+      const previousLessons = queryClient.getQueryData(queryKeys.lessons.list(moduleId));
 
-        // Optimistically update by removing the lesson
-        if (previousLessons) {
-          queryClient.setQueryData(queryKeys.lessons.list(lessonData.moduleId), (old: any) => ({
-            ...old,
-            data: old.data.filter((lesson: Lesson) => lesson.id !== deletedId),
-            total: old.total - 1,
-          }));
-        }
-
-        return { previousLessons, lessonData };
+      // Optimistically update by removing the lesson
+      if (previousLessons) {
+        queryClient.setQueryData(queryKeys.lessons.list(moduleId), (old: any) => ({
+          ...old,
+          data: old.data.filter((lesson: Lesson) => lesson.id !== deletedId),
+          total: old.total - 1,
+        }));
       }
 
-      return { lessonData };
+      return { previousLessons, lessonData, moduleId };
     },
-    onSuccess: (_, deletedId: string) => {
-      // Get the lesson data before removing it to access moduleId
-      const lessonData = queryClient.getQueryData(queryKeys.lessons.detail(deletedId)) as Lesson;
-      
+    onSuccess: (_, { moduleId, id: deletedId }) => {
       // Remove the lesson from cache
       queryClient.removeQueries({ queryKey: queryKeys.lessons.detail(deletedId) });
       queryClient.removeQueries({ queryKey: queryKeys.lessons.exercises(deletedId) });
       
       // Invalidate lessons list to reflect deletion
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.lists() });
-      if (lessonData?.moduleId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(lessonData.moduleId) });
-        // Invalidate module detail if it includes lesson count
-        queryClient.invalidateQueries({ queryKey: queryKeys.modules.detail(lessonData.moduleId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(moduleId) });
+      // Invalidate module detail if it includes lesson count
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.detail(moduleId) });
     },
-    onError: (error, _deletedId, context) => {
+    onError: (error, { moduleId }, context) => {
       // If the mutation fails, use the context to roll back
-      if (context?.previousLessons && context?.lessonData?.moduleId) {
-        queryClient.setQueryData(queryKeys.lessons.list(context.lessonData.moduleId), context.previousLessons);
+      if (context?.previousLessons) {
+        queryClient.setQueryData(queryKeys.lessons.list(moduleId), context.previousLessons);
       }
       console.error('Failed to delete lesson:', error);
     },
-    onSettled: (_, __, deletedId) => {
+    onSettled: (_, __, { moduleId }) => {
       // Always refetch after error or success
-      const lessonData = queryClient.getQueryData(queryKeys.lessons.detail(deletedId)) as Lesson;
-      if (lessonData?.moduleId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(lessonData.moduleId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.list(moduleId) });
     },
   });
 };

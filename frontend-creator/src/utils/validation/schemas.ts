@@ -77,18 +77,9 @@ export const courseSchema = baseCourseSchema.refine(
 // ============================================================================
 
 /**
- * Level validation schema
+ * Base level schema for form validation (without id and courseId for create mode)
  */
-export const levelSchema = z.object({
-    id: z.string()
-        .min(1, 'Level ID is required')
-        .max(30, 'Level ID must be 30 characters or less')
-        .regex(VALIDATION_PATTERNS.ID_PATTERN, 'Level ID can only contain lowercase letters, numbers, and hyphens')
-        .refine(val => !val.startsWith('-') && !val.endsWith('-'), 'Level ID cannot start or end with a hyphen'),
-
-    courseId: z.string()
-        .min(1, 'Course ID is required'),
-
+const baseLevelFormSchema = z.object({
     code: z.string()
         .min(1, 'Level code is required')
         .max(FIELD_CONSTRAINTS.LEVEL_CODE_MAX_LENGTH, `Level code must be ${FIELD_CONSTRAINTS.LEVEL_CODE_MAX_LENGTH} characters or less`)
@@ -103,10 +94,29 @@ export const levelSchema = z.object({
         .min(FIELD_CONSTRAINTS.LEVEL_ORDER_MIN, `Order must be at least ${FIELD_CONSTRAINTS.LEVEL_ORDER_MIN}`)
         .max(FIELD_CONSTRAINTS.ORDER_MAX, `Order cannot exceed ${FIELD_CONSTRAINTS.ORDER_MAX}`)
         .int('Order must be a whole number'),
+});
+
+/**
+ * Complete level schema with all required fields
+ */
+export const levelSchema = baseLevelFormSchema.extend({
+    id: z.string()
+        .min(1, 'Level ID is required')
+        .max(30, 'Level ID must be 30 characters or less')
+        .regex(VALIDATION_PATTERNS.ID_PATTERN, 'Level ID can only contain lowercase letters, numbers, and hyphens')
+        .refine(val => !val.startsWith('-') && !val.endsWith('-'), 'Level ID cannot start or end with a hyphen'),
+
+    courseId: z.string()
+        .min(1, 'Course ID is required'),
 
     createdAt: z.date().optional(),
     updatedAt: z.date().optional(),
 });
+
+/**
+ * Level form schema for create mode (without id and courseId)
+ */
+export const levelFormSchema = baseLevelFormSchema;
 
 // ============================================================================
 // Section Schema
@@ -376,9 +386,30 @@ export const ENTITY_SCHEMAS = {
 } as const;
 
 /**
+ * Map of entity types to their form schemas (for create mode)
+ */
+export const FORM_SCHEMAS = {
+    course: courseSchema, // Course form schema is the same as full schema
+    level: levelFormSchema, // Level form schema excludes id and courseId
+    section: sectionSchema, // TODO: Create form schema if needed
+    module: moduleSchema, // TODO: Create form schema if needed
+    lesson: lessonSchema, // TODO: Create form schema if needed
+    exercise: exerciseSchema, // TODO: Create form schema if needed
+} as const;
+
+/**
  * Get validation schema for an entity type
  */
-export const getEntitySchema = (entityType: string) => {
+export const getEntitySchema = (entityType: string, mode?: 'create' | 'edit') => {
+    // For create mode, use form schemas that may exclude certain fields
+    if (mode === 'create') {
+        const formSchema = FORM_SCHEMAS[entityType as keyof typeof FORM_SCHEMAS];
+        if (formSchema) {
+            return formSchema;
+        }
+    }
+    
+    // Default to full validation schema
     const schema = ENTITY_SCHEMAS[entityType as keyof typeof ENTITY_SCHEMAS];
     if (!schema) {
         throw new Error(`Unknown entity type: ${entityType}`);
@@ -482,12 +513,14 @@ export const validationUtils = {
 export default {
     courseSchema,
     levelSchema,
+    levelFormSchema,
     sectionSchema,
     moduleSchema,
     lessonSchema,
     exerciseSchema,
     BASE_ENTITY_SCHEMAS,
     ENTITY_SCHEMAS,
+    FORM_SCHEMAS,
     getEntitySchema,
     getBaseEntitySchema,
     validateEntityData,

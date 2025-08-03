@@ -34,8 +34,8 @@ const ModuleDetailPage: React.FC = () => {
   const [editingLesson, setEditingLesson] = useState<Lesson | undefined>();
 
   // Fetch module, section, level, and course data
-  const moduleQuery = useModuleQuery(moduleId || '', !!moduleId);
-  const sectionQuery = useSectionQuery(sectionId || '', !!sectionId);
+  const moduleQuery = useModuleQuery(sectionId || '', moduleId || '', !!moduleId && !!sectionId);
+  const sectionQuery = useSectionQuery(levelId || '', sectionId || '', !!sectionId && !!levelId);
   const levelQuery = useLevelQuery(courseId || '', levelId || '', !!levelId && !!courseId);
   const courseQuery = useCourseQuery(courseId || '', !!courseId);
   
@@ -73,8 +73,8 @@ const ModuleDetailPage: React.FC = () => {
 
   // Lesson handlers
   const handleLessonClick = useCallback((lessonId: string) => {
-    navigate(`/lessons/${lessonId}`);
-  }, [navigate]);
+    navigate(`/courses/${courseId}/levels/${levelId}/sections/${sectionId}/modules/${moduleId}/lessons/${lessonId}`);
+  }, [navigate, courseId, levelId, sectionId, moduleId]);
 
   const handleCreateLesson = useCallback(() => {
     setEditingLesson(undefined);
@@ -86,10 +86,20 @@ const ModuleDetailPage: React.FC = () => {
     setLessonModalOpen(true);
   }, []);
 
-  const handleDeleteLesson = useCallback((lesson: Lesson) => {
-    // TODO: Implement delete confirmation and API call
-    console.log('Delete lesson:', lesson);
-  }, []);
+  const handleDeleteLesson = useCallback(async (lesson: Lesson) => {
+    // TODO: Add proper confirmation dialog component
+    if (window.confirm('Are you sure you want to delete this lesson?')) {
+      try {
+        // Note: We have moduleId from the URL params, so we can use the new API
+        // For now, we'll log this as the delete mutation would need to be imported and used
+        console.log('Delete lesson:', lesson, 'from module:', moduleId);
+        // TODO: Import and use useDeleteLessonMutation
+        // await deleteLessonMutation.mutateAsync({ moduleId: moduleId!, id: lesson.id });
+      } catch (error) {
+        console.error('Failed to delete lesson:', error);
+      }
+    }
+  }, [moduleId]);
 
   const handleCloseLessonModal = useCallback(() => {
     setLessonModalOpen(false);

@@ -215,7 +215,7 @@ export const DEFAULT_VALUES = {
 
 export const VALIDATION_PATTERNS = {
   ID_PATTERN: /^[a-z0-9-]+$/,
-  LEVEL_CODE_PATTERN: /^[A-Z0-9]+$/,
+  LEVEL_CODE_PATTERN: /^[A-Z0-9\-]+$/,
   EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   URL_PATTERN: /^https?:\/\/.+/,
 } as const;

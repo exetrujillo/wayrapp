@@ -5,7 +5,6 @@ export { default as LevelCard } from './LevelCard';
 export { default as SectionCard } from './SectionCard';
 export { default as ModuleCard } from './ModuleCard';
 export { default as ContentList } from './ContentList';
-export { default as ContentDashboard } from './ContentDashboard';
 export { default as ContentDetailView } from './ContentDetailView';
 export { default as LevelsSection } from './LevelsSection';
 export { default as SectionsSection } from './SectionsSection';

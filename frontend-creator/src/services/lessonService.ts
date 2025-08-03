@@ -1,10 +1,10 @@
 import apiClient from './api';
 import { API_ENDPOINTS } from '../utils/constants';
-import { 
-  Lesson, 
-  CreateLessonRequest, 
-  UpdateLessonRequest, 
-  PaginatedResponse, 
+import {
+  Lesson,
+  CreateLessonRequest,
+  UpdateLessonRequest,
+  PaginatedResponse,
   PaginationParams,
   ExerciseAssignment,
   CreateExerciseAssignmentRequest,
@@ -13,13 +13,71 @@ import {
 
 class LessonService {
   /**
+   * Transform lesson data from API format to frontend format
+   * @param apiLesson API lesson data
+   * @returns Lesson object formatted for frontend consumption
+   * @private
+   */
+  private transformLessonFromApi(apiLesson: any): Lesson {
+    return {
+      id: apiLesson.id,
+      name: apiLesson.name,
+      description: apiLesson.description,
+      moduleId: apiLesson.module_id, // Transform snake_case to camelCase
+      experiencePoints: apiLesson.experience_points,
+      order: apiLesson.order,
+      createdAt: apiLesson.created_at,
+      updatedAt: apiLesson.updated_at,
+    };
+  }
+
+  /**
+   * Transform lesson data from frontend format to API format
+   * @param lessonData Frontend lesson data
+   * @returns Lesson data formatted for API consumption
+   * @private
+   */
+  private transformLessonToApi(lessonData: CreateLessonRequest | UpdateLessonRequest): any {
+    const result: any = {};
+
+    // Add common fields
+    if (lessonData.name !== undefined) {
+      result.name = lessonData.name;
+    }
+    if (lessonData.description !== undefined) {
+      result.description = lessonData.description;
+    }
+    if (lessonData.experiencePoints !== undefined) {
+      result.experience_points = lessonData.experiencePoints;
+    }
+    if (lessonData.order !== undefined) {
+      result.order = lessonData.order;
+    }
+
+    // Add fields for create requests
+    if ('id' in lessonData && lessonData.id !== undefined) {
+      result.id = lessonData.id;
+    }
+
+    return result;
+  }
+
+  /**
    * Get paginated list of lessons
    * @param params Pagination parameters
    * @returns Paginated list of lessons
    */
   async getLessons(params?: PaginationParams): Promise<PaginatedResponse<Lesson>> {
     try {
-      return await apiClient.get<PaginatedResponse<Lesson>>(API_ENDPOINTS.LESSONS.BASE, { params });
+      const response = await apiClient.get<PaginatedResponse<Lesson>>(API_ENDPOINTS.LESSONS.BASE, { params });
+
+      // Transform the lessons data
+      const transformedLessons = response.data.map((lesson: any) => this.transformLessonFromApi(lesson));
+
+      return {
+        ...response,
+        data: transformedLessons,
+      };
     } catch (error) {
       console.error('Failed to fetch lessons:', error);
       throw error;
@@ -34,10 +92,18 @@ class LessonService {
    */
   async getLessonsByModule(moduleId: string, params?: PaginationParams): Promise<PaginatedResponse<Lesson>> {
     try {
-      return await apiClient.get<PaginatedResponse<Lesson>>(
-        API_ENDPOINTS.MODULES.LESSONS(moduleId), 
+      const response = await apiClient.get<PaginatedResponse<Lesson>>(
+        API_ENDPOINTS.MODULES.LESSONS(moduleId),
         { params }
       );
+
+      // Transform the lessons data
+      const transformedLessons = response.data.map((lesson: any) => this.transformLessonFromApi(lesson));
+
+      return {
+        ...response,
+        data: transformedLessons,
+      };
     } catch (error) {
       console.error(`Failed to fetch lessons for module ${moduleId}:`, error);
       throw error;
@@ -45,15 +111,26 @@ class LessonService {
   }
 
   /**
-   * Get a single lesson by ID
+   * Get a single lesson by ID within a module
+   * @param moduleId Module ID
    * @param id Lesson ID
    * @returns Lesson details
    */
-  async getLesson(id: string): Promise<Lesson> {
+  async getLesson(moduleId: string, id: string): Promise<Lesson> {
+    if (!moduleId || typeof moduleId !== 'string') {
+      throw new Error('Module ID is required and must be a string');
+    }
+
+    if (!id || typeof id !== 'string') {
+      throw new Error('Lesson ID is required and must be a string');
+    }
+
     try {
-      return await apiClient.get<Lesson>(API_ENDPOINTS.LESSONS.DETAIL(id));
+      const response = await apiClient.get<any>(`/modules/${moduleId}/lessons/${id}`);
+      const lessonData = response.data || response;
+      return this.transformLessonFromApi(lessonData);
     } catch (error) {
-      console.error(`Failed to fetch lesson ${id}:`, error);
+      console.error(`Failed to fetch lesson ${id} in module ${moduleId}:`, error);
       throw error;
     }
   }
@@ -79,7 +156,10 @@ class LessonService {
     }
 
     try {
-      return await apiClient.post<Lesson>(API_ENDPOINTS.MODULES.LESSONS(moduleId), lessonData);
+      const transformedData = this.transformLessonToApi(lessonData);
+      const response = await apiClient.post<any>(API_ENDPOINTS.MODULES.LESSONS(moduleId), transformedData);
+      const responseData = response.data || response;
+      return this.transformLessonFromApi(responseData);
     } catch (error) {
       console.error(`Failed to create lesson in module ${moduleId}:`, error);
       throw error;
@@ -88,28 +168,49 @@ class LessonService {
 
   /**
    * Update an existing lesson
+   * @param moduleId Module ID
    * @param id Lesson ID
    * @param lessonData Lesson update data
    * @returns Updated lesson
    */
-  async updateLesson(id: string, lessonData: UpdateLessonRequest): Promise<Lesson> {
+  async updateLesson(moduleId: string, id: string, lessonData: UpdateLessonRequest): Promise<Lesson> {
+    if (!moduleId || typeof moduleId !== 'string') {
+      throw new Error('Module ID is required and must be a string');
+    }
+
+    if (!id || typeof id !== 'string') {
+      throw new Error('Lesson ID is required and must be a string');
+    }
+
     try {
-      return await apiClient.put<Lesson>(API_ENDPOINTS.LESSONS.DETAIL(id), lessonData);
+      const transformedData = this.transformLessonToApi(lessonData);
+      const response = await apiClient.put<any>(`/modules/${moduleId}/lessons/${id}`, transformedData);
+      const responseData = response.data || response;
+      return this.transformLessonFromApi(responseData);
     } catch (error) {
-      console.error(`Failed to update lesson ${id}:`, error);
+      console.error(`Failed to update lesson ${id} in module ${moduleId}:`, error);
       throw error;
     }
   }
 
   /**
    * Delete a lesson
+   * @param moduleId Module ID
    * @param id Lesson ID
    */
-  async deleteLesson(id: string): Promise<void> {
+  async deleteLesson(moduleId: string, id: string): Promise<void> {
+    if (!moduleId || typeof moduleId !== 'string') {
+      throw new Error('Module ID is required and must be a string');
+    }
+
+    if (!id || typeof id !== 'string') {
+      throw new Error('Lesson ID is required and must be a string');
+    }
+
     try {
-      await apiClient.delete(API_ENDPOINTS.LESSONS.DETAIL(id));
+      await apiClient.delete(`/modules/${moduleId}/lessons/${id}`);
     } catch (error) {
-      console.error(`Failed to delete lesson ${id}:`, error);
+      console.error(`Failed to delete lesson ${id} in module ${moduleId}:`, error);
       throw error;
     }
   }
@@ -135,12 +236,12 @@ class LessonService {
    * @returns Created exercise assignment
    */
   async assignExerciseToLesson(
-    lessonId: string, 
+    lessonId: string,
     assignmentData: CreateExerciseAssignmentRequest
   ): Promise<ExerciseAssignment> {
     try {
       return await apiClient.post<ExerciseAssignment>(
-        API_ENDPOINTS.LESSONS.EXERCISES(lessonId), 
+        API_ENDPOINTS.LESSONS.EXERCISES(lessonId),
         assignmentData
       );
     } catch (error) {
@@ -162,7 +263,7 @@ class LessonService {
       throw error;
     }
   }
-  
+
   /**
    * Update an exercise assignment order
    * @param lessonId Lesson ID

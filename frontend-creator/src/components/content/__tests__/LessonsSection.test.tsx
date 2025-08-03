@@ -29,6 +29,8 @@ jest.mock('../../../hooks/useLessons', () => ({
 const mockLessons: Lesson[] = [
   {
     id: 'lesson-1',
+    name: 'Lesson 1',
+    description: 'First lesson description',
     moduleId: 'module-1',
     experiencePoints: 10,
     order: 1,
@@ -37,6 +39,8 @@ const mockLessons: Lesson[] = [
   },
   {
     id: 'lesson-2',
+    name: 'Lesson 2',
+    description: 'Second lesson description',
     moduleId: 'module-1',
     experiencePoints: 15,
     order: 2,

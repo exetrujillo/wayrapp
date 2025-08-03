@@ -32,16 +32,17 @@ export const useModulesQuery = (sectionId: string, params?: PaginationParams, en
 };
 
 /**
- * Hook for fetching a single module by ID
+ * Hook for fetching a single module by ID within a section
+ * @param sectionId Section ID
  * @param id Module ID
  * @param enabled Whether the query should be enabled
  * @returns Query result with module data, loading, and error states
  */
-export const useModuleQuery = (id: string, enabled: boolean = true) => {
+export const useModuleQuery = (sectionId: string, id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.modules.detail(id),
-    queryFn: () => moduleService.getModule(id),
-    enabled: enabled && !!id,
+    queryFn: () => moduleService.getModule(sectionId, id),
+    enabled: enabled && !!id && !!sectionId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on 4xx errors except 401
@@ -77,9 +78,7 @@ export const useCreateModuleMutation = () => {
           data: [
             ...old.data,
             {
-              id: `temp-${Date.now()}`, // Temporary ID
               ...moduleData,
-              sectionId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
@@ -123,9 +122,9 @@ export const useUpdateModuleMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, moduleData }: { id: string; moduleData: UpdateModuleRequest }) => 
-      moduleService.updateModule(id, moduleData),
-    onMutate: async ({ id, moduleData }) => {
+    mutationFn: ({ sectionId, id, moduleData }: { sectionId: string; id: string; moduleData: UpdateModuleRequest }) => 
+      moduleService.updateModule(sectionId, id, moduleData),
+    onMutate: async ({ sectionId, id, moduleData }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.modules.detail(id) });
 
@@ -141,7 +140,7 @@ export const useUpdateModuleMutation = () => {
         }));
       }
 
-      return { previousModule, id };
+      return { previousModule, sectionId, id };
     },
     onSuccess: (updatedModule: Module) => {
       // Update the specific module in cache
@@ -161,9 +160,11 @@ export const useUpdateModuleMutation = () => {
       }
       console.error('Failed to update module:', error);
     },
-    onSettled: (_, __, { id }) => {
+    onSettled: (_, __, { sectionId, id }) => {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.detail(id) });
+      // Also invalidate the section's modules list
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(sectionId) });
     },
   });
 };
@@ -176,60 +177,48 @@ export const useDeleteModuleMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => moduleService.deleteModule(id),
-    onMutate: async (deletedId) => {
-      // Get the module data before removing it to access sectionId
+    mutationFn: ({ sectionId, id }: { sectionId: string; id: string }) => moduleService.deleteModule(sectionId, id),
+    onMutate: async ({ sectionId, id: deletedId }) => {
+      // Get the module data before removing it
       const moduleData = queryClient.getQueryData(queryKeys.modules.detail(deletedId)) as Module;
       
-      if (moduleData?.sectionId) {
-        // Cancel any outgoing refetches
-        await queryClient.cancelQueries({ queryKey: queryKeys.modules.list(moduleData.sectionId) });
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.modules.list(sectionId) });
 
-        // Snapshot the previous value
-        const previousModules = queryClient.getQueryData(queryKeys.modules.list(moduleData.sectionId));
+      // Snapshot the previous value
+      const previousModules = queryClient.getQueryData(queryKeys.modules.list(sectionId));
 
-        // Optimistically update by removing the module
-        if (previousModules) {
-          queryClient.setQueryData(queryKeys.modules.list(moduleData.sectionId), (old: any) => ({
-            ...old,
-            data: old.data.filter((module: Module) => module.id !== deletedId),
-            total: old.total - 1,
-          }));
-        }
-
-        return { previousModules, moduleData };
+      // Optimistically update by removing the module
+      if (previousModules) {
+        queryClient.setQueryData(queryKeys.modules.list(sectionId), (old: any) => ({
+          ...old,
+          data: old.data.filter((module: Module) => module.id !== deletedId),
+          total: old.total - 1,
+        }));
       }
 
-      return { moduleData };
+      return { previousModules, moduleData, sectionId };
     },
-    onSuccess: (_, deletedId: string) => {
-      // Get the module data before removing it to access sectionId
-      const moduleData = queryClient.getQueryData(queryKeys.modules.detail(deletedId)) as Module;
-      
+    onSuccess: (_, { sectionId, id: deletedId }) => {
       // Remove the module from cache
       queryClient.removeQueries({ queryKey: queryKeys.modules.detail(deletedId) });
       
       // Invalidate modules list to reflect deletion
       queryClient.invalidateQueries({ queryKey: queryKeys.modules.lists() });
-      if (moduleData?.sectionId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(moduleData.sectionId) });
-        // Invalidate section detail if it includes module count
-        queryClient.invalidateQueries({ queryKey: queryKeys.sections.detail(moduleData.sectionId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(sectionId) });
+      // Invalidate section detail if it includes module count
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.detail(sectionId) });
     },
-    onError: (error, _deletedId, context) => {
+    onError: (error, { sectionId }, context) => {
       // If the mutation fails, use the context to roll back
-      if (context?.previousModules && context?.moduleData?.sectionId) {
-        queryClient.setQueryData(queryKeys.modules.list(context.moduleData.sectionId), context.previousModules);
+      if (context?.previousModules) {
+        queryClient.setQueryData(queryKeys.modules.list(sectionId), context.previousModules);
       }
       console.error('Failed to delete module:', error);
     },
-    onSettled: (_, __, deletedId) => {
+    onSettled: (_, __, { sectionId }) => {
       // Always refetch after error or success
-      const moduleData = queryClient.getQueryData(queryKeys.modules.detail(deletedId)) as Module;
-      if (moduleData?.sectionId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(moduleData.sectionId) });
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.modules.list(sectionId) });
     },
   });
 };

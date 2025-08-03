@@ -8,6 +8,8 @@ import { Lesson } from '../../../utils/types';
 
 const mockLesson: Lesson = {
   id: 'lesson-1',
+  name: 'Test Lesson',
+  description: 'Test lesson description',
   moduleId: 'module-1',
   experiencePoints: 25,
   order: 3,

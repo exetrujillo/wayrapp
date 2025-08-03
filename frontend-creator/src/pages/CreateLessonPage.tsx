@@ -16,9 +16,36 @@ const CreateLessonPage: React.FC = () => {
   const createLessonMutation = useCreateLessonMutation();
 
   const handleSubmit = async (data: LessonFormData) => {
+    // Generate a unique ID for the lesson based on module ID and lesson name
+    const generateLessonId = (moduleId: string, name: string): string => {
+      const slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      const fullId = `${moduleId}-${slug}`;
+      
+      if (fullId.length > 60) {
+        const maxSlugLength = 60 - moduleId.length - 1;
+        const truncatedSlug = slug.substring(0, maxSlugLength);
+        return `${moduleId}-${truncatedSlug}`;
+      }
+      
+      return fullId;
+    };
+
+    const lessonId = generateLessonId(moduleId, data.name);
+    
     return await createLessonMutation.mutateAsync({
       moduleId,
-      lessonData: data
+      lessonData: {
+        ...data,
+        id: lessonId,
+        description: data.description || undefined,
+      }
     });
   };
 

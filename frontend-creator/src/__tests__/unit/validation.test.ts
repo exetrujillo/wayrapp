@@ -336,6 +336,8 @@ describe('Validation Schemas', () => {
 
   describe('lessonSchema', () => {
     const validLessonData = {
+      name: 'Test Lesson',
+      description: 'Test lesson description',
       experiencePoints: 10,
       order: 1,
     };

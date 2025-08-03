@@ -37,11 +37,11 @@ export const useSectionsQuery = (levelId: string, params?: PaginationParams, ena
  * @param enabled Whether the query should be enabled
  * @returns Query result with section data, loading, and error states
  */
-export const useSectionQuery = (id: string, enabled: boolean = true) => {
+export const useSectionQuery = (levelId: string, id: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.sections.detail(id),
-    queryFn: () => sectionService.getSection(id),
-    enabled: enabled && !!id,
+    queryFn: () => sectionService.getSection(levelId, id),
+    enabled: enabled && !!id && !!levelId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on 4xx errors except 401
@@ -123,11 +123,14 @@ export const useUpdateSectionMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, sectionData }: { id: string; sectionData: UpdateSectionRequest }) => 
-      sectionService.updateSection(id, sectionData),
-    onMutate: async ({ id, sectionData }) => {
+    mutationFn: ({ levelId, id, sectionData }: { levelId: string; id: string; sectionData: UpdateSectionRequest }) => 
+      sectionService.updateSection(levelId, id, sectionData),
+    onMutate: async ({ levelId, id, sectionData }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.sections.detail(id) });
+      
+      // Also invalidate the level's sections list
+      await queryClient.cancelQueries({ queryKey: queryKeys.sections.list(levelId) });
 
       // Snapshot the previous value
       const previousSection = queryClient.getQueryData(queryKeys.sections.detail(id));
@@ -154,16 +157,20 @@ export const useUpdateSectionMutation = () => {
       // Invalidate level detail if it includes section count
       queryClient.invalidateQueries({ queryKey: queryKeys.levels.detail(updatedSection.levelId) });
     },
-    onError: (error, { id }, context) => {
+    onError: (error, { levelId, id }, context) => {
       // If the mutation fails, use the context to roll back
       if (context?.previousSection) {
         queryClient.setQueryData(queryKeys.sections.detail(id), context.previousSection);
       }
+      // Also invalidate the level's sections list
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(levelId) });
       console.error('Failed to update section:', error);
     },
-    onSettled: (_, __, { id }) => {
+    onSettled: (_, __, { levelId, id }) => {
       // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: queryKeys.sections.detail(id) });
+      // Also invalidate the level's sections list
+      queryClient.invalidateQueries({ queryKey: queryKeys.sections.list(levelId) });
     },
   });
 };

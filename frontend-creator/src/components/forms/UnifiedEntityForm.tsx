@@ -12,13 +12,25 @@
  * @since 1.0.0
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FieldValues, UseFormReturn, Control, FieldErrors, Controller } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormSubmission } from './FormHooks';
-import { getEntityFields, createInitialValues, validateLanguageDifference } from './FormUtils';
+import { getEntityFields, createInitialValues } from './FormUtils';
+
+// Helper function to get parent ID field name based on entity type
+const getParentIdFieldName = (entityType: string): string => {
+  switch (entityType) {
+    case 'level': return 'courseId';
+    case 'section': return 'levelId';
+    case 'module': return 'sectionId';
+    case 'lesson': return 'moduleId';
+    case 'exercise': return 'lessonId';
+    default: return 'parentId';
+  }
+};
 import { getEntitySchema } from '../../utils/validation/schemas';
 import { AutoSaveProvider, AutoSaveStatus } from './AutoSaveProvider';
 import { DynamicFieldGenerator } from './DynamicFieldGenerator';
@@ -100,51 +112,15 @@ export interface UnifiedEntityFormProps<T extends FieldValues = FieldValues> {
 // Entity-Specific Validation
 // ============================================================================
 
-/**
- * Validates form data before submission based on entity type
- */
-const validateEntityData = async <T extends FieldValues>(
-  entityType: EntityType,
-  data: T
-): Promise<string | null> => {
-  switch (entityType) {
-    case 'course':
-      // Validate that source and target languages are different
-      if (data.sourceLanguage && data.targetLanguage) {
-        return validateLanguageDifference(data.sourceLanguage, data.targetLanguage);
-      }
-      break;
 
-    case 'level':
-      // Additional level-specific validation could go here
-      break;
-
-    case 'section':
-      // Additional section-specific validation could go here
-      break;
-
-    case 'module':
-      // Additional module-specific validation could go here
-      break;
-
-    case 'lesson':
-      // Additional lesson-specific validation could go here
-      break;
-
-    case 'exercise':
-      // Additional exercise-specific validation could go here
-      break;
-  }
-
-  return null;
-};
 
 /**
  * Gets entity-specific success message
  */
 const getSuccessMessage = (entityType: EntityType, mode: FormMode, t: any): string => {
   const action = mode === 'create' ? 'created' : 'updated';
-  return t(`creator.forms.${entityType}.${action}Success`, `${entityType} ${action} successfully!`);
+  const entityName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+  return t(`creator.forms.${entityType}.${action}Success`, `${entityName} ${action} successfully!`);
 };
 
 
@@ -214,24 +190,63 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
   // Get validation schema for the entity type
   const validationSchema = useMemo(() => {
     try {
-      return getEntitySchema(entityType);
+      const schema = getEntitySchema(entityType, mode);
+
+      return schema;
     } catch (error) {
-      console.warn(`No validation schema found for entity type: ${entityType}`);
+      console.error(`❌ No validation schema found for entity type: ${entityType}`, error);
       return null;
     }
-  }, [entityType]);
+  }, [entityType, mode]);
 
   // Create initial values with defaults
   const initialValues = useMemo(() => {
-    return createInitialValues<T>(entityType, initialData);
-  }, [entityType, initialData]);
+    const baseValues = createInitialValues<T>(entityType, initialData);
 
-  // Initialize form with react-hook-form and Zod validation
-  const form = useForm<T>({
+    // Include parentId in the form data if provided
+    if (_parentId) {
+      const parentFieldName = getParentIdFieldName(entityType);
+      (baseValues as any)[parentFieldName] = _parentId;
+    }
+
+    return baseValues;
+  }, [entityType, initialData?.id, _parentId]); // Add initialData?.id for stability
+
+  // Add stable form key
+  const formKey = useMemo(() =>
+    `${entityType}-${mode}-${initialData?.id || 'new'}-${_parentId || 'no-parent'}`,
+    [entityType, mode, initialData?.id, _parentId]
+  );
+
+  // Memoize form configuration to prevent re-initialization
+  const formConfig = useMemo(() => ({
     ...(validationSchema ? { resolver: zodResolver(validationSchema as any) } : {}),
     defaultValues: initialValues as any,
-    mode: enableRealtimeValidation ? 'onChange' : 'onSubmit',
-  });
+    mode: (enableRealtimeValidation ? 'onChange' : 'onSubmit') as 'onChange' | 'onSubmit',
+  }), [validationSchema, initialValues, enableRealtimeValidation]);
+
+  // Initialize form with react-hook-form and Zod validation
+  const form = useForm<T>(formConfig);
+
+  // Memoize success message to prevent re-renders
+  const memoizedSuccessMessage = useMemo(() =>
+    successMessage || getSuccessMessage(entityType, mode, t),
+    [successMessage, entityType, mode, t]
+  );
+
+  // Memoize validation function to prevent re-renders
+  const memoizedValidateBeforeSubmit = useCallback(async (data: T) => {
+    console.log('🔧 validateBeforeSubmit called with data:', data);
+    const schema = getEntitySchema(entityType, mode);
+    console.log('🔧 Using schema for validation:', schema);
+    const result = await schema.safeParseAsync(data);
+    console.log('🔧 Validation result:', result);
+    if (!result.success) {
+      console.log('🔧 Validation errors:', result.error.errors);
+      return result.error.errors[0]?.message || 'Validation failed';
+    }
+    return null;
+  }, [entityType, mode]);
 
   // Form submission with consistent error handling
   const {
@@ -244,9 +259,9 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
     onSubmit,
     ...(onSuccess ? { onSuccess } : {}),
     ...(onError ? { onError } : {}),
-    successMessage: successMessage || getSuccessMessage(entityType, mode, t),
+    successMessage: memoizedSuccessMessage,
     ...(errorMessage ? { errorMessage } : {}),
-    validateBeforeSubmit: (data) => validateEntityData(entityType, data),
+    validateBeforeSubmit: memoizedValidateBeforeSubmit,
   });
 
   // Form state management
@@ -287,6 +302,17 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
     return () => clearMessages();
   }, [entityType, clearMessages]);
 
+  // Calculate final exclude fields
+  const finalExcludeFields = [
+    ...excludeFields,
+    'createdAt',
+    'updatedAt',
+    // Auto-exclude ID field in create mode
+    ...(mode === 'create' ? ['id'] : []),
+    // Auto-exclude parent ID field when parentId is provided
+    ...(_parentId ? [getParentIdFieldName(entityType)] : [])
+  ];
+
   // Auto-save provider wrapper
   const FormContent = () => (
     <AutoSaveProvider
@@ -297,6 +323,13 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
         onError?.(error.message, data);
       }}
     >
+      {/* Auto-save Status */}
+      {autoSave && (
+        <div className="mb-4">
+          <AutoSaveStatus showText={true} />
+        </div>
+      )}
+
       <EnhancedEntityForm<T>
         entityType={entityType}
         mode={mode}
@@ -308,9 +341,12 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
         showActions={showActions}
         customActions={customActions}
         customFields={customFields}
-        excludeFields={excludeFields}
+        excludeFields={finalExcludeFields}
         includeFields={includeFields}
         fieldOrder={fieldOrder || undefined}
+        parentId={_parentId}
+        formKey={formKey}
+        enableRealtimeValidation={enableRealtimeValidation}
       />
     </AutoSaveProvider>
   );
@@ -392,13 +428,6 @@ export const UnifiedEntityForm = <T extends FieldValues = FieldValues>({
         </div>
       )}
 
-      {/* Auto-save Status */}
-      {autoSave && (
-        <div className="mb-4">
-          <AutoSaveStatus showText={true} />
-        </div>
-      )}
-
       {/* Form Content */}
       <FormContent />
     </div>
@@ -423,6 +452,9 @@ interface EnhancedEntityFormProps<T extends FieldValues> {
   excludeFields?: string[];
   includeFields?: string[] | undefined;
   fieldOrder?: string[] | undefined;
+  parentId?: string | undefined;
+  formKey?: string;
+  enableRealtimeValidation?: boolean;
 }
 
 /**
@@ -442,37 +474,60 @@ function EnhancedEntityForm<T extends FieldValues>({
   excludeFields = [],
   includeFields,
   fieldOrder,
+  parentId,
+  formKey,
+  enableRealtimeValidation = true
 }: EnhancedEntityFormProps<T>) {
   const { t } = useTranslation();
   const { control, handleSubmit: formHandleSubmit, formState: { errors }, watch } = form;
 
-  // Watch all form values for dynamic field generation
+  // Watch form values for dynamic field generation
+  // TODO: Optimize this to only watch specific fields when conditional logic is used
   const formValues = watch();
 
   // Handle form submission
   const handleFormSubmit = async (data: any) => {
+    console.log('🔧 EnhancedEntityForm handleFormSubmit called with data:', data);
+    console.log('🔧 Entity type:', entityType);
+    console.log('🔧 Parent ID:', parentId);
+
     try {
-      await onSubmit(data as T);
+      // Include parentId in the submitted data if provided
+      const submissionData = { ...data };
+      if (parentId) {
+        const parentFieldName = getParentIdFieldName(entityType);
+        submissionData[parentFieldName] = parentId;
+        console.log('🔧 Added parent field:', parentFieldName, '=', parentId);
+      }
+
+      console.log('🔧 Final submission data:', submissionData);
+      await onSubmit(submissionData as T);
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('🔧 Form submission error:', error);
     }
   };
 
   return (
-    <form onSubmit={formHandleSubmit(handleFormSubmit)} className="space-y-6">
+    <form
+      key={formKey} // Add this line
+      onSubmit={formHandleSubmit(handleFormSubmit)}
+      className="space-y-6"
+    >
       {/* Dynamic Field Generation */}
       {validationSchema ? (
         <DynamicFieldGenerator<T>
           schema={validationSchema}
           entityType={entityType}
+          mode={mode}
           control={control}
           errors={errors}
           values={formValues}
           customFields={customFields}
-          excludeFields={[...excludeFields, 'createdAt', 'updatedAt']}
+          excludeFields={excludeFields}
           includeFields={includeFields || []}
           fieldOrder={fieldOrder || []}
           disabled={isSubmitting}
+          disableHtmlValidation={!enableRealtimeValidation}
         />
       ) : (
         // Fallback to legacy field configuration if no schema available

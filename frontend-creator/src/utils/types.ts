@@ -150,6 +150,7 @@ export interface Module {
 }
 
 export interface CreateModuleRequest {
+  id: string;
   sectionId: string;
   moduleType: 'informative' | 'basic_lesson' | 'reading' | 'dialogue' | 'exam';
   name: string;
@@ -165,6 +166,8 @@ export interface UpdateModuleRequest {
 // Lesson Types
 export interface Lesson {
   id: string;
+  name: string;
+  description?: string;
   experiencePoints: number;
   order: number;
   moduleId: string;
@@ -173,11 +176,16 @@ export interface Lesson {
 }
 
 export interface CreateLessonRequest {
+  id: string;
+  name: string;
+  description?: string | undefined;
   experiencePoints: number;
   order: number;
 }
 
 export interface UpdateLessonRequest {
+  name?: string;
+  description?: string | undefined;
   experiencePoints?: number;
   order?: number;
 }

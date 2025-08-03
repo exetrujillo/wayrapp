@@ -32,7 +32,7 @@ const SectionDetailPage: React.FC = () => {
   const [editingModule, setEditingModule] = useState<Module | undefined>();
 
   // Fetch section, level, and course data
-  const sectionQuery = useSectionQuery(sectionId || '', !!sectionId);
+  const sectionQuery = useSectionQuery(levelId || '', sectionId || '', !!sectionId && !!levelId);
   const levelQuery = useLevelQuery(courseId || '', levelId || '', !!levelId && !!courseId);
   const courseQuery = useCourseQuery(courseId || '', !!courseId);
   

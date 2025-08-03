@@ -69,8 +69,8 @@ export const mockApiResponses = {
       data: [
         {
           id: '1',
-          title: 'Basic Greetings',
-          content: 'Learn how to say hello and goodbye',
+          name: 'Basic Greetings',
+          description: 'Learn how to say hello and goodbye',
           experience_points: 10,
           order: 1,
           moduleId: 'module-1',
@@ -79,8 +79,8 @@ export const mockApiResponses = {
         },
         {
           id: '2',
-          title: 'Numbers 1-10',
-          content: 'Learn to count from 1 to 10',
+          name: 'Numbers 1-10',
+          description: 'Learn to count from 1 to 10',
           experience_points: 15,
           order: 2,
           moduleId: 'module-1',

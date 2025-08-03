@@ -1,10 +1,26 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../ui/Modal';
-import { UnifiedEntityForm } from '../forms/UnifiedEntityForm';
+import { SimpleSectionForm } from '../forms/SimpleSectionForm';
 import { useCreateSectionMutation, useUpdateSectionMutation } from '../../hooks/useSections';
 import { Section } from '../../utils/types';
 import { SectionFormData } from '../../utils/validation';
+
+// Helper function to generate section ID from name (similar to level ID generation)
+const generateSectionId = (levelId: string, name: string): string => {
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+
+  return `${levelId}-${slug}`;
+};
+
+// Form data type without ID (similar to level form)
+type SectionFormInput = Omit<SectionFormData, 'id'>;
 
 interface CreateOrEditSectionModalProps {
   isOpen: boolean;
@@ -31,24 +47,49 @@ export const CreateOrEditSectionModal: React.FC<CreateOrEditSectionModalProps> =
 
   const isEditing = !!initialData?.id;
 
-  const handleSubmit = async (data: SectionFormData): Promise<Section> => {
-    if (isEditing && initialData?.id) {
-      return updateSectionMutation.mutateAsync({
-        id: initialData.id,
-        sectionData: data,
-      });
-    } else {
-      return createSectionMutation.mutateAsync({
-        levelId,
-        sectionData: data,
-      });
-    }
-  };
-
-  const handleSuccess = (_section: Section) => {
+  // Add stable success handler
+  const handleSuccess = useCallback((section: Section) => {
+    console.log('🔧 Section creation/update successful:', section);
     onSuccess();
     onClose();
-  };
+  }, [onSuccess, onClose]);
+
+  const handleSubmit = useCallback(async (data: SectionFormInput): Promise<void> => {
+    console.log('🔧 Section form submitted with data:', data);
+    console.log('🔧 Level ID:', levelId);
+    console.log('🔧 Is editing:', isEditing);
+
+    try {
+      let result: Section;
+
+      if (isEditing && initialData?.id) {
+        console.log('🔧 Updating existing section');
+        result = await updateSectionMutation.mutateAsync({
+          levelId: levelId,
+          id: initialData.id,
+          sectionData: data,
+        });
+      } else {
+        // Generate a unique ID for the section based on level ID and section name
+        const sectionId = generateSectionId(levelId, data.name);
+        console.log('🔧 Creating new section with ID:', sectionId);
+
+        result = await createSectionMutation.mutateAsync({
+          levelId,
+          sectionData: {
+            ...data,
+            id: sectionId,
+          },
+        });
+      }
+
+      console.log('🔧 Section creation/update successful:', result);
+      handleSuccess(result);
+    } catch (error) {
+      console.error('🔧 Section creation/update failed:', error);
+      throw error; // Re-throw so the form can handle the error
+    }
+  }, [levelId, isEditing, initialData?.id, updateSectionMutation, createSectionMutation, handleSuccess]);
 
   const handleCancel = () => {
     onClose();
@@ -65,14 +106,11 @@ export const CreateOrEditSectionModal: React.FC<CreateOrEditSectionModalProps> =
       title={title}
       size="md"
     >
-      <UnifiedEntityForm<SectionFormData>
-        entityType="section"
-        mode={initialData?.id ? 'edit' : 'create'}
-        parentId={levelId}
-        initialData={initialData as Partial<SectionFormData>}
+      <SimpleSectionForm
+        initialData={initialData as Partial<SectionFormInput>}
         onSubmit={handleSubmit}
-        onSuccess={handleSuccess}
         onCancel={handleCancel}
+        isSubmitting={createSectionMutation.isPending || updateSectionMutation.isPending}
       />
     </Modal>
   );

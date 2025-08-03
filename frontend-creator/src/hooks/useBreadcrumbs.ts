@@ -122,24 +122,30 @@ export const useBreadcrumbs = (
   
   // Only enable section query if level exists and is not in error state
   const sectionQuery = useSectionQuery(
+    hierarchyPath.levelId || '',
     hierarchyPath.sectionId || '', 
     !!hierarchyPath.sectionId && 
+    !!hierarchyPath.levelId &&
     !!levelQuery.data && 
     !levelQuery.isError
   );
   
   // Only enable module query if section exists and is not in error state
   const moduleQuery = useModuleQuery(
+    hierarchyPath.sectionId || '',
     hierarchyPath.moduleId || '', 
     !!hierarchyPath.moduleId && 
+    !!hierarchyPath.sectionId &&
     !!sectionQuery.data && 
     !sectionQuery.isError
   );
   
   // Only enable lesson query if module exists and is not in error state
   const lessonQuery = useLessonQuery(
+    hierarchyPath.moduleId || '',
     hierarchyPath.lessonId || '', 
     !!hierarchyPath.lessonId && 
+    !!hierarchyPath.moduleId &&
     !!moduleQuery.data && 
     !moduleQuery.isError
   );

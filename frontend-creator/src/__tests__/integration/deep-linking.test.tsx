@@ -93,6 +93,8 @@ const mockModule = {
 
 const mockLesson = {
   id: 'lesson-hello',
+  name: 'Hello Lesson',
+  description: 'Learn basic greetings',
   moduleId: 'module-basic-greetings',
   experiencePoints: 10,
   order: 1,

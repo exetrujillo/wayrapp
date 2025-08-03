@@ -109,12 +109,14 @@ export const useFormSubmission = <T extends FieldValues>({
   const [formState, formActions] = useFormState();
 
   const handleSubmit = useCallback(async (data: T) => {
+    console.log('🔧 FormHooks handleSubmit called with data:', data);
     formActions.setSubmitting(true);
     formActions.clearMessages();
 
     try {
       // Pre-submission validation
       if (validateBeforeSubmit) {
+        console.log('🔧 Running pre-submission validation');
         const validationError = await validateBeforeSubmit(data);
         if (validationError) {
           throw new Error(validationError);
@@ -122,9 +124,11 @@ export const useFormSubmission = <T extends FieldValues>({
       }
 
       // Submit the form
+      console.log('🔧 Calling onSubmit with data:', data);
       const result = await onSubmit(data);
 
       // Handle success
+      console.log('🔧 Form submission successful, result:', result);
       const defaultSuccessMessage = t('common.messages.success', 'Operation completed successfully');
       formActions.setSuccess(successMessage || defaultSuccessMessage);
       
@@ -133,6 +137,7 @@ export const useFormSubmission = <T extends FieldValues>({
       return result;
     } catch (error: any) {
       // Handle error
+      console.error('🔧 Form submission failed:', error);
       const defaultErrorMessage = errorMessage || error.message || t('common.messages.error', 'An error occurred');
       formActions.setError(defaultErrorMessage);
       

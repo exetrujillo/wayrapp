@@ -21,6 +21,43 @@ import {
  */
 class SectionService {
   /**
+   * Transform section data from API format to frontend format
+   * @param apiSection API section data
+   * @returns Section object formatted for frontend consumption
+   * @private
+   */
+  private transformSectionFromApi(apiSection: any): Section {
+    return {
+      id: apiSection.id,
+      levelId: apiSection.level_id, // Transform snake_case to camelCase
+      name: apiSection.name,
+      order: apiSection.order,
+      createdAt: apiSection.created_at,
+      updatedAt: apiSection.updated_at,
+    };
+  }
+
+  /**
+   * Transform section data from frontend format to API format
+   * @param sectionData Frontend section data
+   * @returns Section data formatted for API consumption
+   * @private
+   */
+  private transformSectionToApi(sectionData: CreateSectionRequest | UpdateSectionRequest): any {
+    const result: any = {
+      name: sectionData.name,
+      order: sectionData.order,
+    };
+
+    // Add ID for create requests
+    if ('id' in sectionData) {
+      result.id = sectionData.id;
+    }
+
+    return result;
+  }
+
+  /**
    * Get sections for a specific level
    * @param levelId Level ID
    * @param params Pagination parameters
@@ -48,7 +85,13 @@ class SectionService {
         throw new Error('Invalid response format from sections API');
       }
 
-      return response;
+      // Transform the sections data
+      const transformedSections = response.data.map((section: any) => this.transformSectionFromApi(section));
+
+      return {
+        ...response,
+        data: transformedSections,
+      };
     } catch (error: any) {
       console.error(`Failed to fetch sections for level ${levelId}:`, error);
 
@@ -74,7 +117,11 @@ class SectionService {
    * @param id Section ID
    * @returns Section details
    */
-  async getSection(id: string): Promise<Section> {
+  async getSection(levelId: string, id: string): Promise<Section> {
+    if (!levelId || typeof levelId !== 'string') {
+      throw new Error('Level ID is required and must be a string');
+    }
+
     if (!id || typeof id !== 'string') {
       throw new Error('Section ID is required and must be a string');
     }
@@ -86,17 +133,18 @@ class SectionService {
     // attempts and improves user experience by providing immediate feedback.
 
     try {
-      const response = await apiClient.get<Section>(API_ENDPOINTS.SECTIONS.DETAIL(id));
+      const response = await apiClient.get<any>(`/levels/${levelId}/sections/${id}`);
 
-      // Handle both wrapped and unwrapped responses
-      const sectionData = response;
+      // Handle wrapped API response format: { data: section, success: true, timestamp: ... }
+      const rawSectionData = response.data || response;
 
-      // Validate response structure
-      if (!sectionData || !sectionData.id) {
+      // Validate raw response structure (before transformation)
+      if (!rawSectionData || !rawSectionData.id) {
+        console.error('Invalid section data structure:', rawSectionData);
         throw new Error('Invalid section data received from API');
       }
 
-      return sectionData;
+      return this.transformSectionFromApi(rawSectionData);
     } catch (error: any) {
       console.error(`Failed to fetch section ${id}:`, error);
 
@@ -151,9 +199,10 @@ class SectionService {
     }
 
     try {
-      const response = await apiClient.post<Section>(
+      const transformedData = this.transformSectionToApi(sectionData);
+      const response = await apiClient.post<any>(
         API_ENDPOINTS.LEVELS.SECTIONS(levelId),
-        sectionData
+        transformedData
       );
 
       // SECURITY_AUDIT_TODO: Response structure validation could be more robust
@@ -163,14 +212,14 @@ class SectionService {
       // matches expected format and contains only expected fields.
 
       // Handle both wrapped and unwrapped responses
-      const sectionResponseData = response;
+      const sectionResponseData = response.data || response;
 
       // Validate response structure
       if (!sectionResponseData || !sectionResponseData.id) {
         throw new Error('Invalid response from section creation API');
       }
 
-      return sectionResponseData;
+      return this.transformSectionFromApi(sectionResponseData);
     } catch (error: any) {
       console.error(`Failed to create section in level ${levelId}:`, error);
 
@@ -201,11 +250,16 @@ class SectionService {
 
   /**
    * Update an existing section
+   * @param levelId Level ID (required for correct API endpoint)
    * @param id Section ID
    * @param sectionData Section update data
    * @returns Updated section
    */
-  async updateSection(id: string, sectionData: UpdateSectionRequest): Promise<Section> {
+  async updateSection(levelId: string, id: string, sectionData: UpdateSectionRequest): Promise<Section> {
+    if (!levelId || typeof levelId !== 'string') {
+      throw new Error('Level ID is required and must be a string');
+    }
+
     if (!id || typeof id !== 'string') {
       throw new Error('Section ID is required and must be a string');
     }
@@ -226,17 +280,18 @@ class SectionService {
     // sanitize input before sending to the API.
 
     try {
-      const response = await apiClient.put<Section>(API_ENDPOINTS.SECTIONS.DETAIL(id), sectionData);
+      const transformedData = this.transformSectionToApi(sectionData);
+      const response = await apiClient.put<any>(`/levels/${levelId}/sections/${id}`, transformedData);
 
       // Handle both wrapped and unwrapped responses
-      const sectionResponseData = response;
+      const sectionResponseData = response.data || response;
 
       // Validate response structure
       if (!sectionResponseData || !sectionResponseData.id) {
         throw new Error('Invalid response from section update API');
       }
 
-      return sectionResponseData;
+      return this.transformSectionFromApi(sectionResponseData);
     } catch (error: any) {
       console.error(`Failed to update section ${id}:`, error);
 
@@ -274,7 +329,7 @@ class SectionService {
     if (!levelId || typeof levelId !== 'string') {
       throw new Error('Level ID is required and must be a string');
     }
-    
+
     if (!id || typeof id !== 'string') {
       throw new Error('Section ID is required and must be a string');
     }
@@ -346,7 +401,8 @@ class SectionService {
         throw new Error('Invalid response from section reorder API');
       }
 
-      return sectionsData;
+      // Transform the sections data
+      return sectionsData.map((section: any) => this.transformSectionFromApi(section));
     } catch (error: any) {
       console.error(`Failed to reorder sections in level ${levelId}:`, error);
 

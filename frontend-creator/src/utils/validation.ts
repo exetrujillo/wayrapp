@@ -87,7 +87,7 @@ export const levelSchema = z.object({
   code: z.string()
     .min(1, 'Level code is required')
     .max(10, 'Level code must be 10 characters or less')
-    .regex(/^[A-Z0-9]+$/, 'Level code must contain only uppercase letters and numbers')
+    .regex(/^[A-Z0-9\-]+$/, 'Level code must contain only uppercase letters, numbers, and hyphens')
     .refine(val => val.trim().length > 0, 'Level code cannot be only whitespace'),
   name: z.string()
     .min(3, 'Level name must be at least 3 characters')
@@ -133,15 +133,19 @@ export const moduleSchema = z.object({
 
 // Lesson creation schema with enhanced validation
 export const lessonSchema = z.object({
+  name: z.string()
+    .min(1, 'Lesson name is required')
+    .max(150, 'Lesson name cannot exceed 150 characters')
+    .refine(val => val.trim().length > 0, 'Lesson name cannot be only whitespace'),
+  description: z.string()
+    .max(500, 'Description cannot exceed 500 characters')
+    .optional(),
   experiencePoints: z.number()
     .int('Experience points must be a whole number')
-    .positive('Experience points must be a positive number')
-    .min(1, 'Experience points must be at least 1')
-    .max(1000, 'Experience points cannot exceed 1000'),
+    .min(0, 'Experience points must be non-negative'),
   order: z.number()
     .int('Order must be a whole number')
-    .nonnegative('Order must be a non-negative number')
-    .max(999, 'Order cannot exceed 999'),
+    .positive('Order must be a positive integer'),
 });
 
 // Exercise type-specific data schemas with enhanced validation

@@ -46,21 +46,37 @@ const CreateCoursePage: React.FC = () => {
   // Auto-generate ID from course name
   useEffect(() => {
     const generateId = async () => {
-      if (!watchedName || watchedName.trim().length < 3) {
+      // Only validate when we have a meaningful course name
+      if (!watchedName || watchedName.trim().length < 5) {
         setGeneratedId('');
         setIdValidationStatus({ isValidating: false, isAvailable: null });
         return;
       }
 
+      // Check if the name looks complete (ends with space or has multiple words)
+      const trimmedName = watchedName.trim();
+      const words = trimmedName.split(/\s+/);
+      
+      // Only validate if:
+      // - Name has 5+ characters AND
+      // - (Has multiple words OR ends with space OR hasn't been typed for 1 second)
+      if (trimmedName.length < 5 || (words.length === 1 && !trimmedName.endsWith(' '))) {
+        // Generate preview ID without validation
+        const previewId = generateEntityId(trimmedName, 'COURSE');
+        setGeneratedId(previewId);
+        setIdValidationStatus({ isValidating: false, isAvailable: null });
+        return;
+      }
+
       // Generate base ID
-      const baseId = generateEntityId(watchedName, 'COURSE');
+      const baseId = generateEntityId(trimmedName, 'COURSE');
       setGeneratedId(baseId);
 
       // Validate uniqueness
       setIdValidationStatus({ isValidating: true, isAvailable: null });
 
       try {
-        const uniqueId = await idValidationService.generateUniqueCourseId(watchedName);
+        const uniqueId = await idValidationService.generateUniqueCourseId(trimmedName);
         setGeneratedId(uniqueId);
         setIdValidationStatus({
           isValidating: false,
@@ -76,7 +92,8 @@ const CreateCoursePage: React.FC = () => {
       }
     };
 
-    const timeoutId = setTimeout(generateId, 300); // Debounce
+    // Increase debounce delay to 800ms for better UX
+    const timeoutId = setTimeout(generateId, 800);
     return () => clearTimeout(timeoutId);
   }, [watchedName]);
 
@@ -198,7 +215,7 @@ const CreateCoursePage: React.FC = () => {
                     Using alternative ID: {idValidationStatus.suggestedId}
                   </p>
                 )}
-                {!generatedId && watchedName && watchedName.length >= 3 && (
+                {!generatedId && watchedName && watchedName.trim().length >= 5 && (
                   <p className="mt-1 text-sm text-gray-500">
                     Generating ID from course name...
                   </p>

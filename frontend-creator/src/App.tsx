@@ -143,6 +143,12 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
 
+        <Route path="/courses/:courseId/levels/:levelId/sections/:sectionId/modules/:moduleId/lessons/:lessonId" element={
+          <ProtectedRoute>
+            <LessonDetailPage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/lessons" element={
           <ProtectedRoute>
             <LessonsPage />

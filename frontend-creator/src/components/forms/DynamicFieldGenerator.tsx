@@ -12,15 +12,15 @@
  * @since 1.0.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Controller, Control, FieldValues, FieldErrors } from 'react-hook-form';
 import { z } from 'zod';
 // import { useTranslation } from 'react-i18next';
-import { 
-  LANGUAGE_OPTIONS, 
-  MODULE_TYPE_OPTIONS, 
+import {
+  LANGUAGE_OPTIONS,
+  MODULE_TYPE_OPTIONS,
   EXERCISE_TYPE_OPTIONS,
-  getExerciseTypeDescription 
+  getExerciseTypeDescription
 } from './FormConstants';
 
 // ============================================================================
@@ -60,6 +60,8 @@ export interface DynamicFieldGeneratorProps<T extends FieldValues = FieldValues>
   schema: z.ZodTypeAny;
   /** Entity type for context */
   entityType: string;
+  /** Form mode (create/edit) */
+  mode?: 'create' | 'edit';
   /** Form control from react-hook-form */
   control: Control<T>;
   /** Form errors */
@@ -82,6 +84,8 @@ export interface DynamicFieldGeneratorProps<T extends FieldValues = FieldValues>
   className?: string;
   /** Disable all fields */
   disabled?: boolean;
+  /** Disable HTML5 validation patterns */
+  disableHtmlValidation?: boolean;
 }
 
 // ============================================================================
@@ -91,7 +95,7 @@ export interface DynamicFieldGeneratorProps<T extends FieldValues = FieldValues>
 /**
  * Extract field information from Zod schema
  */
-const analyzeZodSchema = (schema: z.ZodTypeAny, entityType: string): Record<string, FieldConfig> => {
+const analyzeZodSchema = (schema: z.ZodTypeAny, entityType: string, disableHtmlValidation = false): Record<string, FieldConfig> => {
   const fields: Record<string, FieldConfig> = {};
 
   // Handle ZodEffects by getting the underlying schema
@@ -103,9 +107,9 @@ const analyzeZodSchema = (schema: z.ZodTypeAny, entityType: string): Record<stri
   // Handle different schema types
   if (actualSchema instanceof z.ZodObject) {
     const shape = actualSchema.shape;
-    
+
     Object.entries(shape).forEach(([fieldName, fieldSchema]) => {
-      const fieldConfig = analyzeFieldSchema(fieldName, fieldSchema as z.ZodTypeAny, entityType);
+      const fieldConfig = analyzeFieldSchema(fieldName, fieldSchema as z.ZodTypeAny, entityType, disableHtmlValidation);
       if (fieldConfig) {
         fields[fieldName] = fieldConfig;
       }
@@ -118,7 +122,7 @@ const analyzeZodSchema = (schema: z.ZodTypeAny, entityType: string): Record<stri
 /**
  * Analyze individual field schema
  */
-const analyzeFieldSchema = (fieldName: string, fieldSchema: z.ZodTypeAny, entityType: string): FieldConfig | null => {
+const analyzeFieldSchema = (fieldName: string, fieldSchema: z.ZodTypeAny, entityType: string, disableHtmlValidation = false): FieldConfig | null => {
   // Skip internal fields
   if (['createdAt', 'updatedAt'].includes(fieldName)) {
     return null;
@@ -133,7 +137,7 @@ const analyzeFieldSchema = (fieldName: string, fieldSchema: z.ZodTypeAny, entity
     isOptional = true;
     baseSchema = fieldSchema._def.innerType;
   }
-  
+
   if (baseSchema instanceof z.ZodNullable) {
     isNullable = true;
     baseSchema = baseSchema._def.innerType;
@@ -161,7 +165,7 @@ const analyzeFieldSchema = (fieldName: string, fieldSchema: z.ZodTypeAny, entity
 
   // Determine field type and configuration based on schema
   if (baseSchema instanceof z.ZodString) {
-    configureStringField(fieldConfig, baseSchema, fieldName, entityType);
+    configureStringField(fieldConfig, baseSchema, fieldName, entityType, disableHtmlValidation);
   } else if (baseSchema instanceof z.ZodNumber) {
     configureNumberField(fieldConfig, baseSchema, fieldName);
   } else if (baseSchema instanceof z.ZodBoolean) {
@@ -180,9 +184,9 @@ const analyzeFieldSchema = (fieldName: string, fieldSchema: z.ZodTypeAny, entity
 /**
  * Configure string field
  */
-const configureStringField = (config: FieldConfig, schema: z.ZodString, fieldName: string, _entityType: string) => {
+const configureStringField = (config: FieldConfig, schema: z.ZodString, fieldName: string, _entityType: string, disableHtmlValidation = false) => {
   const checks = schema._def.checks || [];
-  
+
   // Determine field type based on name and constraints
   if (fieldName.includes('description') || fieldName.includes('content')) {
     config.type = 'textarea';
@@ -229,8 +233,10 @@ const configureStringField = (config: FieldConfig, schema: z.ZodString, fieldNam
         config.props.maxLength = check.value;
         break;
       case 'regex':
-        if (!config.props) config.props = {};
-        config.props.pattern = check.regex.source;
+        if (!disableHtmlValidation) {
+          if (!config.props) config.props = {};
+          config.props.pattern = check.regex.source;
+        }
         break;
     }
   });
@@ -245,10 +251,10 @@ const configureStringField = (config: FieldConfig, schema: z.ZodString, fieldNam
 const configureNumberField = (config: FieldConfig, schema: z.ZodNumber, fieldName: string) => {
   config.type = 'number';
   config.span = fieldName === 'order' ? 6 : 12;
-  
+
   const checks = schema._def.checks || [];
   const props: Record<string, any> = {};
-  
+
   checks.forEach((check: any) => {
     switch (check.kind) {
       case 'min':
@@ -262,7 +268,7 @@ const configureNumberField = (config: FieldConfig, schema: z.ZodNumber, fieldNam
         break;
     }
   });
-  
+
   config.props = props;
   config.placeholder = generatePlaceholder(fieldName, config.type);
 };
@@ -463,9 +469,9 @@ const ArrayFieldComponent: React.FC<{
   // const { t } = useTranslation();
 
   const addItem = () => {
-    const newItem = itemSchema instanceof z.ZodString ? '' : 
-                   itemSchema instanceof z.ZodNumber ? 0 : 
-                   itemSchema instanceof z.ZodObject ? {} : null;
+    const newItem = itemSchema instanceof z.ZodString ? '' :
+      itemSchema instanceof z.ZodNumber ? 0 :
+        itemSchema instanceof z.ZodObject ? {} : null;
     onChange([...value, newItem]);
   };
 
@@ -567,10 +573,11 @@ const ObjectFieldComponent: React.FC<{
 export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
   schema,
   entityType,
+  mode,
   control,
   errors,
   values,
-  onChange,
+  // onChange, // Commented out to prevent focus loss issues
   customFields = {},
   fieldGroups = {},
   excludeFields = [],
@@ -578,13 +585,20 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
   fieldOrder,
   className = '',
   disabled = false,
+  disableHtmlValidation = false,
 }: DynamicFieldGeneratorProps<T>) => {
   // const { t } = useTranslation();
 
+  // Add stable field configs
+  const fieldConfigs = useMemo(() =>
+    analyzeZodSchema(schema, entityType, disableHtmlValidation),
+    [schema, entityType, disableHtmlValidation]
+  );
+
   // Generate field configurations from schema
   const generatedFields = useMemo(() => {
-    const fields = analyzeZodSchema(schema, entityType);
-    
+    const fields = { ...fieldConfigs };
+
     // Apply custom field overrides
     Object.entries(customFields).forEach(([fieldName, customConfig]) => {
       if (fields[fieldName]) {
@@ -592,26 +606,38 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
       }
     });
 
+    // Disable ID field in edit mode
+    if (mode === 'edit' && fields['id']) {
+      fields['id'].disabled = true;
+    }
+
     return fields;
-  }, [schema, entityType, customFields]);
+  }, [fieldConfigs, mode, customFields]);
+
+  // Check if any fields have conditional visibility
+  const hasConditionalFields = useMemo(() => {
+    return Object.values(generatedFields).some(config => config.showWhen);
+  }, [generatedFields]);
 
   // Filter and sort fields
   const visibleFields = useMemo(() => {
     let fields = Object.entries(generatedFields);
 
     // Filter fields
-    if (includeFields) {
+    if (includeFields && includeFields.length > 0) {
       fields = fields.filter(([name]) => includeFields.includes(name));
     }
     fields = fields.filter(([name]) => !excludeFields.includes(name));
 
-    // Apply conditional visibility
-    fields = fields.filter(([_name, config]) => {
-      if (config.showWhen) {
-        return config.showWhen(values);
-      }
-      return true;
-    });
+    // Apply conditional visibility only if there are conditional fields
+    if (hasConditionalFields) {
+      fields = fields.filter(([_name, config]) => {
+        if (config.showWhen) {
+          return config.showWhen(values);
+        }
+        return true;
+      });
+    }
 
     // Sort fields
     if (fieldOrder) {
@@ -628,12 +654,20 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
     }
 
     return fields;
-  }, [generatedFields, includeFields, excludeFields, values, fieldOrder]);
+  }, [
+    generatedFields, 
+    includeFields, 
+    excludeFields, 
+    fieldOrder,
+    hasConditionalFields,
+    // Only include values as dependency if there are conditional fields
+    ...(hasConditionalFields ? [values] : [])
+  ]);
 
   // Group fields
   const groupedFields = useMemo(() => {
     const groups: Record<string, Array<[string, FieldConfig]>> = {};
-    
+
     visibleFields.forEach(([name, config]) => {
       const groupName = config.group || 'general';
       if (!groups[groupName]) {
@@ -648,25 +682,47 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
   /**
    * Render individual field
    */
-  const renderField = (fieldName: string, fieldConfig: FieldConfig) => {
+  const renderField = useCallback((fieldName: string, fieldConfig: FieldConfig) => {
     const error = errors[fieldName as keyof T];
     const fieldId = `field-${fieldName}`;
 
+    // Map span to proper Tailwind classes
+    const getColSpanClass = (span: number) => {
+      switch (span) {
+        case 1: return 'col-span-1';
+        case 2: return 'col-span-2';
+        case 3: return 'col-span-3';
+        case 4: return 'col-span-4';
+        case 5: return 'col-span-5';
+        case 6: return 'col-span-6';
+        case 7: return 'col-span-7';
+        case 8: return 'col-span-8';
+        case 9: return 'col-span-9';
+        case 10: return 'col-span-10';
+        case 11: return 'col-span-11';
+        case 12: return 'col-span-12';
+        default: return 'col-span-12';
+      }
+    };
+
     return (
-      <div key={fieldName} className={`col-span-${fieldConfig.span || 12}`}>
-        <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 mb-1">
+      <div key={`field-${fieldName}-${entityType}`} className={`${getColSpanClass(fieldConfig.span || 12)} space-y-2`}>
+        <label htmlFor={fieldId} className="block text-sm font-medium text-neutral-700">
           {fieldConfig.label}
-          {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
+          {fieldConfig.required && <span className="text-error ml-1">*</span>}
         </label>
 
         {fieldConfig.description && (
-          <p className="text-xs text-gray-500 mb-2">{fieldConfig.description}</p>
+          <p className="text-xs text-neutral-500">{fieldConfig.description}</p>
         )}
 
         <Controller
+          key={`controller-${fieldName}`} // Add stable key
           name={fieldName as any}
           control={control}
           render={({ field }) => {
+
+
             if (fieldConfig.component) {
               const CustomComponent = fieldConfig.component;
               return (
@@ -676,32 +732,39 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
                   disabled={disabled || fieldConfig.disabled}
                   onChange={(value: any) => {
                     field.onChange(value);
-                    onChange?.(fieldName, value);
+                    // Note: Removed onChange callback to prevent focus loss
+                    // onChange?.(fieldName, value);
                   }}
                 />
               );
             }
 
+
+
             switch (fieldConfig.type) {
               case 'textarea':
+
                 return (
                   <textarea
                     {...field}
                     id={fieldId}
                     placeholder={fieldConfig.placeholder}
                     disabled={disabled || fieldConfig.disabled}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full min-h-20 px-3 py-2 rounded-md border border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500 text-sm"
+                    style={{ minHeight: '80px' }}
                     {...fieldConfig.props}
                   />
                 );
 
               case 'select':
+
                 return (
                   <select
                     {...field}
                     id={fieldId}
                     disabled={disabled || fieldConfig.disabled}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full h-10 px-3 py-2 rounded-md border border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500 text-sm"
+                    style={{ minHeight: '40px', height: '40px' }}
                     {...fieldConfig.props}
                   >
                     <option value="">{fieldConfig.placeholder || `Select ${fieldConfig.label}`}</option>
@@ -722,10 +785,10 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
                       id={fieldId}
                       checked={field.value || false}
                       disabled={disabled || fieldConfig.disabled}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded disabled:opacity-50"
                       {...fieldConfig.props}
                     />
-                    <label htmlFor={fieldId} className="ml-2 text-sm text-gray-700">
+                    <label htmlFor={fieldId} className="ml-2 text-sm text-neutral-700">
                       {fieldConfig.description || fieldConfig.label}
                     </label>
                   </div>
@@ -739,7 +802,22 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
                     id={fieldId}
                     placeholder={fieldConfig.placeholder}
                     disabled={disabled || fieldConfig.disabled}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full h-10 px-3 py-2 rounded-md border border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500 text-sm"
+                    style={{ minHeight: '40px', height: '40px' }}
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        field.onChange(undefined);
+                      } else {
+                        const numericValue = parseFloat(value);
+                        if (!isNaN(numericValue)) {
+                          field.onChange(numericValue);
+                          // Note: Removed onChange callback to prevent focus loss
+                          // onChange?.(fieldName, numericValue);
+                        }
+                      }
+                    }}
                     {...fieldConfig.props}
                   />
                 );
@@ -752,7 +830,8 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
                     id={fieldId}
                     placeholder={fieldConfig.placeholder}
                     disabled={disabled || fieldConfig.disabled}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full h-10 px-3 py-2 rounded-md border border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 disabled:bg-neutral-50 disabled:text-neutral-500 text-sm"
+                    style={{ minHeight: '40px', height: '40px' }}
                     {...fieldConfig.props}
                   />
                 );
@@ -761,20 +840,20 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
         />
 
         {error && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-error">
             {error.message as string}
           </p>
         )}
       </div>
     );
-  };
+  }, [control, errors, disabled]);
 
   /**
    * Render field group
    */
   const renderFieldGroup = (groupName: string, fields: Array<[string, FieldConfig]>) => {
     const groupConfig = fieldGroups[groupName];
-    
+
     if (!groupConfig) {
       return fields.map(([name, config]) => renderField(name, config));
     }
@@ -787,7 +866,7 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
             <p className="text-sm text-gray-500">{groupConfig.description}</p>
           )}
         </div>
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-6">
           {fields.map(([name, config]) => renderField(name, config))}
         </div>
       </div>
@@ -796,6 +875,7 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
 
   return (
     <div className={`space-y-6 ${className}`}>
+
       {Object.keys(fieldGroups).length > 0 ? (
         // Render grouped fields
         Object.entries(groupedFields)
@@ -807,7 +887,7 @@ export const DynamicFieldGenerator = <T extends FieldValues = FieldValues>({
           .map(([groupName, fields]) => renderFieldGroup(groupName, fields))
       ) : (
         // Render ungrouped fields
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-6">
           {visibleFields.map(([name, config]) => renderField(name, config))}
         </div>
       )}

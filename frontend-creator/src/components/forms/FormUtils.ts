@@ -420,7 +420,7 @@ export const validateLevelCodeFormat = (code: string): string | null => {
   if (code.length > FIELD_CONSTRAINTS.LEVEL_CODE_MAX_LENGTH) {
     return `Level code must be ${FIELD_CONSTRAINTS.LEVEL_CODE_MAX_LENGTH} characters or less`;
   }
-  if (!/^[A-Z0-9]+$/.test(code)) return 'Level code can only contain uppercase letters and numbers';
+  if (!/^[A-Z0-9\-]+$/.test(code)) return 'Level code can only contain uppercase letters, numbers, and hyphens';
   return null;
 };
 

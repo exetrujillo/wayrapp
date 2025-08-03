@@ -40,7 +40,7 @@ const LessonsPage: React.FC = () => {
   const handleDeleteLesson = async (lesson: Lesson) => {
     if (window.confirm(t('creator.pages.lessons.deleteConfirm', 'Are you sure you want to delete this lesson?'))) {
       try {
-        await lessonService.deleteLesson(lesson.id);
+        await lessonService.deleteLesson(lesson.moduleId, lesson.id);
         setLessons(lessons.filter(l => l.id !== lesson.id));
       } catch (err: any) {
         setError(err.message || t('common.messages.error', 'An error occurred'));

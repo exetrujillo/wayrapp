@@ -21,7 +21,13 @@ import { useLessonQuery, useLessonExercisesQuery } from '../hooks/useLessons';
  * - Exercise unassignment functionality
  */
 export const LessonDetailPage: React.FC = () => {
-  const { lessonId } = useParams<{ lessonId: string }>();
+  const { moduleId, lessonId } = useParams<{ 
+    courseId: string; 
+    levelId: string; 
+    sectionId: string; 
+    moduleId: string; 
+    lessonId: string; 
+  }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -33,7 +39,7 @@ export const LessonDetailPage: React.FC = () => {
     data: lesson,
     isLoading: isLessonLoading,
     error: lessonError,
-  } = useLessonQuery(lessonId || '', !!lessonId);
+  } = useLessonQuery(moduleId || '', lessonId || '', !!lessonId && !!moduleId);
 
   const {
     data: exercises,
