@@ -107,7 +107,7 @@ export class CourseRepository {
    * @returns {Promise<Course>} Promise resolving to the created course with transformed field names
    * @throws {Error} When database operation fails or constraint violations occur
    */
-  async create(data: CreateCourseDto): Promise<Course> {
+  async create(data: CreateCourseDto & { id: string }): Promise<Course> {
     const course = await this.prisma.course.create({
       data: {
         id: data.id,

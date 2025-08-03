@@ -72,6 +72,7 @@ import {
     ReorderSectionsSchema,
     ReorderLevelsSchema
 } from "../schemas";
+import { CreateCourseDto } from "../types";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
 
@@ -120,7 +121,7 @@ export class ContentController {
         try {
             const validatedData = CreateCourseSchema.parse(req.body);
             // Handle optional properties for exactOptionalPropertyTypes
-            const courseData = {
+            const courseData: CreateCourseDto = {
                 ...validatedData,
                 ...(validatedData.description && {
                     description: validatedData.description,

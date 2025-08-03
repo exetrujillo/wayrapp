@@ -14,7 +14,7 @@ import {
 
 // Course validation schemas
 export const CreateCourseSchema = z.object({
-  id: z.string().min(1, "Course ID is required").max(20, "Course ID too long"),
+  id: z.string().min(1, "Course ID is required").max(20, "Course ID too long").optional(),
   source_language: LanguageCodeSchema,
   target_language: LanguageCodeSchema,
   name: TextFieldSchema(1, 100),

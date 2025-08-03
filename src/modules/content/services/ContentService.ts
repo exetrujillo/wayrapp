@@ -97,6 +97,7 @@ import {
 import { PaginatedResult, QueryOptions, ErrorCodes, HttpStatus } from '../../../shared/types';
 import { cacheService, CACHE_KEYS, logger } from '../../../shared/utils';
 import { AppError } from '../../../shared/middleware';
+import { generateUniqueId, ID_MAX_LENGTHS } from '../../../shared/utils/idGenerator';
 
 /**
  * Main service class implementing comprehensive educational content management operations.
@@ -132,10 +133,10 @@ export class ContentService {
 
   // Course operations
   /**
-   * Creates a new course with validation to prevent duplicate IDs.
+   * Creates a new course with automatic ID generation if not provided.
    * 
-   * @param {CreateCourseDto} data - Course creation data including ID, languages, name, and optional description
-   * @param {string} data.id - Unique identifier for the course
+   * @param {CreateCourseDto} data - Course creation data including optional ID, languages, name, and optional description
+   * @param {string} [data.id] - Optional unique identifier for the course (auto-generated if not provided)
    * @param {string} data.source_language - Source language code (e.g., 'en')
    * @param {string} data.target_language - Target language code (e.g., 'es')
    * @param {string} data.name - Display name of the course
@@ -145,13 +146,28 @@ export class ContentService {
    * @throws {AppError} When a course with the same ID already exists
    */
   async createCourse(data: CreateCourseDto): Promise<Course> {
-    // Check if course with same ID already exists
-    const existingCourse = await this.courseRepository.exists(data.id);
-    if (existingCourse) {
-      throw new AppError(`Course with ID '${data.id}' already exists`, HttpStatus.CONFLICT, ErrorCodes.CONFLICT);
+    let courseId = data.id;
+
+    // Generate ID from name if not provided
+    if (!courseId) {
+      courseId = await generateUniqueId(
+        data.name,
+        ID_MAX_LENGTHS.COURSE,
+        async (id: string) => {
+          return await this.courseRepository.exists(id);
+        }
+      );
+    } else {
+      // Check if provided ID already exists
+      const existingCourse = await this.courseRepository.exists(courseId);
+      if (existingCourse) {
+        throw new AppError(`Course with ID '${courseId}' already exists`, HttpStatus.CONFLICT, ErrorCodes.CONFLICT);
+      }
     }
 
-    return await this.courseRepository.create(data);
+    // Create course with generated or provided ID
+    const courseData = { ...data, id: courseId } as CreateCourseDto & { id: string };
+    return await this.courseRepository.create(courseData);
   }
 
   /**

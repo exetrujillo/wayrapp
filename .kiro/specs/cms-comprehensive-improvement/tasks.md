@@ -1,11 +1,6 @@
 # Implementation Plan
 
 - [x] 1. Establish DRY Foundation Architecture
-
-
-
-
-
   - Create unified API client with consistent error handling and response formatting
   - Implement generic CRUD hooks that work for all entity types (courses, levels, sections, modules, lessons, exercises)
   - Set up centralized query key factory for consistent caching patterns
@@ -13,8 +8,6 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
 - [x] 1.1 Create unified API client system
-
-
   - Implement centralized HTTP client with axios interceptors for authentication and error handling
   - Create generic CRUD methods (create, read, update, delete, list) that work for all entity types
   - Add specialized methods for reordering, assignment, and unassignment operations
@@ -24,6 +17,7 @@
 - [x] 1.2 Implement generic CRUD hooks with TanStack Query
 
 
+
   - Create base hook factory that generates useList, useGet, useCreate, useUpdate, useDelete hooks for any entity type
   - Implement automatic cache invalidation strategies for related entities
   - Add optimistic updates for better user experience
@@ -31,8 +25,6 @@
   - _Requirements: 1.1, 1.4, 1.5, 8.1, 8.2, 8.3_
 
 - [x] 1.3 Set up centralized query key management
-
-
   - Create query key factory with consistent patterns for all entity types
   - Implement hierarchical cache invalidation (when parent changes, invalidate children)
   - Add cache invalidation strategies for many-to-many relationships (lesson-exercise)
@@ -40,8 +32,6 @@
   - _Requirements: 1.4, 1.5, 8.1, 8.2_
 
 - [x] 1.4 Create reusable form system
-
-
   - Implement generic form component that adapts to different entity types
   - Create dynamic field generation based on entity schemas
   - Add real-time validation with Zod schemas
@@ -49,9 +39,6 @@
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6_
 
 - [-] 2. Implement Complete Hierarchical Content Management
-
-
-
   - Build hierarchical navigator component with breadcrumb support
   - Create CRUD interfaces for all content levels (Course → Level → Section → Module → Lesson)
   - Implement parent-child relationship validation and enforcement
@@ -59,9 +46,6 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 4.1, 4.2, 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
 - [x] 2.1 Build intelligent breadcrumb navigation system
-
-
-
 
   - Create breadcrumb component that validates entity existence before making links clickable
   - Implement loading states for dynamic breadcrumb segments
@@ -73,54 +57,27 @@
 
 
 
-
-
-
   - Create Level list, create, edit, and delete components using generic patterns
   - Add Level-specific validation (code uniqueness within course, order management)
   - Implement drag-and-drop reordering for levels within courses
   - Add bulk operations for level management
   - _Requirements: 2.1, 2.2, 2.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [x] 2.3 Implement Section management within levels
-
-  **Implementation Summary:**
-  - ✅ Enhanced Section Service with `reorderSections()` method for drag-and-drop
-  - ✅ Added `useReorderSectionsMutation()` hook with optimistic updates
-  - ✅ Enhanced SectionsSection component with `react-beautiful-dnd` integration
-  - ✅ Added drag handle support to SectionCard component
-  - ✅ Updated localization files with drag-and-drop translations
-  - ✅ Created comprehensive test suite for SectionsSection component
-  - ✅ Maintained existing navigation between levels and sections
-
+- [-] 2.3 Implement Section management within levels
   - Create Section CRUD components using the established generic patterns
   - Add Section-specific validation and order management within levels
   - Implement drag-and-drop reordering for sections within levels
   - Create navigation between levels and sections
   - _Requirements: 2.1, 2.2, 2.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [x] 2.4 Implement Module management within sections
-
-  **Implementation Summary:**
-  - ✅ Enhanced Module Service with `reorderModules()` method for drag-and-drop
-  - ✅ Added `useReorderModulesMutation()` hook with optimistic updates
-  - ✅ Enhanced ModulesSection component with `react-beautiful-dnd` integration
-  - ✅ Added drag handle support to ModuleCard component
-  - ✅ Updated localization files with drag-and-drop translations (English and Spanish)
-  - ✅ Created comprehensive test suite for ModulesSection component
-  - ✅ Fixed integration test course ID length validation issue
-  - ✅ Maintained existing navigation between sections and modules
-
+- [-] 2.4 Implement Module management within sections
   - Create Module CRUD components with module type selection (informative, basic_lesson, reading, dialogue, exam)
   - Add Module-specific validation including type-based business rules
   - Implement drag-and-drop reordering for modules within sections
   - Create type-specific UI indicators and behaviors
   - _Requirements: 2.1, 2.3, 2.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [x] 2.5 Enhance Lesson management within modules
-
-
-
+- [-] 2.5 Enhance Lesson management within modules
   - Upgrade existing lesson components to use new generic patterns
   - Add experience points configuration and validation
   - Implement drag-and-drop reordering for lessons within modules
@@ -129,33 +86,33 @@
 
 - [ ] 2.6 Create hierarchical navigator component
   - Build navigator that shows current position in hierarchy with expandable tree view
-  - Add quick navigation between hierarchy levels
+  - Add quick navigation between hierarchy levelds
   - Implement search functionality within the hierarchy
   - Create hierarchy overview with statistics (counts, completion status)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [ ] 3. Implement Advanced Exercise Management with Many-to-Many Support
+- [-] 3. Implement Advanced Exercise Management with Many-to-Many Support
   - Create global exercise bank with type-specific forms and filtering
   - Implement exercise assignment interface with search and drag-and-drop
   - Build exercise reordering system that respects many-to-many relationships
   - Add exercise usage tracking and conflict resolution
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
-- [ ] 3.1 Create comprehensive exercise bank interface
+- [-] 3.1 Create comprehensive exercise bank interface
   - Build exercise list with filtering by type, difficulty, and usage
   - Add search functionality across exercise content
   - Implement exercise usage indicators showing which lessons use each exercise
   - Create bulk operations for exercise management
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 3.2 Implement type-specific exercise forms
+- [-] 3.2 Implement type-specific exercise forms
   - Create dynamic form system that adapts to exercise type (translation, fill-in-the-blank, vof, pairs, informative, ordering)
   - Add live preview functionality for each exercise type
   - Implement type-specific validation rules and data structures
   - Create exercise templates for quick creation
   - _Requirements: 3.1, 3.2, 3.3, 9.1, 9.2, 9.3, 9.6_
 
-- [ ] 3.3 Build exercise assignment interface for lessons
+- [-] 3.3 Build exercise assignment interface for lessons
   - Create searchable exercise selection modal with filtering and preview
   - Implement drag-and-drop interface for assigning exercises to lessons
   - Add visual indicators for already-assigned exercises
@@ -211,21 +168,21 @@
   - Ensure all drag-and-drop functionality is accessible via keyboard
   - _Requirements: 5.5, 5.6, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6_
 
-- [ ] 5. Build Real-Time Analytics Dashboard
+- [-] 5. Build Real-Time Analytics Dashboard
   - Create analytics data fetching system with real API integration
   - Implement dashboard widgets with loading states and error handling
   - Add drill-down capabilities for detailed analytics
   - Create real-time data updates with configurable refresh intervals
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 5.1 Implement analytics data fetching system
+- [-] 5.1 Implement analytics data fetching system
   - Create analytics API service that fetches real data from backend endpoints
   - Implement caching strategy for analytics data with appropriate TTL
   - Add error handling and fallback states for analytics failures
   - Create data transformation utilities for chart-ready formats
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 5.2 Create dashboard widget system
+- [-] 5.2 Create dashboard widget system
   - Build reusable widget components for different metric types (counts, charts, progress bars)
   - Implement skeleton loading states that match final widget layouts
   - Add error states with retry functionality for individual widgets

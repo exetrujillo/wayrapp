@@ -79,7 +79,7 @@ export interface LessonExercise {
 
 // DTOs for creating content
 export interface CreateCourseDto {
-  id: string;
+  id?: string | undefined; // Optional since it can be auto-generated
   source_language: string;
   target_language: string;
   name: string;
