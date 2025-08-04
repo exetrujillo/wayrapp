@@ -3,7 +3,7 @@
 /**
  * Business logic service for managing hierarchical educational content in WayrApp.
  * 
- * This service orchestrates the complete lifecycle of educational content through a four-tier hierarchy:
+ * This service orchestrates the complete lifecycle of educational content through this hierarchy:
  * Courses → Levels → Sections → Modules → Lessons → Exercises. It serves as the primary business logic layer between REST API
  * controllers and data access repositories, implementing comprehensive validation, intelligent caching,
  * and complex operations like packaged course generation for offline mobile support.

@@ -235,3 +235,65 @@ export interface CreateExerciseAssignmentRequest {
 export interface UpdateExerciseAssignmentRequest {
   order: number;
 }
+
+// Exercise Usage Tracking Types
+export interface ExerciseUsage {
+  exerciseId: string;
+  exercise: Exercise;
+  totalLessons: number;
+  lessons: Array<{
+    lessonId: string;
+    lessonName: string;
+    moduleId: string;
+    moduleName: string;
+    sectionId: string;
+    sectionName: string;
+    levelId: string;
+    levelName: string;
+    courseId: string;
+    courseName: string;
+    order: number;
+  }>;
+  usageFrequency: number;
+  lastUsed: string | null;
+  createdAt: string;
+}
+
+export interface ExerciseDeleteImpact {
+  exerciseId: string;
+  canDelete: boolean;
+  affectedLessons: number;
+  affectedCourses: number;
+  warnings: string[];
+  lessons: Array<{
+    lessonId: string;
+    lessonName: string;
+    courseName: string;
+    studentCount?: number;
+  }>;
+}
+
+export interface ExerciseDuplicationOptions {
+  id: string;
+  modifications?: Record<string, any>;
+  preserveUsage?: boolean;
+}
+
+export interface ExerciseAnalytics {
+  exerciseId: string;
+  usageStats: {
+    totalAssignments: number;
+    uniqueLessons: number;
+    uniqueCourses: number;
+    averagePosition: number;
+  };
+  performanceMetrics: {
+    completionRate?: number;
+    averageScore?: number;
+    averageTimeSpent?: number;
+  };
+  trends: {
+    weeklyUsage: Array<{ week: string; count: number }>;
+    monthlyUsage: Array<{ month: string; count: number }>;
+  };
+}

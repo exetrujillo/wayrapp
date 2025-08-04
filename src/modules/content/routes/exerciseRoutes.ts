@@ -72,6 +72,7 @@ import {
 } from '../schemas';
 import { IdParamSchema } from '../../../shared/schemas/common';
 import { z } from 'zod';
+import { ExerciseUsageService } from '../services/ExerciseUsageService';
 
 /**
  * Creates and configures an Express router with exercise management routes.
@@ -112,6 +113,7 @@ import { z } from 'zod';
 export function createExerciseRoutes(prisma: PrismaClient): Router {
   const router = Router();
   const exerciseController = new ExerciseController(prisma);
+  const exerciseUsageService = new ExerciseUsageService(prisma);
 
   // Exercise routes
 
@@ -510,6 +512,418 @@ export function createExerciseRoutes(prisma: PrismaClient): Router {
       query: ExerciseQuerySchema
     }),
     exerciseController.getExercisesByType
+  );
+
+  // Exercise usage tracking routes
+
+  /**
+   * @swagger
+   * /api/v1/exercises/{id}/usage:
+   *   get:
+   *     tags:
+   *       - Content
+   *       - Exercises
+   *       - Analytics
+   *     summary: Get exercise usage statistics
+   *     description: Retrieve comprehensive usage statistics for a specific exercise including which lessons use it
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           maxLength: 15
+   *         description: Exercise ID
+   *         example: "exercise-001"
+   *     responses:
+   *       200:
+   *         description: Exercise usage statistics retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     exerciseId:
+   *                       type: string
+   *                       example: "exercise-001"
+   *                     totalLessons:
+   *                       type: number
+   *                       example: 5
+   *                     usageFrequency:
+   *                       type: number
+   *                       example: 2.5
+   *                     lessons:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           lessonId:
+   *                             type: string
+   *                           lessonName:
+   *                             type: string
+   *                           courseName:
+   *                             type: string
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       404:
+   *         description: Exercise not found
+   */
+  router.get('/exercises/:id/usage',
+    authenticateToken,
+    validate({ params: IdParamSchema }),
+    async (req, res, next) => {
+      try {
+        const exerciseId = req.params['id'];
+        if (!exerciseId) {
+          res.status(400).json({ success: false, message: 'Exercise ID is required' });
+          return;
+        }
+        const usage = await exerciseUsageService.getExerciseUsage(exerciseId);
+        res.json({
+          success: true,
+          data: usage
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  /**
+   * @swagger
+   * /api/v1/exercises/{id}/delete-impact:
+   *   get:
+   *     tags:
+   *       - Content
+   *       - Exercises
+   *       - Analytics
+   *     summary: Analyze exercise deletion impact
+   *     description: Analyze what would be affected if the exercise is deleted, including cascade warnings
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           maxLength: 15
+   *         description: Exercise ID
+   *         example: "exercise-001"
+   *     responses:
+   *       200:
+   *         description: Deletion impact analysis retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     exerciseId:
+   *                       type: string
+   *                       example: "exercise-001"
+   *                     canDelete:
+   *                       type: boolean
+   *                       example: false
+   *                     affectedLessons:
+   *                       type: number
+   *                       example: 5
+   *                     warnings:
+   *                       type: array
+   *                       items:
+   *                         type: string
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (admin required)
+   *       404:
+   *         description: Exercise not found
+   */
+  router.get('/exercises/:id/delete-impact',
+    authenticateToken,
+    requireRole(['admin']),
+    validate({ params: IdParamSchema }),
+    async (req, res, next) => {
+      try {
+        const exerciseId = req.params['id'];
+        if (!exerciseId) {
+          res.status(400).json({ success: false, message: 'Exercise ID is required' });
+          return;
+        }
+        const impact = await exerciseUsageService.getCascadeDeleteImpact(exerciseId);
+        res.json({
+          success: true,
+          data: impact
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  /**
+   * @swagger
+   * /api/v1/exercises/{id}/duplicate:
+   *   post:
+   *     tags:
+   *       - Content
+   *       - Exercises
+   *     summary: Duplicate an exercise
+   *     description: Create a duplicate of an existing exercise with optional modifications (requires content_creator or admin role)
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           maxLength: 15
+   *         description: Source exercise ID to duplicate
+   *         example: "exercise-001"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - id
+   *             properties:
+   *               id:
+   *                 type: string
+   *                 maxLength: 15
+   *                 example: "exercise-001-v2"
+   *               modifications:
+   *                 type: object
+   *                 description: Optional modifications to apply to the duplicated exercise data
+   *                 example:
+   *                   difficulty: "hard"
+   *                   timeLimit: 30
+   *               preserveUsage:
+   *                 type: boolean
+   *                 default: false
+   *                 description: Whether to copy lesson assignments (not recommended)
+   *     responses:
+   *       201:
+   *         description: Exercise duplicated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: Exercise duplicated successfully
+   *                 data:
+   *                   $ref: '#/components/schemas/Exercise'
+   *       400:
+   *         description: Invalid input data
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       403:
+   *         description: Insufficient permissions (content_creator or admin required)
+   *       404:
+   *         description: Source exercise not found
+   *       409:
+   *         description: Exercise with target ID already exists
+   */
+  router.post('/exercises/:id/duplicate',
+    authenticateToken,
+    requireRole(['admin', 'content_creator']),
+    validate({
+      params: IdParamSchema,
+      body: z.object({
+        id: z.string().min(1).max(15),
+        modifications: z.record(z.any()).optional(),
+        preserveUsage: z.boolean().optional().default(false)
+      })
+    }),
+    async (req, res, next) => {
+      try {
+        const exerciseId = req.params['id'];
+        if (!exerciseId) {
+          res.status(400).json({ success: false, message: 'Exercise ID is required' });
+          return;
+        }
+        const duplicate = await exerciseUsageService.duplicateExercise(exerciseId, req.body);
+        res.status(201).json({
+          success: true,
+          message: 'Exercise duplicated successfully',
+          data: duplicate
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  /**
+   * @swagger
+   * /api/v1/exercises/{id}/analytics:
+   *   get:
+   *     tags:
+   *       - Content
+   *       - Exercises
+   *       - Analytics
+   *     summary: Get exercise analytics
+   *     description: Retrieve comprehensive analytics for a specific exercise including usage trends and performance metrics
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           maxLength: 15
+   *         description: Exercise ID
+   *         example: "exercise-001"
+   *     responses:
+   *       200:
+   *         description: Exercise analytics retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     exerciseId:
+   *                       type: string
+   *                       example: "exercise-001"
+   *                     usageStats:
+   *                       type: object
+   *                       properties:
+   *                         totalAssignments:
+   *                           type: number
+   *                         uniqueLessons:
+   *                           type: number
+   *                         uniqueCourses:
+   *                           type: number
+   *                     performanceMetrics:
+   *                       type: object
+   *                       properties:
+   *                         completionRate:
+   *                           type: number
+   *                         averageScore:
+   *                           type: number
+   *                     trends:
+   *                       type: object
+   *                       properties:
+   *                         weeklyUsage:
+   *                           type: array
+   *                           items:
+   *                             type: object
+   *       401:
+   *         description: Invalid or missing authentication token
+   *       404:
+   *         description: Exercise not found
+   */
+  router.get('/exercises/:id/analytics',
+    authenticateToken,
+    validate({ params: IdParamSchema }),
+    async (req, res, next) => {
+      try {
+        const exerciseId = req.params['id'];
+        if (!exerciseId) {
+          res.status(400).json({ success: false, message: 'Exercise ID is required' });
+          return;
+        }
+        const analytics = await exerciseUsageService.getExerciseAnalytics(exerciseId);
+        res.json({
+          success: true,
+          data: analytics
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  /**
+   * @swagger
+   * /api/v1/exercises/usage/batch:
+   *   post:
+   *     tags:
+   *       - Content
+   *       - Exercises
+   *       - Analytics
+   *     summary: Get batch exercise usage statistics
+   *     description: Retrieve usage statistics for multiple exercises at once
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - exerciseIds
+   *             properties:
+   *               exerciseIds:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   maxLength: 15
+   *                 example: ["exercise-001", "exercise-002", "exercise-003"]
+   *     responses:
+   *       200:
+   *         description: Batch usage statistics retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *       401:
+   *         description: Invalid or missing authentication token
+   */
+  router.post('/exercises/usage/batch',
+    authenticateToken,
+    validate({
+      body: z.object({
+        exerciseIds: z.array(z.string().min(1).max(15)).min(1).max(50)
+      })
+    }),
+    async (req, res, next) => {
+      try {
+        const usageStats = await exerciseUsageService.getBatchExerciseUsage(req.body.exerciseIds);
+        res.json({
+          success: true,
+          data: usageStats
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
   );
 
   return router;

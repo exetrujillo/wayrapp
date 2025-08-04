@@ -17,7 +17,9 @@ export const PairsExerciseForm: React.FC<PairsExerciseFormProps> = ({
 
   const handlePairAdd = () => {
     const pairs = data.pairs || [];
-    onChange('pairs', [...pairs, { left: '', right: '' }]);
+    if (pairs.length < 10) { // Max 10 pairs
+      onChange('pairs', [...pairs, { left: '', right: '' }]);
+    }
   };
 
   const handlePairRemove = (index: number) => {
@@ -35,15 +37,21 @@ export const PairsExerciseForm: React.FC<PairsExerciseFormProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-neutral-700">
-          {t('creator.forms.exercise.matchingPairs', 'Matching Pairs')}
-          <span className="text-error ml-1">*</span>
-        </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t('creator.forms.exercise.matchingPairs', 'Matching Pairs')}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <span className="text-xs text-gray-500">
+            {data.pairs ? data.pairs.length : 0}/10 pairs
+          </span>
+        </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handlePairAdd}
+          disabled={(data.pairs?.length || 0) >= 10}
         >
           {t('creator.forms.exercise.addPair', 'Add Pair')}
         </Button>

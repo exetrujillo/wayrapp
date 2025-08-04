@@ -5,7 +5,8 @@ import {
   Exercise, 
   CreateExerciseRequest, 
   UpdateExerciseRequest, 
-  PaginationParams 
+  PaginationParams,
+  ExerciseDuplicationOptions
 } from '../utils/types';
 
 /**
@@ -243,6 +244,113 @@ export const useDeleteExerciseMutation = () => {
   });
 };
 
+/**
+ * Hook for fetching exercise usage statistics
+ * @param id Exercise ID
+ * @param enabled Whether the query should be enabled
+ * @returns Query result with usage statistics, loading, and error states
+ */
+export const useExerciseUsageQuery = (id: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.exercises.detail(id), 'usage'],
+    queryFn: () => exerciseService.getExerciseUsage(id),
+    enabled: enabled && !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500 && error?.response?.status !== 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+};
+
+/**
+ * Hook for fetching exercise deletion impact analysis
+ * @param id Exercise ID
+ * @param enabled Whether the query should be enabled
+ * @returns Query result with deletion impact analysis, loading, and error states
+ */
+export const useExerciseDeleteImpactQuery = (id: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.exercises.detail(id), 'delete-impact'],
+    queryFn: () => exerciseService.getExerciseDeleteImpact(id),
+    enabled: enabled && !!id,
+    staleTime: 2 * 60 * 1000, // 2 minutes (more dynamic data)
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500 && error?.response?.status !== 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+};
+
+/**
+ * Hook for fetching exercise analytics
+ * @param id Exercise ID
+ * @param enabled Whether the query should be enabled
+ * @returns Query result with analytics data, loading, and error states
+ */
+export const useExerciseAnalyticsQuery = (id: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.exercises.detail(id), 'analytics'],
+    queryFn: () => exerciseService.getExerciseAnalytics(id),
+    enabled: enabled && !!id,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500 && error?.response?.status !== 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+};
+
+/**
+ * Hook for fetching batch exercise usage statistics
+ * @param exerciseIds Array of exercise IDs
+ * @param enabled Whether the query should be enabled
+ * @returns Query result with batch usage statistics, loading, and error states
+ */
+export const useBatchExerciseUsageQuery = (exerciseIds: string[], enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.exercises.lists(), 'batch-usage', exerciseIds.sort().join(',')],
+    queryFn: () => exerciseService.getBatchExerciseUsage(exerciseIds),
+    enabled: enabled && exerciseIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500 && error?.response?.status !== 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
+};
+
+/**
+ * Hook for duplicating an exercise
+ * @returns Mutation object with mutate function and states
+ */
+export const useDuplicateExerciseMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, options }: { id: string; options: ExerciseDuplicationOptions }) => 
+      exerciseService.duplicateExercise(id, options),
+    onSuccess: (newExercise: Exercise) => {
+      // Add the new exercise to the cache
+      queryClient.setQueryData(queryKeys.exercises.detail(newExercise.id), newExercise);
+      
+      // Invalidate exercises list to show the new exercise
+      queryClient.invalidateQueries({ queryKey: queryKeys.exercises.lists() });
+    },
+    onError: (error) => {
+      console.error('Failed to duplicate exercise:', error);
+    },
+  });
+};
+
 // Export all hooks for easy importing
 export default {
   useExercisesQuery,
@@ -251,4 +359,9 @@ export default {
   useCreateExerciseMutation,
   useUpdateExerciseMutation,
   useDeleteExerciseMutation,
+  useExerciseUsageQuery,
+  useExerciseDeleteImpactQuery,
+  useExerciseAnalyticsQuery,
+  useBatchExerciseUsageQuery,
+  useDuplicateExerciseMutation,
 };

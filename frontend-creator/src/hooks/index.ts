@@ -12,6 +12,9 @@ export * from './useCrudHooks';
 // Export query keys factory
 export { queryKeys } from './queryKeys';
 
+// Export hierarchy data hook
+export * from './useHierarchyData';
+
 // Export other utility hooks
 export * from './useAuth';
 export * from './useForm';
@@ -19,3 +22,6 @@ export * from './useForm';
 // Export error handling and enhanced query hooks
 export * from './useErrorHandling';
 export * from './useEnhancedQuery';
+
+// Export hierarchy data hook
+export * from './useHierarchyData';

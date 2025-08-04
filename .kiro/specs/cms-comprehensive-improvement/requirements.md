@@ -28,7 +28,7 @@ This feature transforms the WayrApp Creator CMS into a comprehensive, production
 2. WHEN viewing a level THEN the system SHALL display all sections with full CRUD operations and drag-and-drop reordering
 3. WHEN viewing a section THEN the system SHALL display all modules with type selection (informative, basic_lesson, reading, dialogue, exam)
 4. WHEN viewing a module THEN the system SHALL display all lessons with experience points configuration
-5. WHEN viewing a lesson THEN the system SHALL display assigned exercises with lesson-specific ordering capabilities, showing that exercises can be used in multiple lessons
+5. WHEN viewing a lesson THEN the system SHALL display assigned exercises showing that exercises can be used in multiple lessons
 6. WHEN creating any hierarchical entity THEN the system SHALL validate parent-child relationships and enforce business rules
 
 ### Requirement 3: Advanced Exercise Management System with Many-to-Many Relationships
@@ -41,9 +41,9 @@ This feature transforms the WayrApp Creator CMS into a comprehensive, production
 2. WHEN creating an exercise THEN the system SHALL provide type-specific forms for translation, fill-in-the-blank, true/false, pairs, informative, and ordering exercises
 3. WHEN editing an exercise THEN the system SHALL show a live preview and list all lessons that currently use this exercise
 4. WHEN assigning exercises to lessons THEN the system SHALL provide a searchable interface that shows already-assigned exercises and allows multiple assignments
-5. WHEN reordering exercises within a specific lesson THEN the system SHALL update only that lesson's exercise order without affecting other lessons using the same exercises
+5. WHEN exercises are assigned to lessons THEN the system SHALL maintain the many-to-many relationship without requiring specific ordering since exercises will be presented randomly
 6. WHEN deleting an exercise THEN the system SHALL show all affected lessons and require confirmation before removing the many-to-many relationships
-7. WHEN viewing a lesson's exercises THEN the system SHALL show the lesson-specific order and allow reordering without affecting the exercise's use in other lessons
+6. WHEN viewing a lesson's exercises THEN the system SHALL show all assigned exercises without specific ordering since they will be presented randomly to users
 
 ### Requirement 4: Intelligent Breadcrumb Navigation
 
@@ -67,7 +67,7 @@ This feature transforms the WayrApp Creator CMS into a comprehensive, production
 2. WHEN dragging an item THEN the system SHALL show visual feedback including drop zones and item previews
 3. WHEN dropping an item THEN the system SHALL immediately update the order with optimistic UI updates
 4. WHEN reordering fails THEN the system SHALL revert the UI changes and show an error message
-5. WHEN reordering exercises in lessons THEN the system SHALL update the lesson-exercise relationship order for that specific lesson only, preserving the exercise's order in other lessons
+5. WHEN exercises are assigned to lessons THEN the system SHALL maintain the many-to-many relationship without specific ordering requirements
 6. WHEN drag-and-drop is not supported THEN the system SHALL provide alternative up/down arrow controls
 
 ### Requirement 6: Real-Time Analytics Dashboard

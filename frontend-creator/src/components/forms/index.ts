@@ -1,69 +1,53 @@
-// ============================================================================
-// NEW UNIFIED FORM SYSTEM (Recommended - Eliminates Duplicates)
-// ============================================================================
+/**
+ * Forms Module Exports
+ * 
+ * This module exports all form-related components and utilities.
+ * 
+ * @module Forms
+ * @category Components
+ * @author Exequiel Trujillo
+ * @since 1.0.0
+ */
 
-// Main unified form component that replaces all Enhanced*Form components
-export { 
-  UnifiedEntityForm, 
-  CourseForm as UnifiedCourseForm, 
-  LevelForm as UnifiedLevelForm, 
-  SectionForm as UnifiedSectionForm, 
-  ModuleForm as UnifiedModuleForm, 
-  LessonForm as UnifiedLessonForm 
-} from './UnifiedEntityForm';
+// Main form components
+export { default as ExerciseForm } from './ExerciseForm';
+export { default as DynamicExerciseForm } from './DynamicExerciseForm';
+export { default as UnifiedEntityForm } from './UnifiedEntityForm';
 
-// Form utilities and constants (eliminates duplicate configurations)
-export { 
-  LANGUAGE_OPTIONS,
-  MODULE_TYPE_OPTIONS,
-  EXERCISE_TYPE_OPTIONS,
-  FIELD_CONSTRAINTS,
-  AUTO_SAVE_CONFIG,
-  DEFAULT_VALUES
-} from './FormConstants';
+// Exercise type-specific forms
+export { default as TranslationExerciseForm } from './exercise-types/TranslationExerciseForm';
+export { default as FillInTheBlankExerciseForm } from './exercise-types/FillInTheBlankExerciseForm';
+export { default as VOFExerciseForm } from './exercise-types/VOFExerciseForm';
+export { default as PairsExerciseForm } from './exercise-types/PairsExerciseForm';
+export { default as InformativeExerciseForm } from './exercise-types/InformativeExerciseForm';
+export { default as OrderingExerciseForm } from './exercise-types/OrderingExerciseForm';
 
-export { 
-  useFormState,
-  useFormSubmission,
-  useArrayField,
-  useFormValidation,
-  useAutoSave
-} from './FormHooks';
+// Exercise utilities
+export { default as ExercisePreview } from './ExercisePreview';
+export { default as ExerciseTemplates } from './ExerciseTemplates';
+export { default as ExerciseValidation } from './ExerciseValidation';
 
-export { 
-  getEntityFields,
-  createInitialValues,
-  validateLanguageDifference,
-  generateIdFromName
-} from './FormUtils';
+// Form utilities and constants
+export { default as FormConstants } from './FormConstants';
+export { default as FormUtils } from './FormUtils';
+export { default as FormHooks } from './FormHooks';
 
-export {
-  createDefaultExerciseData,
-  useHintsManager,
-  usePairsManager,
-  useOrderingItemsManager,
-  useBlanksManager,
-  getExercisePreview,
-  getExerciseTypeName
-} from './ExerciseFormUtils';
-
-// ============================================================================
-// LEGACY UNIFIED FORM SYSTEM (Deprecated - Use UnifiedEntityForm instead)
-// ============================================================================
-
-// Enhanced forms using the old unified system (DELETED - use UnifiedEntityForm instead)
-// export { default as EnhancedCourseForm } from './EnhancedCourseForm'; // DELETED - use UnifiedCourseForm
-// export { default as EnhancedLevelForm } from './EnhancedLevelForm'; // DELETED - use UnifiedLevelForm  
-// export { default as EnhancedSectionForm } from './EnhancedSectionForm'; // DELETED - use UnifiedSectionForm
-// export { default as EnhancedModuleForm } from './EnhancedModuleForm'; // DELETED - use UnifiedModuleForm
-// export { default as EnhancedLessonForm } from './EnhancedLessonForm'; // DELETED - use UnifiedLessonForm
-
-// Legacy components have been deleted - use UnifiedEntityForm instead
-
-// ============================================================================
-// LEGACY FORMS - Deprecated, use unified system instead
-// ============================================================================
-
-export { default as LegacyExerciseForm } from './ExerciseForm';
-export { default as ExerciseAssignmentForm } from './ExerciseAssignmentForm';
+// Other form components
+export { default as AutoSaveProvider } from './AutoSaveProvider';
+export { default as DynamicFieldGenerator } from './DynamicFieldGenerator';
 export { default as FormWrapper } from './FormWrapper';
+
+// Simple form components
+export { default as SimpleLessonForm } from './SimpleLessonForm';
+export { default as SimpleLevelForm } from './SimpleLevelForm';
+export { default as SimpleModuleForm } from './SimpleModuleForm';
+export { default as SimpleSectionForm } from './SimpleSectionForm';
+
+// Legacy form components (for backward compatibility)
+export { default as ExerciseAssignmentForm } from './ExerciseAssignmentForm';
+export { default as FormStateManager } from './FormStateManager';
+
+// Type definitions
+export type { DynamicExerciseFormProps } from './DynamicExerciseForm';
+export type { ExercisePreviewProps } from './ExercisePreview';
+export type { ExerciseTemplatesProps } from './ExerciseTemplates';

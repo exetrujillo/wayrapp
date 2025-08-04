@@ -5,7 +5,11 @@ import {
   CreateExerciseRequest, 
   UpdateExerciseRequest, 
   PaginatedResponse, 
-  PaginationParams 
+  PaginationParams,
+  ExerciseUsage,
+  ExerciseDeleteImpact,
+  ExerciseDuplicationOptions,
+  ExerciseAnalytics
 } from '../utils/types';
 
 class ExerciseService {
@@ -95,6 +99,79 @@ class ExerciseService {
       });
     } catch (error) {
       console.error('Failed to search exercises:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get exercise usage statistics
+   * @param id Exercise ID
+   * @returns Exercise usage statistics
+   */
+  async getExerciseUsage(id: string): Promise<ExerciseUsage> {
+    try {
+      return await apiClient.get<ExerciseUsage>(`${API_ENDPOINTS.EXERCISES.DETAIL(id)}/usage`);
+    } catch (error) {
+      console.error(`Failed to fetch exercise usage for ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get exercise deletion impact analysis
+   * @param id Exercise ID
+   * @returns Deletion impact analysis
+   */
+  async getExerciseDeleteImpact(id: string): Promise<ExerciseDeleteImpact> {
+    try {
+      return await apiClient.get<ExerciseDeleteImpact>(`${API_ENDPOINTS.EXERCISES.DETAIL(id)}/delete-impact`);
+    } catch (error) {
+      console.error(`Failed to fetch delete impact for exercise ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Duplicate an exercise
+   * @param id Source exercise ID
+   * @param options Duplication options
+   * @returns Duplicated exercise
+   */
+  async duplicateExercise(id: string, options: ExerciseDuplicationOptions): Promise<Exercise> {
+    try {
+      return await apiClient.post<Exercise>(`${API_ENDPOINTS.EXERCISES.DETAIL(id)}/duplicate`, options);
+    } catch (error) {
+      console.error(`Failed to duplicate exercise ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get exercise analytics
+   * @param id Exercise ID
+   * @returns Exercise analytics
+   */
+  async getExerciseAnalytics(id: string): Promise<ExerciseAnalytics> {
+    try {
+      return await apiClient.get<ExerciseAnalytics>(`${API_ENDPOINTS.EXERCISES.DETAIL(id)}/analytics`);
+    } catch (error) {
+      console.error(`Failed to fetch analytics for exercise ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get batch exercise usage statistics
+   * @param exerciseIds Array of exercise IDs
+   * @returns Array of exercise usage statistics
+   */
+  async getBatchExerciseUsage(exerciseIds: string[]): Promise<ExerciseUsage[]> {
+    try {
+      return await apiClient.post<ExerciseUsage[]>(`${API_ENDPOINTS.EXERCISES.BASE}/usage/batch`, {
+        exerciseIds
+      });
+    } catch (error) {
+      console.error('Failed to fetch batch exercise usage:', error);
       throw error;
     }
   }

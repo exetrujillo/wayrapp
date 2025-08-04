@@ -17,14 +17,16 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
 
   const handleBlankAdd = () => {
     const blanks = data.blanks || [];
-    onChange('blanks', [
-      ...blanks,
-      {
-        position: blanks.length,
-        correctAnswers: [''],
-        hints: [],
-      },
-    ]);
+    if (blanks.length < 10) { // Max 10 blanks
+      onChange('blanks', [
+        ...blanks,
+        {
+          position: blanks.length,
+          correctAnswers: [''],
+          hints: [],
+        },
+      ]);
+    }
   };
 
   const handleBlankRemove = (index: number) => {
@@ -42,9 +44,11 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
   const handleAnswerAdd = (blankIndex: number) => {
     const blanks = [...(data.blanks || [])];
     const answers = [...(blanks[blankIndex].correctAnswers || [])];
-    answers.push('');
-    blanks[blankIndex] = { ...blanks[blankIndex], correctAnswers: answers };
-    onChange('blanks', blanks);
+    if (answers.length < 5) { // Max 5 answers per blank
+      answers.push('');
+      blanks[blankIndex] = { ...blanks[blankIndex], correctAnswers: answers };
+      onChange('blanks', blanks);
+    }
   };
 
   const handleAnswerChange = (blankIndex: number, answerIndex: number, value: string) => {
@@ -66,9 +70,11 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
   const handleHintAdd = (blankIndex: number) => {
     const blanks = [...(data.blanks || [])];
     const hints = [...(blanks[blankIndex].hints || [])];
-    hints.push('');
-    blanks[blankIndex] = { ...blanks[blankIndex], hints };
-    onChange('blanks', blanks);
+    if (hints.length < 3) { // Max 3 hints per blank
+      hints.push('');
+      blanks[blankIndex] = { ...blanks[blankIndex], hints };
+      onChange('blanks', blanks);
+    }
   };
 
   const handleHintChange = (blankIndex: number, hintIndex: number, value: string) => {
@@ -87,50 +93,88 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
     onChange('blanks', blanks);
   };
 
+  // Count blanks in text
+  const blankCount = data.text ? (data.text.match(/___/g) || []).length : 0;
+  const configuredBlanks = data.blanks ? data.blanks.length : 0;
+  const blanksMatch = blankCount === configuredBlanks;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Text with Blanks */}
       <div>
         <label
           htmlFor="text"
-          className="block text-sm font-medium text-neutral-700 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           {t('creator.forms.exercise.fillText', 'Text with Blanks')}
-          <span className="text-error ml-1">*</span>
+          <span className="text-red-500 ml-1">*</span>
         </label>
         <textarea
           id="text"
-          className="input w-full min-h-[100px]"
+          className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           value={data.text || ''}
           onChange={(e) => onChange('text', e.target.value)}
           placeholder={t(
             'creator.forms.exercise.fillTextPlaceholder',
             'Enter text with ___ for blanks'
           )}
+          maxLength={1000}
         />
-        <p className="mt-1 text-xs text-neutral-500">
-          {t(
-            'creator.forms.exercise.fillTextHelp',
-            'Use ___ (three underscores) to indicate blanks in the text'
-          )}
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-xs text-gray-500">
+            {t(
+              'creator.forms.exercise.fillTextHelp',
+              'Use ___ (three underscores) to indicate blanks in the text'
+            )}
+          </p>
+          <span className="text-xs text-gray-500">
+            {data.text ? data.text.length : 0}/1000
+          </span>
+        </div>
+        
+        {/* Blank count indicator */}
+        {data.text && (
+          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-blue-800">
+                {t('creator.forms.exercise.blanksFound', 'Blanks found in text: {{count}}', { count: blankCount })}
+              </span>
+              <span className={`font-medium ${blanksMatch ? 'text-green-600' : 'text-yellow-600'}`}>
+                {blanksMatch ? '✓' : '!'}
+                {t('creator.forms.exercise.blanksConfigured', 'Configured: {{count}}', { count: configuredBlanks })}
+              </span>
+            </div>
+            {!blanksMatch && blankCount > 0 && (
+              <p className="text-xs text-yellow-700 mt-1">
+                {t('creator.forms.exercise.blanksMismatch', 'Number of blanks in text doesn\'t match configured blanks')}
+              </p>
+            )}
+          </div>
+        )}
+        
         {errors?.text && (
-          <p className="mt-1 text-sm text-error">{errors.text}</p>
+          <p className="mt-1 text-sm text-red-600">{errors.text}</p>
         )}
       </div>
 
       {/* Blanks Configuration */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-medium text-neutral-700">
-            {t('creator.forms.exercise.blanks', 'Blanks Configuration')}
-            <span className="text-error ml-1">*</span>
-          </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('creator.forms.exercise.blanks', 'Blanks Configuration')}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <span className="text-xs text-gray-500">
+              {configuredBlanks}/10 blanks configured
+            </span>
+          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleBlankAdd}
+            disabled={configuredBlanks >= 10}
           >
             {t('creator.forms.exercise.addBlank', 'Add Blank')}
           </Button>
@@ -162,15 +206,21 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
                 {/* Correct Answers */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-neutral-700">
-                      {t('creator.forms.exercise.correctAnswers', 'Correct Answers')}
-                      <span className="text-error ml-1">*</span>
-                    </label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('creator.forms.exercise.correctAnswers', 'Correct Answers')}
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <span className="text-xs text-gray-500">
+                        {blank.correctAnswers ? blank.correctAnswers.length : 0}/5 answers
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleAnswerAdd(blankIndex)}
+                      disabled={(blank.correctAnswers?.length || 0) >= 5}
                     >
                       {t('creator.forms.exercise.addAnswer', 'Add Answer')}
                     </Button>
@@ -209,14 +259,20 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
                 {/* Hints */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-neutral-700">
-                      {t('creator.forms.exercise.hints', 'Hints (Optional)')}
-                    </label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('creator.forms.exercise.hints', 'Hints (Optional)')}
+                      </label>
+                      <span className="text-xs text-gray-500">
+                        {blank.hints ? blank.hints.length : 0}/3 hints
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleHintAdd(blankIndex)}
+                      disabled={(blank.hints?.length || 0) >= 3}
                     >
                       {t('creator.forms.exercise.addHint', 'Add Hint')}
                     </Button>

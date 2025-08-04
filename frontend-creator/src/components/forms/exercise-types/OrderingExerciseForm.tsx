@@ -17,13 +17,15 @@ export const OrderingExerciseForm: React.FC<OrderingExerciseFormProps> = ({
 
   const handleItemAdd = () => {
     const items = data.items || [];
-    onChange('items', [
-      ...items,
-      {
-        id: crypto.randomUUID(),
-        text: '',
-      },
-    ]);
+    if (items.length < 10) { // Max 10 items
+      onChange('items', [
+        ...items,
+        {
+          id: crypto.randomUUID(),
+          text: '',
+        },
+      ]);
+    }
   };
 
   const handleItemRemove = (index: number) => {
@@ -51,15 +53,21 @@ export const OrderingExerciseForm: React.FC<OrderingExerciseFormProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-neutral-700">
-          {t('creator.forms.exercise.itemsToOrder', 'Items to Order')}
-          <span className="text-error ml-1">*</span>
-        </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t('creator.forms.exercise.itemsToOrder', 'Items to Order')}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <span className="text-xs text-gray-500">
+            {data.items ? data.items.length : 0}/10 items
+          </span>
+        </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleItemAdd}
+          disabled={(data.items?.length || 0) >= 10}
         >
           {t('creator.forms.exercise.addItem', 'Add Item')}
         </Button>

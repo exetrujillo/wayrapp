@@ -1,7 +1,7 @@
 /**
- * Enhanced Hierarchical Navigator Component for WayrApp Creator
+ * Hierarchical Navigator Component for WayrApp Creator
  * 
- * This component provides a comprehensive navigation interface that shows the entire
+ * This component provides a navigation interface that shows the entire
  * course hierarchy as an expandable tree view with search functionality and statistics.
  * It complements the existing breadcrumb navigation by providing a bird's-eye view
  * of the complete content structure.
@@ -37,17 +37,10 @@
  * />
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HierarchyPath } from '../../utils/breadcrumbUtils';
-import { 
-  useCoursesQuery, 
-  useLevelsQuery, 
-  useSectionsQuery, 
-  useModulesQuery, 
-  useLessonsQuery 
-} from '../../hooks';
-// Types are imported through hooks
+import { useSimpleHierarchyData } from '../../hooks/useSimpleHierarchyData';
 
 // Simple SVG icons
 const ChevronRightIcon = ({ className }: { className?: string }) => (
@@ -93,22 +86,20 @@ const DocumentIcon = ({ className }: { className?: string }) => (
 );
 
 /**
- * Interface for tree node data structure
+ * Interface for hierarchy tree node
  */
-interface TreeNode {
+interface HierarchyTreeNode {
   id: string;
   name: string;
   type: 'course' | 'level' | 'section' | 'module' | 'lesson';
   parentId?: string;
-  children: TreeNode[];
-  isExpanded: boolean;
-  isLoading: boolean;
+  children: HierarchyTreeNode[];
   order: number;
   metadata?: {
     code?: string;
     moduleType?: string;
     experiencePoints?: number;
-    childCount?: number;
+    childCount: number;
   };
 }
 
@@ -120,20 +111,8 @@ interface SearchResult {
   name: string;
   type: 'course' | 'level' | 'section' | 'module' | 'lesson';
   path: HierarchyPath;
-  parentName?: string | undefined;
+  parentName?: string;
   matchedText: string;
-}
-
-/**
- * Interface for hierarchy statistics
- */
-interface HierarchyStats {
-  totalCourses: number;
-  totalLevels: number;
-  totalSections: number;
-  totalModules: number;
-  totalLessons: number;
-  completionPercentage: number;
 }
 
 /**
@@ -157,7 +136,7 @@ interface HierarchicalNavigatorProps {
 }
 
 /**
- * Enhanced hierarchical navigator component with tree view, search, and statistics
+ * Enhanced hierarchical navigator component with complete data loading
  */
 export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
   currentPath = {},
@@ -169,217 +148,98 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
   compact = false
 }) => {
   const { t } = useTranslation();
-  
+
   // State management
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Data fetching
-  const { data: coursesData, isLoading: coursesLoading } = useCoursesQuery();
-  const courses = coursesData?.data || [];
-
-  // Dynamic data loading for expanded nodes
-  const expandedCourses = Array.from(expandedNodes).filter(id => 
-    courses.some(course => course.id === id)
-  );
+  // Load complete hierarchy data using simple approach
+  const hierarchyData = useSimpleHierarchyData();
   
-
-
-  // Load levels for expanded courses
-  const levelQueries = expandedCourses.map(courseId => ({
-    courseId,
-    query: useLevelsQuery(courseId, undefined, true)
-  }));
-
-  // Load sections for expanded levels
-  const expandedLevelsData = Array.from(expandedNodes).filter(id => {
-    // Check if this is a level ID by looking for it in the loaded levels
-    return levelQueries.some(lq => 
-      lq.query.data?.data?.some(level => level.id === id)
-    );
-  });
-
-  const sectionQueries = expandedLevelsData.map(levelId => ({
-    levelId,
-    query: useSectionsQuery(levelId, undefined, true)
-  }));
-
-  // Load modules for expanded sections
-  const expandedSectionsData = Array.from(expandedNodes).filter(id => {
-    return sectionQueries.some(sq => 
-      sq.query.data?.data?.some(section => section.id === id)
-    );
-  });
-
-  const moduleQueries = expandedSectionsData.map(sectionId => ({
-    sectionId,
-    query: useModulesQuery(sectionId, undefined, true)
-  }));
-
-  // Load lessons for expanded modules
-  const expandedModulesData = Array.from(expandedNodes).filter(id => {
-    return moduleQueries.some(mq => 
-      mq.query.data?.data?.some(module => module.id === id)
-    );
-  });
-
-  const lessonQueries = expandedModulesData.map(moduleId => ({
-    moduleId,
-    query: useLessonsQuery(moduleId, undefined, true)
-  }));
-
-  // Build tree structure with dynamic loading
+  // Build tree data from hierarchy data
   const treeData = useMemo(() => {
-    const buildTree = (): TreeNode[] => {
-      return courses.map(course => {
-        const isExpanded = expandedNodes.has(course.id);
-        const levelQuery = levelQueries.find(q => q.courseId === course.id);
-        const levels = levelQuery?.query.data?.data || [];
+    const { courses, levels, sections, modules, lessons } = hierarchyData;
+    
+    return courses.map(course => {
+      const courseLevels = levels.filter(level => level.courseId === course.id);
+      
+      const levelNodes = courseLevels.map(level => {
+        const levelSections = sections.filter(section => section.levelId === level.id);
         
-        const children: TreeNode[] = isExpanded ? levels.map(level => {
-          const levelExpanded = expandedNodes.has(level.id);
-          const sectionQuery = sectionQueries.find(q => q.levelId === level.id);
-          const sections = sectionQuery?.query.data?.data || [];
-
-          const levelChildren: TreeNode[] = levelExpanded ? sections.map(section => {
-            const sectionExpanded = expandedNodes.has(section.id);
-            const moduleQuery = moduleQueries.find(q => q.sectionId === section.id);
-            const modules = moduleQuery?.query.data?.data || [];
-
-            const sectionChildren: TreeNode[] = sectionExpanded ? modules.map(module => {
-              const moduleExpanded = expandedNodes.has(module.id);
-              const lessonQuery = lessonQueries.find(q => q.moduleId === module.id);
-              const lessons = lessonQuery?.query.data?.data || [];
-
-              const moduleChildren: TreeNode[] = moduleExpanded ? lessons.map(lesson => ({
-                id: lesson.id,
-                name: lesson.id, // Use lesson ID as name since Lesson interface doesn't have name property
-                type: 'lesson' as const,
-                parentId: module.id,
-                children: [],
-                isExpanded: false,
-                isLoading: false,
-                order: lesson.order,
-                metadata: {
-                  experiencePoints: lesson.experiencePoints
-                }
-              })) : [];
-
-              return {
-                id: module.id,
-                name: module.name,
-                type: 'module' as const,
-                parentId: section.id,
-                children: moduleChildren,
-                isExpanded: moduleExpanded,
-                isLoading: lessonQuery?.query.isLoading || false,
-                order: module.order,
-                metadata: {
-                  moduleType: module.moduleType,
-                  childCount: lessons.length
-                }
-              };
-            }) : [];
-
-            return {
-              id: section.id,
-              name: section.name,
-              type: 'section' as const,
-              parentId: level.id,
-              children: sectionChildren,
-              isExpanded: sectionExpanded,
-              isLoading: moduleQuery?.query.isLoading || false,
-              order: section.order,
+        const sectionNodes = levelSections.map(section => {
+          const sectionModules = modules.filter(module => module.sectionId === section.id);
+          
+          const moduleNodes = sectionModules.map(module => {
+            const moduleLessons = lessons.filter(lesson => lesson.moduleId === module.id);
+            
+            const lessonNodes = moduleLessons.map(lesson => ({
+              id: lesson.id,
+              name: lesson.name,
+              type: 'lesson' as const,
+              parentId: module.id,
+              children: [],
+              order: lesson.order || 0,
               metadata: {
-                childCount: modules.length
+                experiencePoints: lesson.experiencePoints,
+                childCount: 0
+              }
+            }));
+            
+            return {
+              id: module.id,
+              name: module.name,
+              type: 'module' as const,
+              parentId: section.id,
+              children: lessonNodes.sort((a, b) => a.order - b.order),
+              order: module.order || 0,
+              metadata: {
+                moduleType: module.moduleType,
+                childCount: lessonNodes.length
               }
             };
-          }) : [];
-
+          });
+          
           return {
-            id: level.id,
-            name: level.name,
-            type: 'level' as const,
-            parentId: course.id,
-            children: levelChildren,
-            isExpanded: levelExpanded,
-            isLoading: sectionQuery?.query.isLoading || false,
-            order: level.order,
+            id: section.id,
+            name: section.name,
+            type: 'section' as const,
+            parentId: level.id,
+            children: moduleNodes.sort((a, b) => a.order - b.order),
+            order: section.order || 0,
             metadata: {
-              code: level.code,
-              childCount: sections.length
+              childCount: moduleNodes.length
             }
           };
-        }) : [];
-
+        });
+        
         return {
-          id: course.id,
-          name: course.name,
-          type: 'course' as const,
-          children,
-          isExpanded,
-          isLoading: levelQuery?.query.isLoading || false,
-          order: 0,
+          id: level.id,
+          name: level.name,
+          type: 'level' as const,
+          parentId: course.id,
+          children: sectionNodes.sort((a, b) => a.order - b.order),
+          order: level.order || 0,
           metadata: {
-            childCount: levels.length
+            code: level.code,
+            childCount: sectionNodes.length
           }
         };
       });
-    };
-
-    return buildTree();
-  }, [courses, expandedNodes, levelQueries, sectionQueries, moduleQueries, lessonQueries]);
-
-  // Calculate statistics
-  const statistics = useMemo((): HierarchyStats => {
-    let totalLevels = 0;
-    let totalSections = 0;
-    let totalModules = 0;
-    let totalLessons = 0;
-
-    // Count levels from all level queries
-    levelQueries.forEach(lq => {
-      if (lq.query.data?.data) {
-        totalLevels += lq.query.data.data.length;
-      }
+      
+      return {
+        id: course.id,
+        name: course.name,
+        type: 'course' as const,
+        children: levelNodes.sort((a, b) => a.order - b.order),
+        order: 0,
+        metadata: {
+          childCount: levelNodes.length
+        }
+      };
     });
-
-    // Count sections from all section queries
-    sectionQueries.forEach(sq => {
-      if (sq.query.data?.data) {
-        totalSections += sq.query.data.data.length;
-      }
-    });
-
-    // Count modules from all module queries
-    moduleQueries.forEach(mq => {
-      if (mq.query.data?.data) {
-        totalModules += mq.query.data.data.length;
-      }
-    });
-
-    // Count lessons from all lesson queries
-    lessonQueries.forEach(lq => {
-      if (lq.query.data?.data) {
-        totalLessons += lq.query.data.data.length;
-      }
-    });
-
-    // Calculate completion percentage (simplified - could be more sophisticated)
-    const totalItems = courses.length + totalLevels + totalSections + totalModules + totalLessons;
-    const completionPercentage = totalItems > 0 ? Math.round((totalLessons / totalItems) * 100) : 0;
-
-    return {
-      totalCourses: courses.length,
-      totalLevels,
-      totalSections,
-      totalModules,
-      totalLessons,
-      completionPercentage
-    };
-  }, [courses, levelQueries, sectionQueries, moduleQueries, lessonQueries]);
+  }, [hierarchyData]);
 
   /**
    * Toggle expansion state of a tree node
@@ -406,34 +266,86 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
   }, [onNavigate]);
 
   /**
-   * Build navigation path from node
+   * Build navigation path from node and tree structure
    */
-  const buildNavigationPath = useCallback((node: TreeNode): HierarchyPath => {
-    const path: HierarchyPath = {};
-    
+  const buildNavigationPath = useCallback((node: HierarchyTreeNode): HierarchyPath => {
     // Find the full path by traversing up the tree
-    const findPath = (currentNode: TreeNode, currentPath: HierarchyPath = {}): HierarchyPath => {
+    const findParentPath = (currentNode: HierarchyTreeNode): HierarchyPath => {
+      const currentPath: HierarchyPath = {};
+
+      // Set current node in path
       switch (currentNode.type) {
         case 'course':
-          return { ...currentPath, courseId: currentNode.id };
+          currentPath.courseId = currentNode.id;
+          break;
         case 'level':
-          return { ...currentPath, levelId: currentNode.id };
+          currentPath.levelId = currentNode.id;
+          // Find parent course
+          const parentCourse = treeData.find(course =>
+            course.children.some(level => level.id === currentNode.id)
+          );
+          if (parentCourse) {
+            currentPath.courseId = parentCourse.id;
+          }
+          break;
         case 'section':
-          return { ...currentPath, sectionId: currentNode.id };
+          currentPath.sectionId = currentNode.id;
+          // Find parent level and course
+          for (const course of treeData) {
+            for (const level of course.children) {
+              if (level.children.some(section => section.id === currentNode.id)) {
+                currentPath.courseId = course.id;
+                currentPath.levelId = level.id;
+                break;
+              }
+            }
+          }
+          break;
         case 'module':
-          return { ...currentPath, moduleId: currentNode.id };
+          currentPath.moduleId = currentNode.id;
+          // Find parent section, level, and course
+          for (const course of treeData) {
+            for (const level of course.children) {
+              for (const section of level.children) {
+                if (section.children.some(module => module.id === currentNode.id)) {
+                  currentPath.courseId = course.id;
+                  currentPath.levelId = level.id;
+                  currentPath.sectionId = section.id;
+                  break;
+                }
+              }
+            }
+          }
+          break;
         case 'lesson':
-          return { ...currentPath, lessonId: currentNode.id };
-        default:
-          return currentPath;
+          currentPath.lessonId = currentNode.id;
+          // Find parent module, section, level, and course
+          for (const course of treeData) {
+            for (const level of course.children) {
+              for (const section of level.children) {
+                for (const module of section.children) {
+                  if (module.children.some(lesson => lesson.id === currentNode.id)) {
+                    currentPath.courseId = course.id;
+                    currentPath.levelId = level.id;
+                    currentPath.sectionId = section.id;
+                    currentPath.moduleId = module.id;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          break;
       }
+
+      return currentPath;
     };
 
-    return findPath(node, path);
-  }, []);
+    return findParentPath(node);
+  }, [treeData]);
 
   /**
-   * Perform search across hierarchy
+   * Perform search across complete hierarchy
    */
   const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -442,136 +354,38 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
     }
 
     setIsSearching(true);
-    
+
     try {
       const results: SearchResult[] = [];
       const lowerQuery = query.toLowerCase();
 
-      // Search courses
-      courses
-        .filter(course => course.name.toLowerCase().includes(lowerQuery))
-        .forEach(course => {
-          results.push({
-            id: course.id,
-            name: course.name,
-            type: 'course' as const,
-            path: { courseId: course.id },
-            matchedText: course.name
-          });
+      // Helper function to search nodes recursively
+      const searchNodes = (nodes: HierarchyTreeNode[], parentName?: string) => {
+        nodes.forEach(node => {
+          // Check if node matches search query
+          if (node.name.toLowerCase().includes(lowerQuery) ||
+            (node.metadata?.code && node.metadata.code.toLowerCase().includes(lowerQuery))) {
+
+            const nodePath = buildNavigationPath(node);
+            results.push({
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              path: nodePath,
+              ...(parentName && { parentName }),
+              matchedText: node.name
+            });
+          }
+
+          // Search children recursively
+          if (node.children.length > 0) {
+            searchNodes(node.children, node.name);
+          }
         });
+      };
 
-      // Search levels
-      levelQueries.forEach(lq => {
-        if (lq.query.data?.data) {
-          lq.query.data.data
-            .filter(level => level.name.toLowerCase().includes(lowerQuery) || level.code.toLowerCase().includes(lowerQuery))
-            .forEach(level => {
-              const course = courses.find(c => c.id === level.courseId);
-              results.push({
-                id: level.id,
-                name: level.name,
-                type: 'level' as const,
-                path: { courseId: level.courseId, levelId: level.id },
-                parentName: course?.name || undefined,
-                matchedText: level.name
-              });
-            });
-        }
-      });
-
-      // Search sections
-      sectionQueries.forEach(sq => {
-        if (sq.query.data?.data) {
-          sq.query.data.data
-            .filter(section => section.name.toLowerCase().includes(lowerQuery))
-            .forEach(section => {
-              // Find the parent level and course
-              const level = levelQueries
-                .flatMap(lq => lq.query.data?.data || [])
-                .find(l => l.id === section.levelId);
-              
-              results.push({
-                id: section.id,
-                name: section.name,
-                type: 'section' as const,
-                path: { 
-                  courseId: level?.courseId, 
-                  levelId: section.levelId, 
-                  sectionId: section.id 
-                },
-                parentName: level?.name || undefined,
-                matchedText: section.name
-              });
-            });
-        }
-      });
-
-      // Search modules
-      moduleQueries.forEach(mq => {
-        if (mq.query.data?.data) {
-          mq.query.data.data
-            .filter(module => module.name.toLowerCase().includes(lowerQuery))
-            .forEach(module => {
-              // Find the parent section
-              const section = sectionQueries
-                .flatMap(sq => sq.query.data?.data || [])
-                .find(s => s.id === module.sectionId);
-              
-              results.push({
-                id: module.id,
-                name: module.name,
-                type: 'module' as const,
-                path: { 
-                  courseId: section?.levelId ? levelQueries
-                    .flatMap(lq => lq.query.data?.data || [])
-                    .find(l => l.id === section.levelId)?.courseId : undefined,
-                  levelId: section?.levelId,
-                  sectionId: module.sectionId, 
-                  moduleId: module.id 
-                },
-                parentName: section?.name || undefined,
-                matchedText: module.name
-              });
-            });
-        }
-      });
-
-      // Search lessons
-      lessonQueries.forEach(lq => {
-        if (lq.query.data?.data) {
-          lq.query.data.data
-            .filter(lesson => lesson.id.toLowerCase().includes(lowerQuery)) // Use lesson.id since name doesn't exist
-            .forEach(lesson => {
-              // Find the parent module
-              const module = moduleQueries
-                .flatMap(mq => mq.query.data?.data || [])
-                .find(m => m.id === lesson.moduleId);
-              
-              results.push({
-                id: lesson.id,
-                name: lesson.id, // Use lesson.id as name since name property doesn't exist
-                type: 'lesson' as const,
-                path: { 
-                  courseId: module ? sectionQueries
-                    .flatMap(sq => sq.query.data?.data || [])
-                    .find(s => s.id === module.sectionId)?.levelId ? levelQueries
-                      .flatMap(lq => lq.query.data?.data || [])
-                      .find(l => l.id === sectionQueries
-                        .flatMap(sq => sq.query.data?.data || [])
-                        .find(s => s.id === module.sectionId)?.levelId)?.courseId : undefined : undefined,
-                  levelId: module ? sectionQueries
-                    .flatMap(sq => sq.query.data?.data || [])
-                    .find(s => s.id === module.sectionId)?.levelId : undefined,
-                  sectionId: module?.sectionId,
-                  moduleId: lesson.moduleId,
-                  lessonId: lesson.id 
-                },
-                parentName: module?.name || undefined,
-                matchedText: lesson.id // Use lesson.id as matched text
-              });
-            });
-        }
-      });
+      // Search all tree data
+      searchNodes(treeData);
 
       setSearchResults(results);
     } catch (error) {
@@ -580,7 +394,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
     } finally {
       setIsSearching(false);
     }
-  }, [courses, levelQueries, sectionQueries, moduleQueries, lessonQueries]);
+  }, [treeData, buildNavigationPath]);
 
   // Debounced search effect
   useEffect(() => {
@@ -596,7 +410,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
    */
   const getNodeIcon = (type: string) => {
     const iconClass = "h-4 w-4 text-gray-500";
-    
+
     switch (type) {
       case 'course':
         return <BookIcon className={iconClass} />;
@@ -614,24 +428,39 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
   };
 
   /**
+   * Check if a node is currently selected
+   */
+  const isNodeSelected = useCallback((node: HierarchyTreeNode): boolean => {
+    switch (node.type) {
+      case 'course':
+        return currentPath.courseId === node.id;
+      case 'level':
+        return currentPath.levelId === node.id;
+      case 'section':
+        return currentPath.sectionId === node.id;
+      case 'module':
+        return currentPath.moduleId === node.id;
+      case 'lesson':
+        return currentPath.lessonId === node.id;
+      default:
+        return false;
+    }
+  }, [currentPath]);
+
+  /**
    * Render a tree node
    */
-  const renderTreeNode = (node: TreeNode, depth: number = 0) => {
-    const isCurrentNode = currentPath.courseId === node.id ||
-                         currentPath.levelId === node.id ||
-                         currentPath.sectionId === node.id ||
-                         currentPath.moduleId === node.id ||
-                         currentPath.lessonId === node.id;
-
+  const renderTreeNode = (node: HierarchyTreeNode, depth: number = 0) => {
+    const isCurrentNode = isNodeSelected(node);
     const hasChildren = node.children.length > 0;
+    const isExpanded = expandedNodes.has(node.id);
     const paddingLeft = depth * 20;
 
     return (
       <div key={node.id} className="select-none">
         <div
-          className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded-md transition-colors duration-150 ${
-            isCurrentNode ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-          }`}
+          className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded-md transition-colors duration-150 ${isCurrentNode ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+            }`}
           style={{ paddingLeft: `${paddingLeft + 12}px` }}
           onClick={() => {
             // Navigate to the node
@@ -640,7 +469,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
           }}
         >
           {/* Expansion toggle */}
-          {(hasChildren || node.metadata?.childCount !== undefined) && (
+          {hasChildren && (
             <button
               className="mr-2 p-1 hover:bg-gray-200 rounded"
               onClick={(e) => {
@@ -648,57 +477,58 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
                 toggleExpansion(node.id);
               }}
               role="button"
-              aria-label={`${node.isExpanded ? 'Collapse' : 'Expand'} ${node.name}`}
+              aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${node.name}`}
             >
-              {node.isExpanded ? (
+              {isExpanded ? (
                 <ChevronDownIcon className="h-3 w-3" />
               ) : (
                 <ChevronRightIcon className="h-3 w-3" />
               )}
             </button>
           )}
-          
+
           {/* Node icon */}
           <div className="mr-3">
             {getNodeIcon(node.type)}
           </div>
-          
+
           {/* Node content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium truncate ${
-                isCurrentNode ? 'text-blue-700' : 'text-gray-900'
-              }`}>
+              <span className={`text-sm font-medium truncate ${isCurrentNode ? 'text-blue-700' : 'text-gray-900'
+                }`}>
                 {node.name}
               </span>
-              
-              {/* Metadata */}
-              {node.metadata?.childCount !== undefined && (
+
+              {/* Child count */}
+              {node.metadata?.childCount !== undefined && node.metadata.childCount > 0 && (
                 <span className="text-xs text-gray-500 ml-2">
                   ({node.metadata.childCount})
                 </span>
               )}
             </div>
-            
+
             {/* Additional info for compact mode */}
             {compact && node.metadata?.code && (
               <div className="text-xs text-gray-500 truncate">
                 {node.metadata.code}
               </div>
             )}
+
+            {/* Experience points for lessons */}
+            {node.type === 'lesson' && node.metadata?.experiencePoints && (
+              <div className="text-xs text-primary-600">
+                {node.metadata.experiencePoints} XP
+              </div>
+            )}
           </div>
-          
-          {/* Loading indicator */}
-          {node.isLoading && (
-            <div className="ml-2" role="status" aria-label="Loading">
-              <div className="animate-spin h-3 w-3 border border-gray-300 border-t-blue-600 rounded-full"></div>
-            </div>
-          )}
         </div>
-        
+
         {/* Render children */}
-        {node.isExpanded && node.children.map(child => 
-          renderTreeNode(child, depth + 1)
+        {isExpanded && hasChildren && (
+          <div>
+            {node.children.map(child => renderTreeNode(child, depth + 1))}
+          </div>
         )}
       </div>
     );
@@ -720,7 +550,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
             <div className="animate-spin h-4 w-4 border border-gray-300 border-t-blue-600 rounded-full"></div>
           )}
         </div>
-        
+
         {searchResults.length === 0 && !isSearching ? (
           <p className="text-sm text-gray-500 italic">
             {t('hierarchicalNavigator.noResults')}
@@ -763,41 +593,55 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
   const renderStatistics = () => {
     if (!showStatistics) return null;
 
+    const { courses, levels, sections, modules, lessons } = hierarchyData;
+    const totalCourses = courses.length;
+    const totalLevels = levels.length;
+    const totalSections = sections.length;
+    const totalModules = modules.length;
+    const totalLessons = lessons.length;
+    
+    const totalItems = totalCourses + totalLevels + totalSections + totalModules + totalLessons;
+    const completionPercentage = totalItems > 0 ? Math.round((totalLessons / totalItems) * 100) : 0;
+
     return (
       <div className="bg-gray-50 rounded-lg p-4 mb-4">
         <h4 className="text-sm font-medium text-gray-900 mb-3">
-          {t('hierarchicalNavigator.statistics')}
+          {t('hierarchicalNavigator.statistics', 'Content Statistics')}
         </h4>
-        
+
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-gray-500">{t('hierarchicalNavigator.courses')}</div>
-            <div className="font-semibold text-gray-900">{statistics.totalCourses}</div>
+            <div className="text-gray-500">{t('hierarchicalNavigator.courses', 'Courses')}</div>
+            <div className="font-semibold text-gray-900">{totalCourses}</div>
           </div>
           <div>
-            <div className="text-gray-500">{t('hierarchicalNavigator.levels')}</div>
-            <div className="font-semibold text-gray-900">{statistics.totalLevels}</div>
+            <div className="text-gray-500">{t('hierarchicalNavigator.levels', 'Levels')}</div>
+            <div className="font-semibold text-gray-900">{totalLevels}</div>
           </div>
           <div>
-            <div className="text-gray-500">{t('hierarchicalNavigator.sections')}</div>
-            <div className="font-semibold text-gray-900">{statistics.totalSections}</div>
+            <div className="text-gray-500">{t('hierarchicalNavigator.sections', 'Sections')}</div>
+            <div className="font-semibold text-gray-900">{totalSections}</div>
           </div>
           <div>
-            <div className="text-gray-500">{t('hierarchicalNavigator.modules')}</div>
-            <div className="font-semibold text-gray-900">{statistics.totalModules}</div>
+            <div className="text-gray-500">{t('hierarchicalNavigator.modules', 'Modules')}</div>
+            <div className="font-semibold text-gray-900">{totalModules}</div>
+          </div>
+          <div>
+            <div className="text-gray-500">{t('hierarchicalNavigator.lessons', 'Lessons')}</div>
+            <div className="font-semibold text-gray-900">{totalLessons}</div>
           </div>
         </div>
-        
-        {statistics.completionPercentage > 0 && (
+
+        {completionPercentage > 0 && (
           <div className="mt-4">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-500">{t('hierarchicalNavigator.completion')}</span>
-              <span className="font-semibold">{statistics.completionPercentage}%</span>
+              <span className="text-gray-500">{t('hierarchicalNavigator.completion', 'Completion')}</span>
+              <span className="font-semibold">{completionPercentage}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${statistics.completionPercentage}%` }}
+                style={{ width: `${completionPercentage}%` }}
               ></div>
             </div>
           </div>
@@ -806,12 +650,25 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
     );
   };
 
-  if (coursesLoading) {
+  if (hierarchyData.isLoading) {
     return (
       <div className={`hierarchical-navigator ${className}`}>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin h-6 w-6 border border-gray-300 border-t-blue-600 rounded-full"></div>
-          <span className="ml-3 text-gray-600">{t('common.loading')}</span>
+          <span className="ml-3 text-gray-600">{t('common.loading', 'Loading...')}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (hierarchyData.error) {
+    return (
+      <div className={`hierarchical-navigator ${className}`}>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-red-600">
+            <p>Error loading hierarchy data</p>
+            <p className="text-sm">{hierarchyData.error.message}</p>
+          </div>
         </div>
       </div>
     );
@@ -824,7 +681,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
         <h3 className="text-lg font-semibold text-gray-900">
           {t('hierarchicalNavigator.title')}
         </h3>
-        
+
         {/* Search */}
         {showSearch && (
           <div className="mt-3 relative">
@@ -834,7 +691,7 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
             <input
               type="text"
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              placeholder={t('hierarchicalNavigator.searchPlaceholder')}
+              placeholder={t('hierarchicalNavigator.searchPlaceholder', 'Search content...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -843,14 +700,14 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
       </div>
 
       {/* Content */}
-      <div 
+      <div
         className="overflow-y-auto"
         style={{ maxHeight }}
       >
         <div className="p-4">
           {/* Statistics */}
           {renderStatistics()}
-          
+
           {/* Tree view */}
           {searchQuery ? (
             renderSearchResults()
@@ -859,16 +716,16 @@ export const HierarchicalNavigator: React.FC<HierarchicalNavigatorProps> = ({
               {treeData.map(node => renderTreeNode(node))}
             </div>
           )}
-          
+
           {/* Empty state */}
-          {treeData.length === 0 && !coursesLoading && (
+          {treeData.length === 0 && !hierarchyData.isLoading && (
             <div className="text-center py-8">
               <BookIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h4 className="mt-2 text-sm font-medium text-gray-900">
-                {t('hierarchicalNavigator.noCourses')}
+                {t('hierarchicalNavigator.noCourses', 'No courses available')}
               </h4>
               <p className="mt-1 text-sm text-gray-500">
-                {t('hierarchicalNavigator.createFirstCourse')}
+                {t('hierarchicalNavigator.createFirstCourse', 'Create your first course to get started')}
               </p>
             </div>
           )}

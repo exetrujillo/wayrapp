@@ -191,15 +191,13 @@ interface ExerciseManagement {
   // Lesson-exercise relationships
   lessonExercises: {
     list: (lessonId: string) => Promise<LessonExercise[]>;
-    assign: (lessonId: string, exerciseId: string, order: number) => Promise<void>;
+    assign: (lessonId: string, exerciseId: string) => Promise<void>;
     unassign: (lessonId: string, exerciseId: string) => Promise<void>;
-    reorder: (lessonId: string, exerciseIds: string[]) => Promise<void>;
   };
 }
 
 interface LessonExercise {
   exercise: Exercise;
-  order: number;
   assignedAt: Date;
 }
 
@@ -208,7 +206,6 @@ interface ExerciseUsage {
   lessonName: string;
   moduleId: string;
   moduleName: string;
-  order: number;
 }
 ```
 
@@ -592,9 +589,8 @@ interface HierarchicalService<T> extends GenericService<T> {
 interface ExerciseService extends GenericService<Exercise> {
   getByType: (type: ExerciseType) => Promise<Exercise[]>;
   getUsage: (id: string) => Promise<ExerciseUsage[]>;
-  assignToLesson: (lessonId: string, exerciseId: string, order: number) => Promise<void>;
+  assignToLesson: (lessonId: string, exerciseId: string) => Promise<void>;
   unassignFromLesson: (lessonId: string, exerciseId: string) => Promise<void>;
-  reorderInLesson: (lessonId: string, exerciseIds: string[]) => Promise<void>;
 }
 ```
 
