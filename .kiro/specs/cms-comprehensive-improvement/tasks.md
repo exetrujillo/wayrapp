@@ -170,7 +170,9 @@
   - ✅ Simplified the lesson-exercise relationship to focus on assignment/unassignment only
   - _Requirements: 3.5, 3.7 (updated to remove ordering requirements)_
 
-- [x] 3.5 Add exercise usage tracking and management
+- [ ] 3.5 Add exercise usage tracking and management
+
+
 
 
 

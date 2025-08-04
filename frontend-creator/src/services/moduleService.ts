@@ -62,10 +62,13 @@ class ModuleService {
    */
   async getModules(params?: PaginationParams): Promise<PaginatedResponse<Module>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<Module>>(API_ENDPOINTS.MODULES.BASE, { params });
+      const response = await apiClient.get<any>(API_ENDPOINTS.MODULES.BASE, { params });
+      
+      // Extract data from API response format { data: modules, success: true, timestamp: ... }
+      const modulesData = response.data || response;
       
       // Transform the modules data
-      const transformedModules = response.data.map((module: any) => this.transformModuleFromApi(module));
+      const transformedModules = Array.isArray(modulesData) ? modulesData.map((module: any) => this.transformModuleFromApi(module)) : [];
       
       return {
         ...response,
@@ -85,13 +88,16 @@ class ModuleService {
    */
   async getModulesBySection(sectionId: string, params?: PaginationParams): Promise<PaginatedResponse<Module>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<Module>>(
+      const response = await apiClient.get<any>(
         API_ENDPOINTS.SECTIONS.MODULES(sectionId), 
         { params }
       );
       
+      // Extract data from API response format { data: modules, success: true, timestamp: ... }
+      const modulesData = response.data || response;
+      
       // Transform the modules data
-      const transformedModules = response.data.map((module: any) => this.transformModuleFromApi(module));
+      const transformedModules = Array.isArray(modulesData) ? modulesData.map((module: any) => this.transformModuleFromApi(module)) : [];
       
       return {
         ...response,

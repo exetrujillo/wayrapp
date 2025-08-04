@@ -80,13 +80,16 @@ class SectionService {
         { params }
       );
 
+      // Extract data from API response format { data: sections, success: true, timestamp: ... }
+      const sectionsData = response.data || response;
+
       // Validate response structure
-      if (!response || !Array.isArray(response.data)) {
+      if (!sectionsData || !Array.isArray(sectionsData)) {
         throw new Error('Invalid response format from sections API');
       }
 
       // Transform the sections data
-      const transformedSections = response.data.map((section: any) => this.transformSectionFromApi(section));
+      const transformedSections = sectionsData.map((section: any) => this.transformSectionFromApi(section));
 
       return {
         ...response,

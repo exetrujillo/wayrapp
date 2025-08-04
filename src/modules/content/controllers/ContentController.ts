@@ -224,11 +224,17 @@ export class ContentController {
 
             const response: ApiResponse = {
                 data: result.data,
+                meta: {
+                    page: result.pagination.page,
+                    limit: result.pagination.limit,
+                    total: result.pagination.total,
+                    totalPages: result.pagination.totalPages,
+                },
                 success: true,
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers using the enhanced helper
+            // Add pagination info to response headers using the enhanced helper for backward compatibility
             const { addPaginationHeaders } = await import("../../../shared/middleware/pagination");
             addPaginationHeaders(res, result.pagination);
 

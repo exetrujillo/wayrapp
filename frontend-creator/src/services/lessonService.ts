@@ -69,10 +69,13 @@ class LessonService {
    */
   async getLessons(params?: PaginationParams): Promise<PaginatedResponse<Lesson>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<Lesson>>(API_ENDPOINTS.LESSONS.BASE, { params });
+      const response = await apiClient.get<any>(API_ENDPOINTS.LESSONS.BASE, { params });
+
+      // Extract data from API response format { data: lessons, success: true, timestamp: ... }
+      const lessonsData = response.data || response;
 
       // Transform the lessons data
-      const transformedLessons = response.data.map((lesson: any) => this.transformLessonFromApi(lesson));
+      const transformedLessons = Array.isArray(lessonsData) ? lessonsData.map((lesson: any) => this.transformLessonFromApi(lesson)) : [];
 
       return {
         ...response,
@@ -92,13 +95,16 @@ class LessonService {
    */
   async getLessonsByModule(moduleId: string, params?: PaginationParams): Promise<PaginatedResponse<Lesson>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<Lesson>>(
+      const response = await apiClient.get<any>(
         API_ENDPOINTS.MODULES.LESSONS(moduleId),
         { params }
       );
 
+      // Extract data from API response format { data: lessons, success: true, timestamp: ... }
+      const lessonsData = response.data || response;
+
       // Transform the lessons data
-      const transformedLessons = response.data.map((lesson: any) => this.transformLessonFromApi(lesson));
+      const transformedLessons = Array.isArray(lessonsData) ? lessonsData.map((lesson: any) => this.transformLessonFromApi(lesson)) : [];
 
       return {
         ...response,
@@ -222,7 +228,9 @@ class LessonService {
    */
   async getLessonExercises(lessonId: string): Promise<ExerciseAssignment[]> {
     try {
-      return await apiClient.get<ExerciseAssignment[]>(API_ENDPOINTS.LESSONS.EXERCISES(lessonId));
+      const response = await apiClient.get<any>(API_ENDPOINTS.LESSONS.EXERCISES(lessonId));
+      // Extract data from API response format { data: exercises, success: true, timestamp: ... }
+      return response.data || response;
     } catch (error) {
       console.error(`Failed to fetch exercises for lesson ${lessonId}:`, error);
       throw error;

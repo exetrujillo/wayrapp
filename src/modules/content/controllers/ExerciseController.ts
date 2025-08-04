@@ -219,11 +219,17 @@ export class ExerciseController {
 
             const response: ApiResponse = {
                 data: result.data,
+                meta: {
+                    page: result.pagination.page,
+                    limit: result.pagination.limit,
+                    total: result.pagination.total,
+                    totalPages: result.pagination.totalPages,
+                },
                 success: true,
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
+            // Add pagination info to response headers for backward compatibility
             res.set({
                 "X-Total-Count": result.pagination.total.toString(),
                 "X-Total-Pages": result.pagination.totalPages.toString(),
@@ -285,11 +291,17 @@ export class ExerciseController {
 
             const response: ApiResponse = {
                 data: result.data,
+                meta: {
+                    page: result.pagination.page,
+                    limit: result.pagination.limit,
+                    total: result.pagination.total,
+                    totalPages: result.pagination.totalPages,
+                },
                 success: true,
                 timestamp: new Date().toISOString(),
             };
 
-            // Add pagination info to response headers
+            // Add pagination info to response headers for backward compatibility
             res.set({
                 "X-Total-Count": result.pagination.total.toString(),
                 "X-Total-Pages": result.pagination.totalPages.toString(),

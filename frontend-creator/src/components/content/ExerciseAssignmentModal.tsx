@@ -522,7 +522,7 @@ export const ExerciseAssignmentModal: React.FC<ExerciseAssignmentModalProps> = (
         </div>
 
         {/* Pagination */}
-        {exercisesResponse && exercisesResponse.meta.totalPages > 1 && (
+        {exercisesResponse && exercisesResponse.meta && exercisesResponse.meta.totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
             <div className="text-sm text-neutral-600">
               {t('creator.components.exerciseAssignmentModal.pagination.showing', 'Showing {{start}} to {{end}} of {{total}} exercises', {
