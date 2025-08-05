@@ -26,6 +26,7 @@ import { VOFExerciseForm } from './exercise-types/VOFExerciseForm';
 import { PairsExerciseForm } from './exercise-types/PairsExerciseForm';
 import { InformativeExerciseForm } from './exercise-types/InformativeExerciseForm';
 import { OrderingExerciseForm } from './exercise-types/OrderingExerciseForm';
+import TranslationWordBankExerciseForm from './exercise-types/TranslationWordBankExerciseForm';
 
 // ============================================================================
 // Type Definitions
@@ -63,6 +64,13 @@ const getDefaultExerciseData = (exerciseType: ExerciseType): Record<string, any>
                 source_text: '',
                 target_text: '',
                 hints: [],
+            };
+        case 'translation-word-bank':
+            return {
+                source_text: '',
+                target_text: '',
+                word_bank: [],
+                correct_words: [],
             };
         case 'fill-in-the-blank':
             return {
@@ -164,11 +172,24 @@ export const DynamicExerciseForm: React.FC<DynamicExerciseFormProps> = ({
             setIsSubmitting(true);
             setErrors({});
 
-            // Submit the exercise
+            // Generate a unique ID for the exercise if not editing (max 15 chars, lowercase, numbers, hyphens only)
+            const generateExerciseId = () => {
+                const random = Math.random().toString(36).substr(2, 8);
+                return `ex-${random}`.toLowerCase().substr(0, 15);
+            };
+            const exerciseId = initialData?.id || generateExerciseId();
+
+            // Submit the exercise - minimal format for deployed backend compatibility
+            // Convert exercise type to backend format (dash to underscore)
+            const backendExerciseType = exerciseType.replace(/-/g, '_');
+
             const submissionData: CreateExerciseRequest = {
-                exerciseType,
+                id: exerciseId,
+                exercise_type: backendExerciseType as any,
                 data: exerciseData,
             };
+
+
 
             const result = await onSubmit(submissionData);
 
@@ -214,6 +235,8 @@ export const DynamicExerciseForm: React.FC<DynamicExerciseFormProps> = ({
         switch (exerciseType) {
             case 'translation':
                 return <TranslationExerciseForm {...commonProps} />;
+            case 'translation-word-bank':
+                return <TranslationWordBankExerciseForm {...commonProps} />;
             case 'fill-in-the-blank':
                 return <FillInTheBlankExerciseForm {...commonProps} />;
             case 'vof':
@@ -317,7 +340,7 @@ export const DynamicExerciseForm: React.FC<DynamicExerciseFormProps> = ({
                 </Card>
 
                 {/* Main Content Area */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
                     {/* Form Section */}
                     <div className="space-y-6">
                         <Card className="p-6">

@@ -164,6 +164,7 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
     const getExerciseTypeName = (type: string) => {
         const typeMap: Record<string, string> = {
             translation: t('creator.exerciseTypes.translation', 'Translation'),
+            'translation-word-bank': t('creator.exerciseTypes.translationWordBank', 'Translation Word Bank'),
             'fill-in-the-blank': t('creator.exerciseTypes.fillInTheBlank', 'Fill in the Blank'),
             vof: t('creator.exerciseTypes.vof', 'Verify or False'),
             pairs: t('creator.exerciseTypes.pairs', 'Pairs'),
@@ -181,6 +182,9 @@ const ExerciseAssignmentForm: React.FC<ExerciseAssignmentFormProps> = ({ lessonI
         switch (exercise.exerciseType) {
             case 'translation':
                 return exercise.data['source_text'] || '';
+            case 'translation-word-bank':
+                const wordCount = exercise.data['word_bank']?.length || 0;
+                return `${exercise.data['source_text'] || ''} (${wordCount} words)`;
             case 'fill-in-the-blank':
                 return exercise.data['text'] || '';
             case 'vof':

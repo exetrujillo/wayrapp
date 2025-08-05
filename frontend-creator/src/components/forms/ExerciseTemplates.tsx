@@ -78,6 +78,68 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
       tags: ['intermediate', 'directions', 'travel'],
     },
   ],
+  'translation-word-bank': [
+    {
+      id: 'basic-introduction',
+      name: 'Basic Introduction',
+      description: 'Translate a simple self-introduction using word bank',
+      data: {
+        source_text: 'Me llamo María y soy estudiante',
+        target_text: 'My name is María and I am a student',
+        word_bank: [
+          'My', 'name', 'is', 'María', 'and', 'I', 'am', 'a', 'student',
+          'teacher', 'doctor', 'called', 'your', 'his', 'she', 'we'
+        ],
+        correct_words: ['My', 'name', 'is', 'María', 'and', 'I', 'am', 'a', 'student'],
+      },
+      tags: ['beginner', 'introduction', 'basic', 'identity'],
+    },
+    {
+      id: 'daily-routine',
+      name: 'Daily Routine',
+      description: 'Describe daily activities with word selection',
+      data: {
+        source_text: 'Yo desayuno a las ocho de la mañana',
+        target_text: 'I have breakfast at eight in the morning',
+        word_bank: [
+          'I', 'have', 'breakfast', 'at', 'eight', 'in', 'the', 'morning',
+          'lunch', 'dinner', 'nine', 'ten', 'evening', 'night', 'afternoon', 'eat'
+        ],
+        correct_words: ['I', 'have', 'breakfast', 'at', 'eight', 'in', 'the', 'morning'],
+      },
+      tags: ['beginner', 'daily-routine', 'time', 'meals'],
+    },
+    {
+      id: 'family-description',
+      name: 'Family Description',
+      description: 'Describe family members using word bank',
+      data: {
+        source_text: 'Mi hermana es muy inteligente y amable',
+        target_text: 'My sister is very intelligent and kind',
+        word_bank: [
+          'My', 'sister', 'is', 'very', 'intelligent', 'and', 'kind',
+          'brother', 'mother', 'father', 'smart', 'nice', 'funny', 'tall', 'beautiful', 'his'
+        ],
+        correct_words: ['My', 'sister', 'is', 'very', 'intelligent', 'and', 'kind'],
+      },
+      tags: ['beginner', 'family', 'adjectives', 'descriptions'],
+    },
+    {
+      id: 'weather-description',
+      name: 'Weather Description',
+      description: 'Describe weather conditions with word selection',
+      data: {
+        source_text: 'Hoy hace mucho calor y sol',
+        target_text: 'Today it is very hot and sunny',
+        word_bank: [
+          'Today', 'it', 'is', 'very', 'hot', 'and', 'sunny',
+          'cold', 'rainy', 'cloudy', 'windy', 'snowy', 'warm', 'cool', 'yesterday', 'tomorrow'
+        ],
+        correct_words: ['Today', 'it', 'is', 'very', 'hot', 'and', 'sunny'],
+      },
+      tags: ['beginner', 'weather', 'adjectives', 'daily-life'],
+    },
+  ],
   'fill-in-the-blank': [
     {
       id: 'verb-conjugation',

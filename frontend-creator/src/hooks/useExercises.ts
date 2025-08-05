@@ -96,7 +96,6 @@ export const useCreateExerciseMutation = () => {
           ...old,
           data: [
             {
-              id: `temp-${Date.now()}`, // Temporary ID
               ...newExercise,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),

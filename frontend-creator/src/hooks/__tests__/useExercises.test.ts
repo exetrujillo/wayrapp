@@ -92,7 +92,8 @@ describe('useExercises hooks', () => {
       };
 
       const exerciseData = {
-        exerciseType: 'translation' as const,
+        id: 'test-exercise-1',
+        exercise_type: 'translation' as const,
         data: { sourceText: 'Good morning', targetText: 'Buenos días' },
       };
 
@@ -117,7 +118,8 @@ describe('useExercises hooks', () => {
       mockExerciseService.createExercise.mockRejectedValue(mockError);
 
       const exerciseData = {
-        exerciseType: 'translation' as const,
+        id: 'test-exercise-2',
+        exercise_type: 'translation' as const,
         data: { sourceText: 'Good morning', targetText: 'Buenos días' },
       };
 

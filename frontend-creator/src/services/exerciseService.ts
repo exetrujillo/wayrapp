@@ -14,13 +14,35 @@ import {
 
 class ExerciseService {
   /**
+   * Transform exercise data from API format to frontend format
+   * @param apiExercise API exercise data
+   * @returns Exercise object formatted for frontend consumption
+   * @private
+   */
+  private transformExerciseFromApi(apiExercise: any): Exercise {
+    return {
+      id: apiExercise.id,
+      exerciseType: apiExercise.exercise_type, // Transform snake_case to camelCase
+      data: apiExercise.data,
+      createdAt: apiExercise.created_at || apiExercise.createdAt,
+      updatedAt: apiExercise.updated_at || apiExercise.updatedAt,
+    };
+  }
+
+  /**
    * Get paginated list of exercises
    * @param params Pagination parameters
    * @returns Paginated list of exercises
    */
   async getExercises(params?: PaginationParams): Promise<PaginatedResponse<Exercise>> {
     try {
-      return await apiClient.get<PaginatedResponse<Exercise>>(API_ENDPOINTS.EXERCISES.BASE, { params });
+      const response: any = await apiClient.get<any>(API_ENDPOINTS.EXERCISES.BASE, { params });
+      // Handle wrapped API response format
+      const exerciseList: any[] = response.data || response;
+      return {
+        ...response,
+        data: exerciseList.map((exercise: any) => this.transformExerciseFromApi(exercise))
+      };
     } catch (error) {
       console.error('Failed to fetch exercises:', error);
       throw error;
@@ -34,7 +56,10 @@ class ExerciseService {
    */
   async getExercise(id: string): Promise<Exercise> {
     try {
-      return await apiClient.get<Exercise>(API_ENDPOINTS.EXERCISES.DETAIL(id));
+      const response: any = await apiClient.get<any>(API_ENDPOINTS.EXERCISES.DETAIL(id));
+      // Handle wrapped API response format
+      const exerciseResponse: any = response.data || response;
+      return this.transformExerciseFromApi(exerciseResponse);
     } catch (error) {
       console.error(`Failed to fetch exercise ${id}:`, error);
       throw error;
@@ -48,7 +73,10 @@ class ExerciseService {
    */
   async createExercise(exerciseData: CreateExerciseRequest): Promise<Exercise> {
     try {
-      return await apiClient.post<Exercise>(API_ENDPOINTS.EXERCISES.BASE, exerciseData);
+      const response: any = await apiClient.post<any>(API_ENDPOINTS.EXERCISES.BASE, exerciseData);
+      // Handle wrapped API response format
+      const exerciseResponse: any = response.data || response;
+      return this.transformExerciseFromApi(exerciseResponse);
     } catch (error) {
       console.error('Failed to create exercise:', error);
       throw error;
@@ -63,7 +91,10 @@ class ExerciseService {
    */
   async updateExercise(id: string, exerciseData: UpdateExerciseRequest): Promise<Exercise> {
     try {
-      return await apiClient.put<Exercise>(API_ENDPOINTS.EXERCISES.DETAIL(id), exerciseData);
+      const response: any = await apiClient.put<any>(API_ENDPOINTS.EXERCISES.DETAIL(id), exerciseData);
+      // Handle wrapped API response format
+      const exerciseResponse: any = response.data || response;
+      return this.transformExerciseFromApi(exerciseResponse);
     } catch (error) {
       console.error(`Failed to update exercise ${id}:`, error);
       throw error;

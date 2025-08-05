@@ -228,20 +228,20 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           {/* Data Summary */}
           <div className="mb-3">
             <div className="flex flex-wrap gap-2">
-              {Object.keys(exercise.data).slice(0, 3).map((key) => (
+              {exercise.data && Object.keys(exercise.data).slice(0, 3).map((key) => (
                 <span
                   key={key}
                   className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800"
                 >
-                  {key}: {typeof exercise.data[key] === 'object'
+                  {key}: {exercise.data[key] && typeof exercise.data[key] === 'object'
                     ? `${Object.keys(exercise.data[key]).length} items`
-                    : String(exercise.data[key]).substring(0, 20) + (String(exercise.data[key]).length > 20 ? '...' : '')
+                    : String(exercise.data[key] || '').substring(0, 20) + (String(exercise.data[key] || '').length > 20 ? '...' : '')
                   }
                 </span>
               ))}
-              {Object.keys(exercise.data).length > 3 && (
+              {exercise.data && Object.keys(exercise.data).length > 3 && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
-                  +{Object.keys(exercise.data).length - 3} more
+                  +{Object.keys(exercise.data || {}).length - 3} more
                 </span>
               )}
             </div>

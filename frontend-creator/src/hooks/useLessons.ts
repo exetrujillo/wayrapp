@@ -314,9 +314,9 @@ export const useRemoveExerciseAssignmentMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ lessonId, assignmentId }: { lessonId: string; assignmentId: string }) => 
-      lessonService.removeExerciseFromLesson(lessonId, assignmentId),
-    onMutate: async ({ lessonId, assignmentId }) => {
+    mutationFn: ({ lessonId, exerciseId }: { lessonId: string; exerciseId: string }) => 
+      lessonService.removeExerciseFromLesson(lessonId, exerciseId),
+    onMutate: async ({ lessonId, exerciseId }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: queryKeys.lessons.exercises(lessonId) });
 
@@ -326,7 +326,7 @@ export const useRemoveExerciseAssignmentMutation = () => {
       // Optimistically update by removing the assignment
       if (previousExercises) {
         queryClient.setQueryData(queryKeys.lessons.exercises(lessonId), (old: any) => 
-          old.filter((assignment: ExerciseAssignment) => assignment.id !== assignmentId)
+          old.filter((assignment: ExerciseAssignment) => assignment.exercise_id !== exerciseId)
         );
       }
 

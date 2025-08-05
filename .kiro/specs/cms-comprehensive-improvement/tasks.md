@@ -117,6 +117,7 @@
 
 
 
+
   - Build exercise list with filtering by type, difficulty, and usage
   - Add search functionality across exercise content
   - Implement exercise usage indicators showing which lessons use each exercise
@@ -124,6 +125,8 @@
   - _Requirements: 3.1, 3.2, 3.3_
 
 - [x] 3.2 Implement type-specific exercise forms
+
+
 
   **Implementation Summary:**
   - ✅ Created `DynamicExerciseForm` component that dynamically adapts to different exercise types
@@ -170,7 +173,9 @@
   - ✅ Simplified the lesson-exercise relationship to focus on assignment/unassignment only
   - _Requirements: 3.5, 3.7 (updated to remove ordering requirements)_
 
-- [ ] 3.5 Add exercise usage tracking and management
+- [x] 3.5 Add exercise usage tracking and management
+
+
 
 
 

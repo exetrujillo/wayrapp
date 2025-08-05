@@ -193,6 +193,7 @@ export interface UpdateLessonRequest {
 // Exercise Types
 export type ExerciseType = 
   | 'translation'
+  | 'translation-word-bank'
   | 'fill-in-the-blank'
   | 'vof'
   | 'pairs'
@@ -208,12 +209,13 @@ export interface Exercise {
 }
 
 export interface CreateExerciseRequest {
-  exerciseType: ExerciseType;
+  id: string;
+  exercise_type: ExerciseType;
   data: Record<string, any>;
 }
 
 export interface UpdateExerciseRequest {
-  exerciseType?: ExerciseType;
+  exercise_type?: ExerciseType;
   data?: Record<string, any>;
 }
 

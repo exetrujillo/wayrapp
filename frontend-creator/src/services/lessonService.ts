@@ -261,13 +261,13 @@ class LessonService {
   /**
    * Remove an exercise assignment from a lesson
    * @param lessonId Lesson ID
-   * @param assignmentId Assignment ID
+   * @param exerciseId Exercise ID
    */
-  async removeExerciseFromLesson(lessonId: string, assignmentId: string): Promise<void> {
+  async removeExerciseFromLesson(lessonId: string, exerciseId: string): Promise<void> {
     try {
-      await apiClient.delete(`${API_ENDPOINTS.LESSONS.EXERCISES(lessonId)}/${assignmentId}`);
+      await apiClient.delete(`${API_ENDPOINTS.LESSONS.EXERCISES(lessonId)}/${exerciseId}`);
     } catch (error) {
-      console.error(`Failed to remove exercise assignment ${assignmentId} from lesson ${lessonId}:`, error);
+      console.error(`Failed to remove exercise ${exerciseId} from lesson ${lessonId}:`, error);
       throw error;
     }
   }
@@ -303,10 +303,12 @@ class LessonService {
    */
   async reorderLessonExercises(lessonId: string, exerciseIds: string[]): Promise<ExerciseAssignment[]> {
     try {
-      return await apiClient.put<ExerciseAssignment[]>(
+      const response: any = await apiClient.put<ExerciseAssignment[]>(
         API_ENDPOINTS.LESSONS.REORDER_EXERCISES(lessonId),
-        { exerciseIds }
+        { exercise_ids: exerciseIds } // Backend expects snake_case
       );
+      // Handle wrapped API response format
+      return response.data || response;
     } catch (error) {
       console.error(`Failed to reorder exercises in lesson ${lessonId}:`, error);
       throw error;

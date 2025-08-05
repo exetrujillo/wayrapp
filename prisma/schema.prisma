@@ -294,6 +294,7 @@ enum ModuleType {
 enum ExerciseType {
   translation
   fill_in_the_blank @map("fill-in-the-blank")
+  translation_word_bank @map("translation-word-bank")
   vof
   pairs
   informative

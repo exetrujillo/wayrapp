@@ -60,6 +60,7 @@ export interface Exercise {
   id: string;
   exercise_type:
     | "translation"
+    | "translation-word-bank"
     | "fill-in-the-blank"
     | "vof"
     | "pairs"
@@ -123,6 +124,7 @@ export interface CreateExerciseDto {
   id: string;
   exercise_type:
     | "translation"
+    | "translation-word-bank"
     | "fill-in-the-blank"
     | "vof"
     | "pairs"

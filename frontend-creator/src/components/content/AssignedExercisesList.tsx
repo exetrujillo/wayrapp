@@ -19,24 +19,24 @@ interface AssignedExercisesListProps {
 interface DraggableExerciseItemProps {
   assignment: ExerciseAssignment;
   index: number;
-  onUnassign: (assignmentId: string) => void;
+  onUnassign: (exerciseId: string) => void;
   isDragDisabled?: boolean;
 }
 
 /**
  * Individual draggable exercise item component with drag handle and actions
  */
-const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({ 
-  assignment, 
-  index, 
+const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
+  assignment,
+  index,
   onUnassign,
-  isDragDisabled = false 
+  isDragDisabled = false
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<'top' | 'bottom' | null>(null);
   const { t } = useTranslation();
-  
+
   // Fetch exercise details
   const { data: exercise, isLoading } = useExerciseQuery(assignment.exercise_id);
 
@@ -48,15 +48,15 @@ const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
     return combine(
       draggable({
         element,
-        getInitialData: () => ({ type: 'exercise', assignmentId: assignment.id, index }),
+        getInitialData: () => ({ type: 'exercise', exerciseId: assignment.exercise_id, index }),
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
       }),
       dropTargetForElements({
         element,
         canDrop: ({ source }) => source.data.type === 'exercise',
-        getData: ({ input }) => 
-          attachClosestEdge({ type: 'exercise', assignmentId: assignment.id, index }, {
+        getData: ({ input }) =>
+          attachClosestEdge({ type: 'exercise', exerciseId: assignment.exercise_id, index }, {
             element,
             input,
             allowedEdges: ['top', 'bottom'],
@@ -69,21 +69,35 @@ const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
         onDrop: () => setClosestEdge(null),
       })
     );
-  }, [assignment.id, index, isDragDisabled]);
+  }, [assignment.exercise_id, index, isDragDisabled]);
 
   const handleUnassign = () => {
     if (window.confirm(t('creator.components.assignedExercisesList.unassignConfirm', 'Are you sure you want to unassign this exercise?'))) {
-      onUnassign(assignment.id);
+      onUnassign(assignment.exercise_id);
     }
   };
 
   // Get exercise type icon
-  const getExerciseTypeIcon = (type: string) => {
+  const getExerciseTypeIcon = (type: string | undefined) => {
+    if (!type) {
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    }
+
     switch (type) {
       case 'translation':
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 716.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+          </svg>
+        );
+      case 'translation-word-bank':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
           </svg>
         );
       case 'vof':
@@ -128,11 +142,15 @@ const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
   // Get preview content from exercise data
   const getPreviewContent = () => {
     if (!exercise) return '';
-    
+
     const { data } = exercise;
     switch (exercise.exerciseType) {
       case 'translation':
         return data['source_text'] || data['text'] || '';
+      case 'translation-word-bank':
+        const wordCount = data['word_bank'] ? data['word_bank'].length : 0;
+        const correctCount = data['correct_words'] ? data['correct_words'].length : 0;
+        return `${data['source_text'] || ''} (${wordCount} words, ${correctCount} correct)`;
       case 'vof':
         return data['statement'] || data['question'] || '';
       case 'fill-in-the-blank':
@@ -170,14 +188,13 @@ const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
     <div
       ref={ref}
       className={`relative ${isDragging ? 'opacity-50' : ''}`}
-      data-testid={`draggable-exercise-${assignment.id}`}
+      data-testid={`draggable-exercise-${assignment.exercise_id}`}
     >
       {closestEdge === 'top' && <DropIndicator edge="top" />}
-      
+
       <div
-        className={`bg-white border border-neutral-200 rounded-lg p-4 mb-3 transition-all duration-200 ${
-          isDragging ? 'shadow-lg ring-2 ring-primary-500 ring-opacity-50' : 'hover:shadow-md'
-        }`}
+        className={`bg-white border border-neutral-200 rounded-lg p-4 mb-3 transition-all duration-200 ${isDragging ? 'shadow-lg ring-2 ring-primary-500 ring-opacity-50' : 'hover:shadow-md'
+          }`}
       >
         <div className="flex items-start space-x-4">
           {/* Drag Handle */}
@@ -195,49 +212,49 @@ const DraggableExerciseItem: React.FC<DraggableExerciseItemProps> = ({
           {/* Order Number */}
           <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
             {assignment.order}
+          </div>
+
+          {/* Exercise Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="flex-shrink-0 p-2 bg-neutral-100 rounded-lg text-neutral-600">
+                  {getExerciseTypeIcon(exercise.exerciseType)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-neutral-900 capitalize">
+                    {exercise.exerciseType ? exercise.exerciseType.replace(/[-_]/g, ' ') : 'Unknown Type'}
+                  </h4>
+                  <p className="text-xs text-neutral-500">
+                    {t('creator.components.assignedExercisesList.exerciseId', 'ID')}: {exercise.id}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex space-x-2 ml-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUnassign}
+                  className="text-error border-error hover:bg-error hover:text-white"
+                  title={t('creator.components.assignedExercisesList.unassign', 'Unassign')}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
             </div>
 
-            {/* Exercise Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="flex-shrink-0 p-2 bg-neutral-100 rounded-lg text-neutral-600">
-                    {getExerciseTypeIcon(exercise.exerciseType)}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-neutral-900 capitalize">
-                      {exercise.exerciseType.replace(/[-_]/g, ' ')}
-                    </h4>
-                    <p className="text-xs text-neutral-500">
-                      {t('creator.components.assignedExercisesList.exerciseId', 'ID')}: {exercise.id}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex space-x-2 ml-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleUnassign}
-                    className="text-error border-error hover:bg-error hover:text-white"
-                    title={t('creator.components.assignedExercisesList.unassign', 'Unassign')}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Preview Content */}
-              <div className="text-sm text-neutral-600 line-clamp-2">
-                {getPreviewContent()}
-              </div>
+            {/* Preview Content */}
+            <div className="text-sm text-neutral-600 line-clamp-2">
+              {getPreviewContent()}
+            </div>
           </div>
         </div>
       </div>
-      
+
       {closestEdge === 'bottom' && <DropIndicator edge="bottom" />}
     </div>
   );
@@ -271,7 +288,7 @@ const DroppableExerciseContainer: React.FC<DroppableExerciseContainerProps> = ({
       onDragLeave: () => setIsDraggedOver(false),
       onDrop: ({ source, location }) => {
         setIsDraggedOver(false);
-        
+
         const destination = location.current.dropTargets[0];
         if (!destination) return;
 
@@ -319,7 +336,7 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
   exercises,
 }) => {
   const { t } = useTranslation();
-  
+
   // Mutations for reordering and removing exercises
   const reorderMutation = useReorderExercisesMutation();
   const removeAssignmentMutation = useRemoveExerciseAssignmentMutation();
@@ -339,6 +356,7 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
 
     // Extract exercise IDs in new order
     const exercise_ids = reorderedExercises.map(assignment => assignment.exercise_id);
+    console.log('Sending exercise IDs:', exercise_ids);
 
     // Call reorder mutation
     reorderMutation.mutate({
@@ -347,10 +365,10 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
     });
   };
 
-  const handleUnassign = (assignmentId: string) => {
+  const handleUnassign = (exerciseId: string) => {
     removeAssignmentMutation.mutate({
       lessonId,
-      assignmentId,
+      exerciseId,
     });
   };
 
@@ -380,8 +398,8 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
         <Feedback
           type="error"
           message={
-            reorderMutation.error?.message || 
-            removeAssignmentMutation.error?.message || 
+            reorderMutation.error?.message ||
+            removeAssignmentMutation.error?.message ||
             t('creator.components.assignedExercisesList.error.message', 'Failed to update exercises')
           }
         />
@@ -429,13 +447,13 @@ export const AssignedExercisesList: React.FC<AssignedExercisesListProps> = ({
       </div>
 
       {/* Drag and Drop Container */}
-      <DroppableExerciseContainer 
+      <DroppableExerciseContainer
         onReorder={handleReorder}
         className="min-h-32 transition-colors duration-200"
       >
         {sortedExercises.map((assignment, index) => (
           <DraggableExerciseItem
-            key={assignment.id}
+            key={`${assignment.exercise_id}-${index}`}
             assignment={assignment}
             index={index}
             onUnassign={handleUnassign}

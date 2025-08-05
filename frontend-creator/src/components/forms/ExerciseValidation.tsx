@@ -101,6 +101,15 @@ const VALIDATION_RULES = {
       maxItems: 10,
     },
   },
+  'translation-word-bank': {
+    required: ['source_text', 'target_text', 'word_bank', 'correct_words'],
+    custom: {
+      minWords: 2,
+      maxWords: 20,
+      maxSentenceWords: 15,
+      minDistractors: 1,
+    },
+  },
 };
 
 // ============================================================================
@@ -583,6 +592,149 @@ const validateOrderingExercise = (data: any): ValidationError[] => {
   return errors;
 };
 
+/**
+ * Validates translation word bank exercise data
+ */
+const validateTranslationWordBankExercise = (data: any): ValidationError[] => {
+  const errors: ValidationError[] = [];
+  const rules = VALIDATION_RULES['translation-word-bank'];
+
+  // Required fields
+  if (!data.source_text || data.source_text.trim().length === 0) {
+    errors.push({
+      field: 'source_text',
+      message: 'Source text is required',
+      severity: 'error',
+    });
+  }
+
+  if (!data.target_text || data.target_text.trim().length === 0) {
+    errors.push({
+      field: 'target_text',
+      message: 'Target text is required',
+      severity: 'error',
+    });
+  }
+
+  if (!data.word_bank || !Array.isArray(data.word_bank) || data.word_bank.length === 0) {
+    errors.push({
+      field: 'word_bank',
+      message: 'Word bank is required',
+      severity: 'error',
+    });
+    return errors;
+  }
+
+  if (!data.correct_words || !Array.isArray(data.correct_words) || data.correct_words.length === 0) {
+    errors.push({
+      field: 'correct_words',
+      message: 'Correct words are required',
+      severity: 'error',
+    });
+    return errors;
+  }
+
+  // Filter out empty words
+  const validWords = data.word_bank.filter((word: string) => word && word.trim().length > 0);
+  const validCorrectWords = data.correct_words.filter((word: string) => word && word.trim().length > 0);
+
+  // Word bank count validation
+  if (validWords.length < rules.custom.minWords) {
+    errors.push({
+      field: 'word_bank',
+      message: `At least ${rules.custom.minWords} words are required in the word bank`,
+      severity: 'error',
+    });
+  }
+
+  if (validWords.length > rules.custom.maxWords) {
+    errors.push({
+      field: 'word_bank',
+      message: `Maximum ${rules.custom.maxWords} words allowed in the word bank`,
+      severity: 'warning',
+    });
+  }
+
+  // Correct words validation
+  if (validCorrectWords.length < rules.custom.minWords) {
+    errors.push({
+      field: 'correct_words',
+      message: `At least ${rules.custom.minWords} correct words are required`,
+      severity: 'error',
+    });
+  }
+
+  // Check if all correct words are in the word bank
+  const missingWords = validCorrectWords.filter((word: string) =>
+    !validWords.some((bankWord: string) => bankWord.trim().toLowerCase() === word.trim().toLowerCase())
+  );
+
+  if (missingWords.length > 0) {
+    errors.push({
+      field: 'word_bank',
+      message: `Correct words not found in word bank: ${missingWords.join(', ')}`,
+      severity: 'error',
+    });
+  }
+
+  // Distractor words validation
+  const distractorCount = validWords.length - validCorrectWords.length;
+  if (distractorCount < rules.custom.minDistractors) {
+    errors.push({
+      field: 'word_bank',
+      message: `At least ${rules.custom.minDistractors} distractor word(s) recommended`,
+      severity: 'warning',
+    });
+  }
+
+  // Sentence length validation
+  if (data.source_text) {
+    const sourceWordCount = data.source_text.trim().split(/\s+/).filter(Boolean).length;
+    if (sourceWordCount > rules.custom.maxSentenceWords) {
+      errors.push({
+        field: 'source_text',
+        message: `Source text should have maximum ${rules.custom.maxSentenceWords} words for word bank exercises`,
+        severity: 'warning',
+      });
+    }
+  }
+
+  if (data.target_text) {
+    const targetWordCount = data.target_text.trim().split(/\s+/).filter(Boolean).length;
+    if (targetWordCount > rules.custom.maxSentenceWords) {
+      errors.push({
+        field: 'target_text',
+        message: `Target text should have maximum ${rules.custom.maxSentenceWords} words for word bank exercises`,
+        severity: 'warning',
+      });
+    }
+  }
+
+  // Check for duplicate words in word bank
+  const wordTexts = validWords.map((word: string) => word.trim().toLowerCase());
+  const duplicates = wordTexts.filter((word: string, index: number) => wordTexts.indexOf(word) !== index);
+
+  if (duplicates.length > 0) {
+    errors.push({
+      field: 'word_bank',
+      message: 'Duplicate words found in word bank',
+      severity: 'warning',
+    });
+  }
+
+  // Same text warning
+  if (data.source_text && data.target_text &&
+    data.source_text.trim().toLowerCase() === data.target_text.trim().toLowerCase()) {
+    errors.push({
+      field: 'target_text',
+      message: 'Source and target text should be different for translation exercises',
+      severity: 'warning',
+    });
+  }
+
+  return errors;
+};
+
 // ============================================================================
 // Main Validation Function
 // ============================================================================
@@ -600,6 +752,9 @@ export const validateExerciseData = async (
   switch (exerciseType) {
     case 'translation':
       errors = validateTranslationExercise(data);
+      break;
+    case 'translation-word-bank':
+      errors = validateTranslationWordBankExercise(data);
       break;
     case 'fill-in-the-blank':
       errors = validateFillInTheBlankExercise(data);
@@ -671,6 +826,25 @@ const calculateQualityScore = (
       if (data.source_text && data.target_text) {
         const sourceWords = data.source_text.trim().split(/\s+/).length;
         if (sourceWords >= 3 && sourceWords <= 20) score += 5; // Good length
+      }
+      break;
+    case 'translation-word-bank':
+      if (data.word_bank && data.correct_words) {
+        const validWords = data.word_bank.filter((word: string) => word && word.trim().length > 0);
+        const validCorrectWords = data.correct_words.filter((word: string) => word && word.trim().length > 0);
+        const distractorCount = validWords.length - validCorrectWords.length;
+
+        // Bonus for having good number of distractors
+        if (distractorCount >= 3 && distractorCount <= 8) score += 10;
+
+        // Bonus for appropriate sentence length
+        if (data.source_text && data.target_text) {
+          const sourceWords = data.source_text.trim().split(/\s+/).length;
+          const targetWords = data.target_text.trim().split(/\s+/).length;
+          if (sourceWords >= 3 && sourceWords <= 10 && targetWords >= 3 && targetWords <= 10) {
+            score += 5;
+          }
+        }
       }
       break;
     case 'fill-in-the-blank':

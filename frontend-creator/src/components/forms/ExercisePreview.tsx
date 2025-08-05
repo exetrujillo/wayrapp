@@ -173,7 +173,7 @@ const VOFPreview: React.FC<{ data: any }> = ({ data }) => {
           {t('creator.preview.trueOrFalse', 'True or False?')}
         </h4>
         <p className="text-blue-800 mb-4">{data.statement}</p>
-        
+
         <div className="flex space-x-4">
           <label className="flex items-center">
             <input type="radio" name="vof-preview" className="mr-2" disabled />
@@ -225,7 +225,7 @@ const PairsPreview: React.FC<{ data: any }> = ({ data }) => {
         <h4 className="font-medium text-blue-900 mb-3">
           {t('creator.preview.matchPairs', 'Match the pairs:')}
         </h4>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <h5 className="font-medium text-blue-800 mb-2">
@@ -242,7 +242,7 @@ const PairsPreview: React.FC<{ data: any }> = ({ data }) => {
               ))}
             </div>
           </div>
-          
+
           <div>
             <h5 className="font-medium text-blue-800 mb-2">
               {t('creator.preview.rightColumn', 'Right Column')}
@@ -283,7 +283,7 @@ const InformativePreview: React.FC<{ data: any }> = ({ data }) => {
             {data.title}
           </h4>
         )}
-        
+
         {data.content && (
           <div className="text-blue-800 whitespace-pre-wrap">
             {data.content}
@@ -359,7 +359,7 @@ const OrderingPreview: React.FC<{ data: any }> = ({ data }) => {
         <h4 className="font-medium text-blue-900 mb-3">
           {t('creator.preview.arrangeOrder', 'Arrange in the correct order:')}
         </h4>
-        
+
         <div className="space-y-2">
           {shuffledItems.map((item: any, index: number) => (
             <div
@@ -373,10 +373,93 @@ const OrderingPreview: React.FC<{ data: any }> = ({ data }) => {
             </div>
           ))}
         </div>
-        
+
         <p className="text-sm text-blue-700 mt-3">
           {t('creator.preview.dragToReorder', 'Drag items to reorder them')}
         </p>
+      </div>
+    </div>
+  );
+};
+
+const TranslationWordBankPreview: React.FC<{ data: any }> = ({ data }) => {
+  const { t } = useTranslation();
+
+  if (!data.source_text || !data.target_text || !data.word_bank || data.word_bank.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        {t('creator.preview.completeFields', 'Complete the required fields to see preview')}
+      </div>
+    );
+  }
+
+  const validWords = data.word_bank.filter((word: string) => word && word.trim().length > 0);
+  const validCorrectWords = data.correct_words ? data.correct_words.filter((word: string) => word && word.trim().length > 0) : [];
+
+  if (validWords.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        {t('creator.preview.addWords', 'Add words to the word bank to see preview')}
+      </div>
+    );
+  }
+
+  // Shuffle words for preview (simulate random order)
+  const shuffledWords = [...validWords].sort(() => Math.random() - 0.5);
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-blue-50 p-4 rounded-md">
+        <h4 className="font-medium text-blue-900 mb-3">
+          {t('creator.preview.translateSentence', 'Translate this sentence:')}
+        </h4>
+
+        <div className="bg-white p-3 rounded border border-blue-200 mb-4">
+          <p className="text-lg font-medium text-gray-900">{data.source_text}</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {t('creator.preview.translateToTarget', 'Translate to target language')}
+          </p>
+        </div>
+
+        <h5 className="font-medium text-blue-800 mb-2">
+          {t('creator.preview.selectWords', 'Select and arrange the correct words:')}
+        </h5>
+
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {shuffledWords.map((word: string, index: number) => {
+            const isCorrect = validCorrectWords.includes(word);
+            return (
+              <button
+                key={index}
+                className={`p-2 text-sm rounded border cursor-pointer transition-colors ${isCorrect
+                  ? 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100'
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  }`}
+                disabled
+              >
+                {word}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="bg-gray-100 p-3 rounded border-2 border-dashed border-gray-300 min-h-12">
+          <p className="text-sm text-gray-500 text-center">
+            {t('creator.preview.constructionArea', 'Selected words will appear here')}
+          </p>
+        </div>
+
+        <div className="mt-3 text-xs text-blue-700">
+          <p>
+            {t('creator.preview.wordBankInstructions', 'Students will click words to select them, then arrange them in the correct order.')}
+          </p>
+          <p className="mt-1">
+            <strong>{t('creator.preview.expectedAnswer', 'Expected answer:')}</strong> {data.target_text}
+          </p>
+          <p className="mt-1">
+            <strong>{t('creator.preview.wordStats', 'Words:')}</strong> {validWords.length} total, {validCorrectWords.length} correct, {validWords.length - validCorrectWords.length} distractors
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -407,6 +490,8 @@ export const ExercisePreview: React.FC<ExercisePreviewProps> = ({
     switch (exerciseType) {
       case 'translation':
         return <TranslationPreview data={exerciseData} />;
+      case 'translation-word-bank':
+        return <TranslationWordBankPreview data={exerciseData} />;
       case 'fill-in-the-blank':
         return <FillInTheBlankPreview data={exerciseData} />;
       case 'vof':
@@ -434,7 +519,7 @@ export const ExercisePreview: React.FC<ExercisePreviewProps> = ({
             {t('creator.preview.studentView', 'Student View')}
           </span>
         </div>
-        
+
         <Card className="bg-white">
           <div className="p-4">
             {renderPreview()}

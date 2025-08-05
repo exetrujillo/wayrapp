@@ -28,6 +28,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({
   const exerciseTypes: (ExerciseType | 'all')[] = [
     'all',
     'translation',
+    'translation-word-bank',
     'fill-in-the-blank',
     'vof',
     'pairs',

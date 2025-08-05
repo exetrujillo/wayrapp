@@ -3,19 +3,21 @@ import Layout from '../components/layout/Layout';
 import PageTitle from '../components/layout/PageTitle';
 import { ContentList, ExerciseCard } from '../components/content';
 import { Modal } from '../components/ui/Modal';
-import { UnifiedEntityForm } from '../components/forms/UnifiedEntityForm';
+import { DynamicExerciseForm } from '../components/forms/DynamicExerciseForm';
 import { useTranslation } from 'react-i18next';
-import { 
-  useExercisesQuery, 
-  useDeleteExerciseMutation
+import {
+  useExercisesQuery,
+  useDeleteExerciseMutation,
+  useCreateExerciseMutation,
+  useUpdateExerciseMutation
 } from '../hooks/useExercises';
-import { Exercise, PaginationParams } from '../utils/types';
+import { Exercise, PaginationParams, CreateExerciseRequest, UpdateExerciseRequest } from '../utils/types';
 
 const ExercisesPage: React.FC = () => {
   const { t } = useTranslation();
 
   const pageTitle = t('common.navigation.exercises');
-  
+
   const [currentParams, setCurrentParams] = useState<PaginationParams>({
     page: 1,
     limit: 12,
@@ -26,14 +28,16 @@ const ExercisesPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Use TanStack Query hooks
-  const { 
-    data: exercisesResponse, 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    data: exercisesResponse,
+    isLoading,
+    error,
+    refetch
   } = useExercisesQuery(currentParams);
 
   const deleteExerciseMutation = useDeleteExerciseMutation();
+  const createExerciseMutation = useCreateExerciseMutation();
+  const updateExerciseMutation = useUpdateExerciseMutation();
 
   const exercises = exercisesResponse?.data || [];
   const pagination = exercisesResponse?.meta || null;
@@ -76,7 +80,7 @@ const ExercisesPage: React.FC = () => {
     if (action === 'delete') {
       if (window.confirm(t('creator.exercises.bulkDeleteConfirm', `Are you sure you want to delete ${selectedExercises.length} exercises?`))) {
         try {
-          await Promise.all(selectedExercises.map(exercise => 
+          await Promise.all(selectedExercises.map(exercise =>
             deleteExerciseMutation.mutateAsync(exercise.id)
           ));
         } catch (error) {
@@ -86,10 +90,30 @@ const ExercisesPage: React.FC = () => {
     }
   };
 
+  // Handle exercise creation
+  const handleCreateExercise = async (data: CreateExerciseRequest): Promise<Exercise> => {
+    return await createExerciseMutation.mutateAsync(data);
+  };
+
+  // Handle exercise update
+  const handleUpdateExercise = async (data: CreateExerciseRequest): Promise<Exercise> => {
+    if (!editingExercise) throw new Error('No exercise selected for editing');
+    const updateData: UpdateExerciseRequest = {
+      exercise_type: data.exercise_type,
+      data: data.data
+    };
+    return await updateExerciseMutation.mutateAsync({
+      id: editingExercise.id,
+      exerciseData: updateData
+    });
+  };
+
   // Handle form success
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (_exercise: Exercise) => {
     setCreateModalOpen(false);
     setEditingExercise(null);
+    // Optionally show success message or navigate
+    // The exercise parameter is available if needed for success messaging
   };
 
   // Handle form cancel
@@ -98,10 +122,16 @@ const ExercisesPage: React.FC = () => {
     setEditingExercise(null);
   };
 
+  // Handle form error
+  const handleFormError = (error: string) => {
+    console.error('Form error:', error);
+    // Optionally show error message to user
+  };
+
   // Render exercise preview
   const renderExercisePreview = (exercise: Exercise) => {
     const { data } = exercise;
-    
+
     switch (exercise.exerciseType) {
       case 'translation':
         return (
@@ -220,15 +250,14 @@ const ExercisesPage: React.FC = () => {
           title={t('creator.exercises.createNew', 'Create New Exercise')}
           size="xl"
         >
-          <UnifiedEntityForm
-            entityType="exercise"
-            mode="create"
-            onSubmit={async (data) => {
-              // Handle exercise creation
-              console.log('Creating exercise:', data);
-            }}
+          <DynamicExerciseForm
+            onSubmit={handleCreateExercise}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
+            onError={handleFormError}
+            enablePreview={true}
+            enableTemplates={true}
+            isModal={true}
           />
         </Modal>
 
@@ -240,16 +269,15 @@ const ExercisesPage: React.FC = () => {
             title={t('creator.exercises.editExercise', 'Edit Exercise')}
             size="xl"
           >
-            <UnifiedEntityForm
-              entityType="exercise"
-              mode="edit"
+            <DynamicExerciseForm
               initialData={editingExercise}
-              onSubmit={async (data) => {
-                // Handle exercise update
-                console.log('Updating exercise:', data);
-              }}
+              onSubmit={handleUpdateExercise}
               onSuccess={handleFormSuccess}
               onCancel={handleFormCancel}
+              onError={handleFormError}
+              enablePreview={true}
+              enableTemplates={true}
+              isModal={true}
             />
           </Modal>
         )}
