@@ -246,7 +246,8 @@ describe('Common Schemas', () => {
   describe('ExerciseTypeSchema', () => {
     it('should validate exercise type', () => {
       expect(ExerciseTypeSchema.parse('translation')).toBe('translation');
-      expect(ExerciseTypeSchema.parse('fill_in_the_blank')).toBe('fill_in_the_blank');
+      expect(ExerciseTypeSchema.parse('translation-word-bank')).toBe('translation-word-bank');
+      expect(ExerciseTypeSchema.parse('fill-in-the-blank')).toBe('fill-in-the-blank');
       expect(ExerciseTypeSchema.parse('vof')).toBe('vof');
       expect(ExerciseTypeSchema.parse('pairs')).toBe('pairs');
       expect(ExerciseTypeSchema.parse('informative')).toBe('informative');

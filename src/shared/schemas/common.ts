@@ -887,7 +887,7 @@ export const ModuleTypeSchema = z.enum(['informative', 'basic_lesson', 'reading'
  *   timeSpent: TimeSecondsSchema
  * });
  */
-export const ExerciseTypeSchema = z.enum(['translation', 'translation_word_bank', 'fill_in_the_blank', 'vof', 'pairs', 'informative', 'ordering']);
+export const ExerciseTypeSchema = z.enum(['translation', 'translation-word-bank', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering']);
 
 /**
  * Generic text field validation schema factory function

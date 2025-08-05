@@ -507,7 +507,7 @@ export function createExerciseRoutes(prisma: PrismaClient): Router {
   router.get('/exercises/type/:type',
     validate({
       params: z.object({
-        type: z.enum(['translation', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering'])
+        type: z.enum(['translation', 'translation-word-bank', 'fill-in-the-blank', 'vof', 'pairs', 'informative', 'ordering'])
       }),
       query: ExerciseQuerySchema
     }),

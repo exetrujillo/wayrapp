@@ -64,6 +64,7 @@ import {
     CreateExerciseSchema,
     UpdateExerciseSchema,
     ExerciseQuery,
+    CreateExerciseDto,
 } from "../schemas";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
@@ -113,10 +114,10 @@ export class ExerciseController {
     ): Promise<void> => {
         try {
             const validatedData = CreateExerciseSchema.parse(req.body);
-            // Convert exercise type for internal consistency
+            // Convert exercise type from frontend format (dashes) to Prisma enum format (underscores)
             const exerciseData = {
                 ...validatedData,
-                exercise_type: validatedData.exercise_type.replace('-', '_') as any
+                exercise_type: validatedData.exercise_type.replace(/-/g, '_') as any
             };
             const exercise = await this.exerciseService.createExercise(exerciseData);
 
@@ -287,7 +288,9 @@ export class ExerciseController {
                 sortOrder: query.sortOrder ?? "desc",
             };
 
-            const result = await this.exerciseService.getExercisesByType(type, options);
+            // Convert exercise type from frontend format (dashes) to Prisma enum format (underscores)
+            const convertedType = type.replace(/-/g, '_');
+            const result = await this.exerciseService.getExercisesByType(convertedType, options);
 
             const response: ApiResponse = {
                 data: result.data,
@@ -353,13 +356,16 @@ export class ExerciseController {
             }
 
             const validatedData = UpdateExerciseSchema.parse(req.body);
-            // Convert exercise type for internal consistency if provided
-            const exerciseData = {
+            // Convert exercise type from frontend format (dashes) to Prisma enum format (underscores) and filter undefined
+            const processedData = {
                 ...validatedData,
                 ...(validatedData.exercise_type && {
-                    exercise_type: validatedData.exercise_type.replace('-', '_') as any
+                    exercise_type: validatedData.exercise_type.replace(/-/g, '_') as any
                 })
             };
+            const exerciseData = Object.fromEntries(
+                Object.entries(processedData).filter(([_, value]) => value !== undefined)
+            ) as Partial<CreateExerciseDto>;
             const exercise = await this.exerciseService.updateExercise(id, exerciseData);
 
             const response: ApiResponse = {
