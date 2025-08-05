@@ -572,6 +572,16 @@ export const contentFixtureHelpers = {
       id: "test-translation",
       exerciseType: ExerciseType.translation,
     }),
+    [ExerciseType.translation_word_bank]: contentFixtureHelpers.createExercise({
+      id: "test-translation-word-bank",
+      exerciseType: ExerciseType.translation_word_bank,
+      data: {
+        source_text: "Hola mundo",
+        target_text: "Hello world",
+        word_bank: ["Hello", "world", "goodbye", "earth", "hi"],
+        correct_words: ["Hello", "world"],
+      },
+    }),
     [ExerciseType.fill_in_the_blank]: contentFixtureHelpers.createExercise({
       id: "test-fill-blank",
       exerciseType: ExerciseType.fill_in_the_blank,
