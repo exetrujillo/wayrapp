@@ -175,6 +175,7 @@ export const MODULE_TYPES = [
  */
 export const EXERCISE_TYPES = [
   { value: 'translation', label: 'Translation' },
+  { value: 'translation-word-bank', label: 'Translation Word Bank' },
   { value: 'fill-in-the-blank', label: 'Fill in the Blank' },
   { value: 'vof', label: 'Verify or False' },
   { value: 'pairs', label: 'Pairs' },

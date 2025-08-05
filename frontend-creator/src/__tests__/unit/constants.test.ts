@@ -83,7 +83,7 @@ describe('Constants', () => {
 
   describe('EXERCISE_TYPES', () => {
     it('should contain all expected exercise types', () => {
-      const expectedTypes = ['translation', 'fill-in-the-blank', 'vof', 'pairs', 'ordering', 'informative'];
+      const expectedTypes = ['translation', 'translation-word-bank', 'fill-in-the-blank', 'vof', 'pairs', 'ordering', 'informative'];
       const exerciseTypeValues = EXERCISE_TYPES.map(type => type.value);
       
       expectedTypes.forEach(type => {

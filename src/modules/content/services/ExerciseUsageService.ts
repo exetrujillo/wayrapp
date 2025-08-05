@@ -196,13 +196,13 @@ export class ExerciseUsageService {
     });
 
     // Calculate usage frequency (assignments per month since creation)
-    const monthsSinceCreation = Math.max(1, 
+    const monthsSinceCreation = Math.max(1,
       Math.ceil((Date.now() - exercise.created_at.getTime()) / (1000 * 60 * 60 * 24 * 30))
     );
     const usageFrequency = lessonAssignments.length / monthsSinceCreation;
 
     // Find last usage date
-    const lastUsed = lessonAssignments.length > 0 
+    const lastUsed = lessonAssignments.length > 0
       ? new Date(Math.max(...lessonAssignments.map(la => la.lesson.updatedAt.getTime())))
       : null;
 
@@ -345,9 +345,6 @@ export class ExerciseUsageService {
    * 
    * @param {string} sourceExerciseId - The unique identifier of the exercise to duplicate
    * @param {ExerciseDuplicationOptions} options - Duplication configuration options
-   * @param {string} options.id - New unique identifier for the duplicated exercise
-   * @param {Record<string, any>} [options.modifications] - Optional modifications to apply to the exercise data
-   * @param {boolean} [options.preserveUsage=false] - Whether to copy lesson assignments (not recommended)
    * @returns {Promise<Exercise>} Promise resolving to the created duplicate exercise
    * @throws {Error} When source exercise is not found or duplicate ID already exists
    * 
@@ -361,7 +358,7 @@ export class ExerciseUsageService {
    * });
    */
   async duplicateExercise(
-    sourceExerciseId: string, 
+    sourceExerciseId: string,
     options: ExerciseDuplicationOptions
   ): Promise<Exercise> {
     // Check if source exercise exists
@@ -477,7 +474,7 @@ export class ExerciseUsageService {
     const uniqueCourses = new Set(
       lessonAssignments.map(la => la.lesson.module.section.level.course.id)
     ).size;
-    const averagePosition = totalAssignments > 0 
+    const averagePosition = totalAssignments > 0
       ? lessonAssignments.reduce((sum, la) => sum + la.order, 0) / totalAssignments
       : 0;
 
@@ -542,10 +539,10 @@ export class ExerciseUsageService {
    * ]);
    */
   async getBatchExerciseUsage(exerciseIds: string[]): Promise<ExerciseUsage[]> {
-    const usagePromises = exerciseIds.map(id => 
+    const usagePromises = exerciseIds.map(id =>
       this.getExerciseUsage(id).catch(() => null)
     );
-    
+
     const results = await Promise.all(usagePromises);
     return results.filter((usage): usage is ExerciseUsage => usage !== null);
   }

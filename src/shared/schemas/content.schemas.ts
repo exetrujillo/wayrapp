@@ -622,6 +622,7 @@ export const ExerciseSchema = z.object({
     ),
   exercise_type: z.enum([
     'translation',
+    'translation-word-bank',
     'fill-in-the-blank',
     'vof',
     'pairs',
@@ -976,7 +977,7 @@ export type LessonRequest = z.infer<typeof LessonSchema>;
  * 
  * @type {Object}
  * @property {string} id - URL-safe exercise identifier (max 15 chars)
- * @property {'translation' | 'fill-in-the-blank' | 'vof' | 'pairs' | 'informative' | 'ordering'} exercise_type - Exercise type for activity categorization
+ * @property {'translation' | 'translation-word-bank' | 'fill-in-the-blank' | 'vof' | 'pairs' | 'informative' | 'ordering'} exercise_type - Exercise type for activity categorization
  * @property {Object | Array} data - Flexible JSON data structure for exercise content
  */
 export type ExerciseRequest = z.infer<typeof ExerciseSchema>;

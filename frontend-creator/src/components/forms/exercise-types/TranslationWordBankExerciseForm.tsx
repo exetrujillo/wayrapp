@@ -19,15 +19,24 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
   // Auto-generate correct words from target text
   const generateCorrectWords = () => {
     if (!data.target_text) return;
-    
+
     const words = data.target_text
       .trim()
       .split(/\s+/)
       .filter((word: string) => word.length > 0)
       .map((word: string) => word.replace(/[.,!?;:]$/, '')); // Remove punctuation
-    
+
+    console.log('Generated correct words:', words);
+    console.log('Current data.correct_words:', data.correct_words);
+
+    console.log('Calling onChange with correct_words:', words);
     onChange('correct_words', words);
     
+    // Also log after a small delay to see if it updated
+    setTimeout(() => {
+      console.log('After onChange - data.correct_words:', data.correct_words);
+    }, 100);
+
     // If word bank is empty, start with correct words
     if (!data.word_bank || data.word_bank.length === 0) {
       onChange('word_bank', [...words]);
@@ -56,7 +65,7 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
   const handleWordBankMove = (index: number, direction: 'up' | 'down') => {
     const wordBank = [...(data.word_bank || [])];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     if (newIndex >= 0 && newIndex < wordBank.length) {
       [wordBank[index], wordBank[newIndex]] = [wordBank[newIndex], wordBank[index]];
       onChange('word_bank', wordBank);
@@ -68,6 +77,14 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
   const targetWordCount = data.target_text ? data.target_text.trim().split(/\s+/).filter(Boolean).length : 0;
   const correctWordsCount = data.correct_words ? data.correct_words.length : 0;
   const wordBankCount = data.word_bank ? data.word_bank.filter((word: string) => word.trim().length > 0).length : 0;
+
+  // Debug logging for word counts
+  console.log('Word counts debug:', {
+    'data.correct_words': data.correct_words,
+    correctWordsCount,
+    'data.word_bank': data.word_bank,
+    wordBankCount
+  });
 
   return (
     <div className="space-y-6">
@@ -137,7 +154,7 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
             </Button>
           </div>
         )}
-        
+
         {/* Same text warning */}
         {data.source_text && data.target_text && data.source_text.trim() === data.target_text.trim() && (
           <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -185,11 +202,10 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
               return (
                 <div
                   key={index}
-                  className={`flex items-center space-x-3 p-3 border rounded-lg ${
-                    isCorrectWord 
-                      ? 'border-green-200 bg-green-50' 
+                  className={`flex items-center space-x-3 p-3 border rounded-lg ${isCorrectWord
+                      ? 'border-green-200 bg-green-50'
                       : 'border-neutral-200 bg-neutral-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col space-y-1">
                     <Button
@@ -214,11 +230,10 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
                     </Button>
                   </div>
 
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                    isCorrectWord 
-                      ? 'bg-green-100 text-green-600' 
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${isCorrectWord
+                      ? 'bg-green-100 text-green-600'
                       : 'bg-neutral-100 text-neutral-600'
-                  }`}>
+                    }`}>
                     {index + 1}
                   </div>
 
@@ -298,16 +313,16 @@ export const TranslationWordBankExerciseForm: React.FC<TranslationWordBankExerci
             </span>
           </div>
           <div className="flex items-center text-sm">
-            <span className={`mr-2 ${correctWordsCount >= 2 ? 'text-green-600' : 'text-gray-400'}`}>
-              {correctWordsCount >= 2 ? '✓' : '○'}
+            <span className={`mr-2 ${correctWordsCount >= 1 ? 'text-green-600' : 'text-gray-400'}`}>
+              {correctWordsCount >= 1 ? '✓' : '○'}
             </span>
             <span className="text-gray-700">
               {t('creator.forms.exercise.hasCorrectWords', 'Has correct words ({{count}})', { count: correctWordsCount })}
             </span>
           </div>
           <div className="flex items-center text-sm">
-            <span className={`mr-2 ${wordBankCount >= correctWordsCount + 2 ? 'text-green-600' : wordBankCount > correctWordsCount ? 'text-yellow-600' : 'text-gray-400'}`}>
-              {wordBankCount >= correctWordsCount + 2 ? '✓' : wordBankCount > correctWordsCount ? '!' : '○'}
+            <span className={`mr-2 ${wordBankCount >= correctWordsCount + 1 ? 'text-green-600' : 'text-gray-400'}`}>
+              {wordBankCount >= correctWordsCount + 1 ? '✓' : '○'}
             </span>
             <span className="text-gray-700">
               {t('creator.forms.exercise.hasDistractors', 'Has distractor words ({{count}})', { count: Math.max(0, wordBankCount - correctWordsCount) })}

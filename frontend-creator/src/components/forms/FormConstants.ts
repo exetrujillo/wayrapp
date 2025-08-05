@@ -43,6 +43,7 @@ export const MODULE_TYPE_OPTIONS = [
 
 export const EXERCISE_TYPE_OPTIONS = [
   { value: 'translation', label: 'Translation' },
+  { value: 'translation-word-bank', label: 'Translation Word Bank' },
   { value: 'fill-in-the-blank', label: 'Fill in the Blank' },
   { value: 'vof', label: 'True/False' },
   { value: 'pairs', label: 'Matching Pairs' },
@@ -147,10 +148,10 @@ export const FORM_LAYOUT = {
   GRID_COLS_1: 1,
   GRID_COLS_2: 2,
   GRID_COLS_12: 12,
-  
+
   SPAN_HALF: 6,
   SPAN_FULL: 12,
-  
+
   TEXTAREA_ROWS_SMALL: 3,
   TEXTAREA_ROWS_MEDIUM: 4,
   TEXTAREA_ROWS_LARGE: 8,
@@ -162,6 +163,7 @@ export const FORM_LAYOUT = {
 
 export const EXERCISE_TYPE_DESCRIPTIONS = {
   translation: 'Students translate text from source language to target language.',
+  'translation-word-bank': 'Students select and arrange words from a word bank to form the correct translation.',
   'fill-in-the-blank': 'Students fill in missing words or phrases in a sentence or paragraph.',
   vof: 'Students determine whether a statement is true or false.',
   pairs: 'Students match items from two columns or groups.',
@@ -249,8 +251,8 @@ export const getExerciseTypeOption = (value: string) => {
  * Get exercise type description
  */
 export const getExerciseTypeDescription = (type: string): string => {
-  return EXERCISE_TYPE_DESCRIPTIONS[type as keyof typeof EXERCISE_TYPE_DESCRIPTIONS] || 
-         'Select an exercise type to see its description.';
+  return EXERCISE_TYPE_DESCRIPTIONS[type as keyof typeof EXERCISE_TYPE_DESCRIPTIONS] ||
+    'Select an exercise type to see its description.';
 };
 
 export default {

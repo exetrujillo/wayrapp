@@ -104,7 +104,7 @@ const VALIDATION_RULES = {
   'translation-word-bank': {
     required: ['source_text', 'target_text', 'word_bank', 'correct_words'],
     custom: {
-      minWords: 2,
+      minWords: 1,
       maxWords: 20,
       maxSentenceWords: 15,
       minDistractors: 1,
@@ -642,7 +642,7 @@ const validateTranslationWordBankExercise = (data: any): ValidationError[] => {
   if (validWords.length < rules.custom.minWords) {
     errors.push({
       field: 'word_bank',
-      message: `At least ${rules.custom.minWords} words are required in the word bank`,
+      message: `At least ${rules.custom.minWords} word(s) are required in the word bank`,
       severity: 'error',
     });
   }
@@ -659,7 +659,7 @@ const validateTranslationWordBankExercise = (data: any): ValidationError[] => {
   if (validCorrectWords.length < rules.custom.minWords) {
     errors.push({
       field: 'correct_words',
-      message: `At least ${rules.custom.minWords} correct words are required`,
+      message: `At least ${rules.custom.minWords} correct word(s) are required`,
       severity: 'error',
     });
   }

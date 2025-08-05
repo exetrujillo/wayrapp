@@ -179,17 +179,16 @@ export const DynamicExerciseForm: React.FC<DynamicExerciseFormProps> = ({
             };
             const exerciseId = initialData?.id || generateExerciseId();
 
-            // Submit the exercise - minimal format for deployed backend compatibility
-            // Convert exercise type to backend format (dash to underscore)
-            const backendExerciseType = exerciseType.replace(/-/g, '_');
-
+            // Submit the exercise - backend uses dash format
             const submissionData: CreateExerciseRequest = {
                 id: exerciseId,
-                exercise_type: backendExerciseType as any,
+                exercise_type: exerciseType as any,
                 data: exerciseData,
             };
 
-
+            console.log('🚀 SUBMITTING EXERCISE DATA:');
+            console.log('Exercise Type:', exerciseType);
+            console.log('Full Submission Data:', JSON.stringify(submissionData, null, 2));
 
             const result = await onSubmit(submissionData);
 
@@ -198,6 +197,10 @@ export const DynamicExerciseForm: React.FC<DynamicExerciseFormProps> = ({
             }
         } catch (error: any) {
             const errorMessage = error.message || 'Failed to save exercise';
+            console.error('❌ FORM SUBMISSION ERROR:');
+            console.error('Error object:', error);
+            console.error('Error details:', error.details);
+            console.error('Error response:', error.response);
             setErrors({ general: errorMessage });
 
             if (onError) {
