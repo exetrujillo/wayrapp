@@ -361,7 +361,10 @@ export class ExerciseService {
       case 'translation':
         this.validateTranslationData(data);
         break;
-      case 'fill-in-the-blank':
+      case 'translation_word_bank':
+        this.validateTranslationWordBankData(data);
+        break;
+      case 'fill_in_the_blank':
         this.validateFillInTheBlankData(data);
         break;
       case 'vof':
@@ -427,6 +430,93 @@ export class ExerciseService {
         ErrorCodes.VALIDATION_ERROR
       );
     }
+  }
+
+  /**
+   * Validates translation word bank exercise data structure and required fields.
+   * 
+   * @private
+   * @param {any} data - Translation word bank exercise data to validate
+   * @param {string} data.source_text - Source language text to translate
+   * @param {string} data.target_text - Target language translation
+   * @param {string[]} data.correct_words - Array of correct words from target text
+   * @param {string[]} data.word_bank - Array of words including correct words and distractors
+   * @returns {void}
+   * @throws {Error} When source_text is missing or invalid
+   * @throws {Error} When target_text is missing or invalid
+   * @throws {Error} When correct_words is missing or invalid
+   * @throws {Error} When word_bank is missing or invalid
+   * @throws {Error} When correct_words are not all present in word_bank
+   */
+  private validateTranslationWordBankData(data: any): void {
+    if (!data.source_text || typeof data.source_text !== 'string') {
+      throw new AppError(
+        'Translation word bank exercise must have a valid source_text',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+    if (!data.target_text || typeof data.target_text !== 'string') {
+      throw new AppError(
+        'Translation word bank exercise must have a valid target_text',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+    if (!data.correct_words || !Array.isArray(data.correct_words) || data.correct_words.length === 0) {
+      throw new AppError(
+        'Translation word bank exercise must have a valid correct_words array with at least one word',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+    if (!data.word_bank || !Array.isArray(data.word_bank) || data.word_bank.length === 0) {
+      throw new AppError(
+        'Translation word bank exercise must have a valid word_bank array with at least one word',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all correct words are present in the word bank
+    const missingWords = data.correct_words.filter((word: string) => !data.word_bank.includes(word));
+    if (missingWords.length > 0) {
+      throw new AppError(
+        `Translation word bank exercise: correct words [${missingWords.join(', ')}] must be present in word_bank`,
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that word bank has more words than just correct words (should have distractors)
+    if (data.word_bank.length <= data.correct_words.length) {
+      throw new AppError(
+        'Translation word bank exercise must have distractor words in addition to correct words',
+        HttpStatus.BAD_REQUEST,
+        ErrorCodes.VALIDATION_ERROR
+      );
+    }
+
+    // Validate that all words in arrays are strings
+    data.correct_words.forEach((word: any, index: number) => {
+      if (typeof word !== 'string' || word.trim().length === 0) {
+        throw new AppError(
+          `Translation word bank exercise: correct_words[${index}] must be a non-empty string`,
+          HttpStatus.BAD_REQUEST,
+          ErrorCodes.VALIDATION_ERROR
+        );
+      }
+    });
+
+    data.word_bank.forEach((word: any, index: number) => {
+      if (typeof word !== 'string' || word.trim().length === 0) {
+        throw new AppError(
+          `Translation word bank exercise: word_bank[${index}] must be a non-empty string`,
+          HttpStatus.BAD_REQUEST,
+          ErrorCodes.VALIDATION_ERROR
+        );
+      }
+    });
   }
 
   /**
