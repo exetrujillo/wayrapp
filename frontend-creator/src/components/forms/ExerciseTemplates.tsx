@@ -150,12 +150,12 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
         blanks: [
           {
             position: 0,
-            correctAnswers: ['went'],
+            correct_answers: ['went'],
             hints: ['Past tense of "go"'],
           },
           {
             position: 1,
-            correctAnswers: ['bought', 'purchased'],
+            correct_answers: ['bought', 'purchased'],
             hints: ['Past tense of "buy"'],
           },
         ],
@@ -171,17 +171,17 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
         blanks: [
           {
             position: 0,
-            correctAnswers: ['The'],
+            correct_answers: ['The'],
             hints: ['Definite article for specific cat'],
           },
           {
             position: 1,
-            correctAnswers: ['a', 'the'],
+            correct_answers: ['a', 'the'],
             hints: ['Could be indefinite or definite'],
           },
           {
             position: 2,
-            correctAnswers: ['the'],
+            correct_answers: ['the'],
             hints: ['Definite article for specific room'],
           },
         ],

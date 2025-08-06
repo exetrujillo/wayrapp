@@ -22,7 +22,7 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
         ...blanks,
         {
           position: blanks.length,
-          correctAnswers: [''],
+          correct_answers: [''],
           hints: [],
         },
       ]);
@@ -43,27 +43,27 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
 
   const handleAnswerAdd = (blankIndex: number) => {
     const blanks = [...(data.blanks || [])];
-    const answers = [...(blanks[blankIndex].correctAnswers || [])];
+    const answers = [...(blanks[blankIndex].correct_answers || [])];
     if (answers.length < 5) { // Max 5 answers per blank
       answers.push('');
-      blanks[blankIndex] = { ...blanks[blankIndex], correctAnswers: answers };
+      blanks[blankIndex] = { ...blanks[blankIndex], correct_answers: answers };
       onChange('blanks', blanks);
     }
   };
 
   const handleAnswerChange = (blankIndex: number, answerIndex: number, value: string) => {
     const blanks = [...(data.blanks || [])];
-    const answers = [...(blanks[blankIndex].correctAnswers || [])];
+    const answers = [...(blanks[blankIndex].correct_answers || [])];
     answers[answerIndex] = value;
-    blanks[blankIndex] = { ...blanks[blankIndex], correctAnswers: answers };
+    blanks[blankIndex] = { ...blanks[blankIndex], correct_answers: answers };
     onChange('blanks', blanks);
   };
 
   const handleAnswerRemove = (blankIndex: number, answerIndex: number) => {
     const blanks = [...(data.blanks || [])];
-    const answers = [...(blanks[blankIndex].correctAnswers || [])];
+    const answers = [...(blanks[blankIndex].correct_answers || [])];
     answers.splice(answerIndex, 1);
-    blanks[blankIndex] = { ...blanks[blankIndex], correctAnswers: answers };
+    blanks[blankIndex] = { ...blanks[blankIndex], correct_answers: answers };
     onChange('blanks', blanks);
   };
 
@@ -212,7 +212,7 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
                         <span className="text-red-500 ml-1">*</span>
                       </label>
                       <span className="text-xs text-gray-500">
-                        {blank.correctAnswers ? blank.correctAnswers.length : 0}/5 answers
+                        {blank.correct_answers ? blank.correct_answers.length : 0}/5 answers
                       </span>
                     </div>
                     <Button
@@ -220,15 +220,15 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
                       variant="outline"
                       size="sm"
                       onClick={() => handleAnswerAdd(blankIndex)}
-                      disabled={(blank.correctAnswers?.length || 0) >= 5}
+                      disabled={(blank.correct_answers?.length || 0) >= 5}
                     >
                       {t('creator.forms.exercise.addAnswer', 'Add Answer')}
                     </Button>
                   </div>
 
-                  {blank.correctAnswers && blank.correctAnswers.length > 0 && (
+                  {blank.correct_answers && blank.correct_answers.length > 0 && (
                     <div className="space-y-2">
-                      {blank.correctAnswers.map((answer: string, answerIndex: number) => (
+                      {blank.correct_answers.map((answer: string, answerIndex: number) => (
                         <div key={answerIndex} className="flex items-center space-x-2">
                           <input
                             type="text"
@@ -240,7 +240,7 @@ export const FillInTheBlankExerciseForm: React.FC<FillInTheBlankExerciseFormProp
                               `Answer ${answerIndex + 1}`
                             )}
                           />
-                          {blank.correctAnswers.length > 1 && (
+                          {blank.correct_answers.length > 1 && (
                             <Button
                               type="button"
                               variant="outline"

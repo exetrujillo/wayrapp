@@ -275,7 +275,7 @@ const validateFillInTheBlankExercise = (data: any): ValidationError[] => {
     }
 
     data.blanks.forEach((blank: any, index: number) => {
-      if (!blank.correctAnswers || !Array.isArray(blank.correctAnswers) || blank.correctAnswers.length === 0) {
+      if (!blank.correct_answers || !Array.isArray(blank.correct_answers) || blank.correct_answers.length === 0) {
         errors.push({
           field: 'blanks',
           message: `Blank ${index + 1} must have at least one correct answer`,
@@ -283,7 +283,7 @@ const validateFillInTheBlankExercise = (data: any): ValidationError[] => {
         });
       } else {
         // Check for empty answers
-        const emptyAnswers = blank.correctAnswers.filter((answer: string) => !answer || answer.trim().length === 0);
+        const emptyAnswers = blank.correct_answers.filter((answer: string) => !answer || answer.trim().length === 0);
         if (emptyAnswers.length > 0) {
           errors.push({
             field: 'blanks',
@@ -292,7 +292,7 @@ const validateFillInTheBlankExercise = (data: any): ValidationError[] => {
           });
         }
 
-        if (blank.correctAnswers.length > rules.custom.maxAnswersPerBlank) {
+        if (blank.correct_answers.length > rules.custom.maxAnswersPerBlank) {
           errors.push({
             field: 'blanks',
             message: `Blank ${index + 1} has too many answers (max ${rules.custom.maxAnswersPerBlank})`,
