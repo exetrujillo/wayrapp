@@ -46,13 +46,13 @@ export const VOFExerciseForm: React.FC<VOFExerciseFormProps> = ({
           <div className="flex items-center space-x-3">
             <input
               type="radio"
-              id="isTrue"
-              name="isTrue"
-              checked={data.isTrue === true}
-              onChange={() => onChange('isTrue', true)}
+              id="is_true"
+              name="is_true"
+              checked={data.is_true === true}
+              onChange={() => onChange('is_true', true)}
               className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-neutral-300"
             />
-            <label htmlFor="isTrue" className="text-sm font-medium text-neutral-700">
+            <label htmlFor="is_true" className="text-sm font-medium text-neutral-700">
               {t('creator.forms.exercise.true', 'True')}
             </label>
           </div>
@@ -60,9 +60,9 @@ export const VOFExerciseForm: React.FC<VOFExerciseFormProps> = ({
             <input
               type="radio"
               id="isFalse"
-              name="isTrue"
-              checked={data.isTrue === false}
-              onChange={() => onChange('isTrue', false)}
+              name="is_true"
+              checked={data.is_true === false}
+              onChange={() => onChange('is_true', false)}
               className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-neutral-300"
             />
             <label htmlFor="isFalse" className="text-sm font-medium text-neutral-700">
@@ -70,8 +70,8 @@ export const VOFExerciseForm: React.FC<VOFExerciseFormProps> = ({
             </label>
           </div>
         </div>
-        {errors?.isTrue && (
-          <p className="mt-1 text-sm text-error">{errors.isTrue}</p>
+        {errors?.is_true && (
+          <p className="mt-1 text-sm text-error">{errors.is_true}</p>
         )}
       </div>
 

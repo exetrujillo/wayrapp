@@ -80,7 +80,7 @@ const getDefaultExerciseData = (exerciseType: ExerciseType): Record<string, any>
         case 'vof':
             return {
                 statement: '',
-                isTrue: null,
+                is_true: null,
                 explanation: '',
             };
         case 'pairs':

@@ -196,7 +196,7 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
       description: 'Simple true/false statements about common knowledge',
       data: {
         statement: 'The sun rises in the east.',
-        isTrue: true,
+        is_true: true,
         explanation: 'The sun always rises in the east and sets in the west due to Earth\'s rotation.',
       },
       tags: ['facts', 'beginner', 'science'],
@@ -207,7 +207,7 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
       description: 'Test understanding of grammar rules',
       data: {
         statement: 'In English, adjectives always come after the noun they describe.',
-        isTrue: false,
+        is_true: false,
         explanation: 'In English, adjectives typically come BEFORE the noun (e.g., "red car", not "car red").',
       },
       tags: ['grammar', 'intermediate', 'rules'],

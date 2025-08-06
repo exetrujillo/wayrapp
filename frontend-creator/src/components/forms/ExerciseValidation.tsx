@@ -67,7 +67,7 @@ const VALIDATION_RULES = {
     },
   },
   vof: {
-    required: ['statement', 'isTrue'],
+    required: ['statement', 'is_true'],
     minLength: {
       statement: 1,
     },
@@ -333,9 +333,9 @@ const validateVOFExercise = (data: any): ValidationError[] => {
     });
   }
 
-  if (data.isTrue === null || data.isTrue === undefined) {
+  if (data.is_true === null || data.is_true === undefined) {
     errors.push({
-      field: 'isTrue',
+      field: 'is_true',
       message: 'Please select whether the statement is true or false',
       severity: 'error',
     });
