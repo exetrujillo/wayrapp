@@ -91,6 +91,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     switch (exercise.exerciseType) {
       case 'translation':
         return data['source_text'] || data['text'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
+      case 'translation-word-bank':
+        return data['source_text'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
       case 'vof':
         return data['question'] || t('creator.components.exerciseCard.noPreview', 'No preview available');
       case 'fill-in-the-blank':

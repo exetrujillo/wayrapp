@@ -121,8 +121,14 @@ export class ExerciseController {
             };
             const exercise = await this.exerciseService.createExercise(exerciseData);
 
+            // Convert exercise type back to frontend format (underscores to dashes)
+            const formattedExercise = {
+                ...exercise,
+                exercise_type: exercise.exercise_type.replace(/_/g, '-') as any
+            };
+
             const response: ApiResponse = {
-                data: exercise,
+                data: formattedExercise,
                 success: true,
                 message: 'Exercise created successfully',
                 timestamp: new Date().toISOString(),
@@ -168,8 +174,13 @@ export class ExerciseController {
             }
 
             const exercise = await this.exerciseService.getExercise(id);
+            // Convert exercise type back to frontend format (underscores to dashes)
+            const formattedExercise = {
+                ...exercise,
+                exercise_type: exercise.exercise_type.replace(/_/g, '-') as any
+            };
             const response: ApiResponse = {
-                data: exercise,
+                data: formattedExercise,
                 success: true,
                 timestamp: new Date().toISOString(),
             };
@@ -218,8 +229,14 @@ export class ExerciseController {
 
             const result = await this.exerciseService.getExercises(options);
 
+            // Convert exercise types back to frontend format (underscores to dashes)
+            const formattedExercises = result.data.map(exercise => ({
+                ...exercise,
+                exercise_type: exercise.exercise_type.replace(/_/g, '-') as any
+            }));
+
             const response: ApiResponse = {
-                data: result.data,
+                data: formattedExercises,
                 meta: {
                     page: result.pagination.page,
                     limit: result.pagination.limit,
@@ -292,8 +309,14 @@ export class ExerciseController {
             const convertedType = type.replace(/-/g, '_');
             const result = await this.exerciseService.getExercisesByType(convertedType, options);
 
+            // Convert exercise types back to frontend format (underscores to dashes)
+            const formattedExercises = result.data.map(exercise => ({
+                ...exercise,
+                exercise_type: exercise.exercise_type.replace(/_/g, '-') as any
+            }));
+
             const response: ApiResponse = {
-                data: result.data,
+                data: formattedExercises,
                 meta: {
                     page: result.pagination.page,
                     limit: result.pagination.limit,
@@ -368,8 +391,14 @@ export class ExerciseController {
             ) as Partial<CreateExerciseDto>;
             const exercise = await this.exerciseService.updateExercise(id, exerciseData);
 
+            // Convert exercise type back to frontend format (underscores to dashes)
+            const formattedExercise = {
+                ...exercise,
+                exercise_type: exercise.exercise_type.replace(/_/g, '-') as any
+            };
+
             const response: ApiResponse = {
-                data: exercise,
+                data: formattedExercise,
                 success: true,
                 message: 'Exercise updated successfully',
                 timestamp: new Date().toISOString(),
