@@ -278,11 +278,11 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
       description: 'Arrange words to form a correct sentence',
       data: {
         items: [
-          { id: '1', text: 'I', order: 0 },
-          { id: '2', text: 'am', order: 1 },
-          { id: '3', text: 'learning', order: 2 },
-          { id: '4', text: 'Spanish', order: 3 },
-          { id: '5', text: 'today', order: 4 },
+          { id: '1', text: 'I', correct_order: 1 },
+          { id: '2', text: 'am', correct_order: 2 },
+          { id: '3', text: 'learning', correct_order: 3 },
+          { id: '4', text: 'Spanish', correct_order: 4 },
+          { id: '5', text: 'today', correct_order: 5 },
         ],
       },
       tags: ['grammar', 'sentence-structure', 'beginner'],
@@ -293,11 +293,11 @@ const EXERCISE_TEMPLATES: Record<ExerciseType, ExerciseTemplate[]> = {
       description: 'Put story events in chronological order',
       data: {
         items: [
-          { id: '1', text: 'Maria woke up early', order: 0 },
-          { id: '2', text: 'She had breakfast', order: 1 },
-          { id: '3', text: 'She went to work', order: 2 },
-          { id: '4', text: 'She came home in the evening', order: 3 },
-          { id: '5', text: 'She went to bed', order: 4 },
+          { id: '1', text: 'Maria woke up early', correct_order: 1 },
+          { id: '2', text: 'She had breakfast', correct_order: 2 },
+          { id: '3', text: 'She went to work', correct_order: 3 },
+          { id: '4', text: 'She came home in the evening', correct_order: 4 },
+          { id: '5', text: 'She went to bed', correct_order: 5 },
         ],
       },
       tags: ['reading', 'sequence', 'intermediate'],

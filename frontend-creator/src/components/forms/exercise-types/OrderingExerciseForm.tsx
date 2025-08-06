@@ -18,25 +18,32 @@ export const OrderingExerciseForm: React.FC<OrderingExerciseFormProps> = ({
   const handleItemAdd = () => {
     const items = data.items || [];
     if (items.length < 10) { // Max 10 items
-      onChange('items', [
+      const newItems = [
         ...items,
         {
           id: crypto.randomUUID(),
           text: '',
+          correct_order: items.length + 1,
         },
-      ]);
+      ];
+      onChange('items', newItems);
     }
   };
 
   const handleItemRemove = (index: number) => {
     const items = [...(data.items || [])];
     items.splice(index, 1);
-    onChange('items', items);
+    // Update correct_order for remaining items
+    const updatedItems = items.map((item, i) => ({
+      ...item,
+      correct_order: i + 1
+    }));
+    onChange('items', updatedItems);
   };
 
   const handleItemChange = (index: number, value: string) => {
     const items = [...(data.items || [])];
-    items[index] = { ...items[index], text: value };
+    items[index] = { ...items[index], text: value, correct_order: index + 1 };
     onChange('items', items);
   };
 
@@ -46,7 +53,12 @@ export const OrderingExerciseForm: React.FC<OrderingExerciseFormProps> = ({
     
     if (newIndex >= 0 && newIndex < items.length) {
       [items[index], items[newIndex]] = [items[newIndex], items[index]];
-      onChange('items', items);
+      // Update correct_order for all items after reordering
+      const updatedItems = items.map((item, i) => ({
+        ...item,
+        correct_order: i + 1
+      }));
+      onChange('items', updatedItems);
     }
   };
 
