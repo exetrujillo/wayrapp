@@ -101,3 +101,9 @@ prisma/migrations/
 *.key
 *.mobileprovision
 *.orig.*
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+frontend-mobile-backup/

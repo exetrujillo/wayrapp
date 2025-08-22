@@ -1,0 +1,19 @@
+services:
+  # Mobile Development Environment (connects to your existing API)
+  mobile-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobile-only
+    container_name: wayrapp-mobile-test
+    environment:
+      - NODE_ENV=test
+      - API_URL=http://host.docker.internal:3000  # Connect to your local API
+      # Or use your deployed API:
+      # - API_URL=https://wayrapp.vercel.app
+    volumes:
+      - ./frontend-mobile:/app/frontend-mobile
+      - ./frontend-shared:/app/frontend-shared
+      - /app/frontend-mobile/node_modules
+      - /app/frontend-shared/node_modules
+    network_mode: "host"  # This allows connecting to your local API
+    working_dir: /app/frontend-mobile

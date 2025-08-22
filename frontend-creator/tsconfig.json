@@ -27,7 +27,7 @@
     "jsx": "react-jsx",
     
     /* Added for Vite compatibility */
-    "types": ["vite/client", "node", "jest"],
+    "types": ["vite/client", "node"],
     
     /* Additional settings from parent */
     "esModuleInterop": true,
