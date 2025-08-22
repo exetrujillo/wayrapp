@@ -310,7 +310,7 @@ void main() {
 
     testWidgets('should auto-navigate to dashboard when authenticated', (WidgetTester tester) async {
       // Setup authenticated state
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'testuser',

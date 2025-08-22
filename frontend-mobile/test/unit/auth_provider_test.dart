@@ -38,14 +38,14 @@ void main() {
 
       test('should check auth status on initialization', () async {
         // Wait for initialization to complete
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
         
         verify(mockAuthRepository.isAuthenticated());
       });
 
       test('should set authenticated state if user is already logged in', () async {
         // Arrange
-        final mockUser = User(
+        const mockUser = User(
           id: '1',
           email: 'test@example.com',
           username: 'testuser',
@@ -59,7 +59,7 @@ void main() {
 
         // Act
         final provider = AuthProvider(authRepository: mockAuthRepository);
-        await Future.delayed(Duration.zero); // Wait for initialization
+        await Future<void>.delayed(Duration.zero); // Wait for initialization
 
         // Assert
         expect(provider.isAuthenticated, true);
@@ -70,7 +70,7 @@ void main() {
     group('login', () {
       test('should set loading state during login', () async {
         // Arrange
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: User(
@@ -84,7 +84,7 @@ void main() {
         when(mockAuthRepository.login(any, any))
             .thenAnswer((_) async {
           // Simulate delay
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future<void>.delayed(const Duration(milliseconds: 100));
           return mockAuthResponse;
         });
 
@@ -100,13 +100,13 @@ void main() {
 
       test('should set authenticated state on successful login', () async {
         // Arrange
-        final mockUser = User(
+        const mockUser = User(
           id: '1',
           email: 'test@example.com',
           username: 'testuser',
           role: UserRole.student,
         );
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: mockUser,
@@ -128,7 +128,7 @@ void main() {
       test('should set error state on login failure', () async {
         // Arrange
         when(mockAuthRepository.login(any, any))
-            .thenThrow(AuthException('Invalid credentials'));
+            .thenThrow(const AuthException('Invalid credentials'));
 
         // Act
         await authProvider.login('test@example.com', 'wrong_password');
@@ -143,7 +143,7 @@ void main() {
       test('should handle network errors during login', () async {
         // Arrange
         when(mockAuthRepository.login(any, any))
-            .thenThrow(NetworkException('Connection timeout'));
+            .thenThrow(const NetworkException('Connection timeout'));
 
         // Act
         await authProvider.login('test@example.com', 'password');
@@ -157,13 +157,13 @@ void main() {
     group('register', () {
       test('should set authenticated state on successful registration', () async {
         // Arrange
-        final mockUser = User(
+        const mockUser = User(
           id: '2',
           email: 'newuser@example.com',
           username: 'newuser',
           role: UserRole.student,
         );
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'new_token',
           refreshToken: 'new_refresh_token',
           user: mockUser,
@@ -185,7 +185,7 @@ void main() {
       test('should set error state on registration failure', () async {
         // Arrange
         when(mockAuthRepository.register(any, any, any))
-            .thenThrow(ValidationException('Email already exists', {}));
+            .thenThrow(const ValidationException('Email already exists', {}));
 
         // Act
         await authProvider.register('existing@example.com', 'password', 'user');
@@ -198,7 +198,7 @@ void main() {
 
       test('should set loading state during registration', () async {
         // Arrange
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'token',
           refreshToken: 'refresh_token',
           user: User(
@@ -211,7 +211,7 @@ void main() {
 
         when(mockAuthRepository.register(any, any, any))
             .thenAnswer((_) async {
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future<void>.delayed(const Duration(milliseconds: 100));
           return mockAuthResponse;
         });
 
@@ -229,13 +229,13 @@ void main() {
     group('logout', () {
       test('should clear authenticated state on logout', () async {
         // Arrange - set initial authenticated state
-        final mockUser = User(
+        const mockUser = User(
           id: '1',
           email: 'test@example.com',
           username: 'testuser',
           role: UserRole.student,
         );
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: mockUser,
@@ -261,13 +261,13 @@ void main() {
 
       test('should clear state even if logout API call fails', () async {
         // Arrange - set initial authenticated state
-        final mockUser = User(
+        const mockUser = User(
           id: '1',
           email: 'test@example.com',
           username: 'testuser',
           role: UserRole.student,
         );
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: mockUser,
@@ -276,7 +276,7 @@ void main() {
         when(mockAuthRepository.login(any, any))
             .thenAnswer((_) async => mockAuthResponse);
         when(mockAuthRepository.logout())
-            .thenThrow(NetworkException('Connection failed'));
+            .thenThrow(const NetworkException('Connection failed'));
 
         await authProvider.login('test@example.com', 'password');
 
@@ -293,12 +293,12 @@ void main() {
       test('should clear error when starting new login', () async {
         // Arrange - set initial error state
         when(mockAuthRepository.login(any, any))
-            .thenThrow(AuthException('Initial error'));
+            .thenThrow(const AuthException('Initial error'));
         await authProvider.login('test@example.com', 'wrong_password');
         expect(authProvider.error, 'Initial error');
 
         // Setup successful login
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: User(
@@ -322,12 +322,12 @@ void main() {
       test('should clear error when starting new registration', () async {
         // Arrange - set initial error state
         when(mockAuthRepository.register(any, any, any))
-            .thenThrow(ValidationException('Initial error', {}));
+            .thenThrow(const ValidationException('Initial error', {}));
         await authProvider.register('test@example.com', 'password', 'user');
         expect(authProvider.error, 'Initial error');
 
         // Setup successful registration
-        final mockAuthResponse = AuthResponse(
+        const mockAuthResponse = AuthResponse(
           token: 'test_token',
           refreshToken: 'test_refresh_token',
           user: User(
@@ -359,7 +359,7 @@ void main() {
 
         // Act
         final provider = AuthProvider(authRepository: mockAuthRepository);
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
         // Assert - should fallback to logout
         expect(provider.isAuthenticated, false);
@@ -376,7 +376,7 @@ void main() {
 
         // Act
         final provider = AuthProvider(authRepository: mockAuthRepository);
-        await Future.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
         // Assert - should remain unauthenticated if no user
         expect(provider.isAuthenticated, false);

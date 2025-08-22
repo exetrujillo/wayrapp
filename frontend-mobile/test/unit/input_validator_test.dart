@@ -322,13 +322,13 @@ void main() {
 
     group('edge cases', () {
       test('should handle unicode characters in email', () {
-        final unicodeEmail = 'tëst@éxample.com';
+        const unicodeEmail = 'tëst@éxample.com';
         final result = InputValidator.validateEmail(unicodeEmail);
         expect(result, null);
       });
 
       test('should handle unicode characters in name', () {
-        final unicodeName = 'José María';
+        const unicodeName = 'José María';
         final result = InputValidator.validateName(unicodeName);
         expect(result, null);
       });

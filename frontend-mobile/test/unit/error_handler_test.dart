@@ -9,7 +9,7 @@ void main() {
     group('getErrorMessage', () {
       test('should return message from AuthException', () {
         // Arrange
-        final exception = AuthException('Invalid credentials');
+        const exception = AuthException('Invalid credentials');
 
         // Act
         final result = ErrorHandler.getErrorMessage(exception);
@@ -20,7 +20,7 @@ void main() {
 
       test('should return message from NetworkException', () {
         // Arrange
-        final exception = NetworkException('Connection timeout');
+        const exception = NetworkException('Connection timeout');
 
         // Act
         final result = ErrorHandler.getErrorMessage(exception);
@@ -31,7 +31,7 @@ void main() {
 
       test('should return message from ValidationException', () {
         // Arrange
-        final exception = ValidationException('Validation failed', {
+        const exception = ValidationException('Validation failed', {
           'email': ['Email is required'],
           'password': ['Password too short'],
         });
@@ -45,7 +45,7 @@ void main() {
 
       test('should return message from ServerException', () {
         // Arrange
-        final exception = ServerException('Internal server error', statusCode: 500);
+        const exception = ServerException('Internal server error', statusCode: 500);
 
         // Act
         final result = ErrorHandler.getErrorMessage(exception);
@@ -278,11 +278,11 @@ void main() {
     group('getValidationErrors', () {
       test('should extract validation errors from ValidationException', () {
         // Arrange
-        final errors = {
+        const errors = {
           'email': ['Email is required', 'Email format is invalid'],
           'password': ['Password is too short'],
         };
-        final exception = ValidationException('Validation failed', errors);
+        const exception = ValidationException('Validation failed', errors);
 
         // Act
         final result = ErrorHandler.getValidationErrors(exception);
@@ -293,7 +293,7 @@ void main() {
 
       test('should return empty map for non-validation exceptions', () {
         // Arrange
-        final exception = AuthException('Invalid credentials');
+        const exception = AuthException('Invalid credentials');
 
         // Act
         final result = ErrorHandler.getValidationErrors(exception);
@@ -306,7 +306,7 @@ void main() {
     group('isNetworkError', () {
       test('should return true for NetworkException', () {
         // Arrange
-        final exception = NetworkException('Connection failed');
+        const exception = NetworkException('Connection failed');
 
         // Act
         final result = ErrorHandler.isNetworkError(exception);
@@ -361,7 +361,7 @@ void main() {
 
       test('should return false for non-network exceptions', () {
         // Arrange
-        final exception = AuthException('Invalid credentials');
+        const exception = AuthException('Invalid credentials');
 
         // Act
         final result = ErrorHandler.isNetworkError(exception);

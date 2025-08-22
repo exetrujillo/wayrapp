@@ -81,13 +81,13 @@ void main() {
 
     testWidgets('should complete login flow and navigate to dashboard', (WidgetTester tester) async {
       // Setup successful login
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'testuser',
         role: UserRole.student,
       );
-      final mockAuthResponse = AuthResponse(
+      const mockAuthResponse = AuthResponse(
         token: 'test_token',
         refreshToken: 'test_refresh_token',
         user: mockUser,
@@ -173,13 +173,13 @@ void main() {
 
     testWidgets('should complete registration flow', (WidgetTester tester) async {
       // Setup successful registration
-      final mockUser = User(
+      const mockUser = User(
         id: '2',
         email: 'newuser@example.com',
         username: 'newuser',
         role: UserRole.student,
       );
-      final mockAuthResponse = AuthResponse(
+      const mockAuthResponse = AuthResponse(
         token: 'new_token',
         refreshToken: 'new_refresh_token',
         user: mockUser,
@@ -217,7 +217,7 @@ void main() {
 
     testWidgets('should handle logout flow correctly', (WidgetTester tester) async {
       // Setup authenticated state
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'testuser',
@@ -255,7 +255,7 @@ void main() {
 
     testWidgets('should handle server change flow', (WidgetTester tester) async {
       // Setup authenticated state
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'testuser',
@@ -295,7 +295,7 @@ void main() {
 
     testWidgets('should maintain authentication state across app restarts', (WidgetTester tester) async {
       // Setup persistent authentication
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'testuser',

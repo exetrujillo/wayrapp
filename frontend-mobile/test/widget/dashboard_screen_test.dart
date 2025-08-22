@@ -24,7 +24,7 @@ void main() {
 
     testWidgets('should display dashboard with user information', (WidgetTester tester) async {
       // Setup mock data
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'Test User',
@@ -61,7 +61,7 @@ void main() {
 
     testWidgets('should display navigation drawer with menu items', (WidgetTester tester) async {
       // Setup mock data
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'Test User',
@@ -104,7 +104,7 @@ void main() {
 
     testWidgets('should show user menu with logout option', (WidgetTester tester) async {
       // Setup mock data
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'Test User',
@@ -144,7 +144,7 @@ void main() {
 
     testWidgets('should show coming soon dialog for future features', (WidgetTester tester) async {
       // Setup mock data
-      final mockUser = User(
+      const mockUser = User(
         id: '1',
         email: 'test@example.com',
         username: 'Test User',

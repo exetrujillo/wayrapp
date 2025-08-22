@@ -106,6 +106,9 @@ enum ServerStatus {
   
   @JsonValue('testing')
   testing,
+  
+  @JsonValue('offline')
+  offline,
 }
 
 /// Extension methods for ServerStatus
@@ -123,6 +126,8 @@ extension ServerStatusExtension on ServerStatus {
         return 'Error';
       case ServerStatus.testing:
         return 'Testing...';
+      case ServerStatus.offline:
+        return 'Offline';
     }
   }
 
@@ -139,6 +144,8 @@ extension ServerStatusExtension on ServerStatus {
         return 'error';
       case ServerStatus.testing:
         return 'sync';
+      case ServerStatus.offline:
+        return 'wifi_off';
     }
   }
 
