@@ -11,7 +11,8 @@
   "excludeExternals": true,
   "excludeNotDocumented": true,
   "readme": "./README.md",
-  "tsconfig": "./tsconfig.json",
+  "tsconfig": "./tsconfig.docs.json",
+  "skipErrorChecking": true,
   "exclude": [
     "**/*.test.ts",
     "**/*.spec.ts",
