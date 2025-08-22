@@ -64,8 +64,8 @@ import {
     CreateExerciseSchema,
     UpdateExerciseSchema,
     ExerciseQuery,
-    CreateExerciseDto,
 } from "../schemas";
+import { CreateExerciseDto } from "../types";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
 
@@ -118,7 +118,7 @@ export class ExerciseController {
             const exerciseData = {
                 ...validatedData,
                 exercise_type: validatedData.exercise_type.replace(/-/g, '_') as any
-            };
+            } as CreateExerciseDto;
             const exercise = await this.exerciseService.createExercise(exerciseData);
 
             // Convert exercise type back to frontend format (underscores to dashes)

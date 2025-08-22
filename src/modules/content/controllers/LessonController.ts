@@ -66,8 +66,8 @@ import {
     AssignExerciseToLessonSchema,
     ReorderExercisesSchema,
     ReorderLessonsSchema,
-    CreateLessonDto,
 } from "../schemas";
+import { CreateLessonDto, AssignExerciseToLessonDto } from "../types";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
 
@@ -427,7 +427,7 @@ export class LessonController {
             const validatedData = AssignExerciseToLessonSchema.parse(req.body);
             const lessonExercise = await this.lessonService.assignExerciseToLesson(
                 lessonId,
-                validatedData
+                validatedData as AssignExerciseToLessonDto
             );
 
             const response: ApiResponse = {

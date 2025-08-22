@@ -43,8 +43,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProgressService } from '../services/progressService';
 import { 
-  UpdateProgressInput,
-  OfflineProgressSyncInput,
+  UpdateProgressDto,
+  OfflineProgressSync,
   UpdateUserProgressInput
 } from '../types';
 import { AppError } from '@/shared/middleware/errorHandler';
@@ -187,7 +187,7 @@ export class ProgressController {
       const bodyData = req.body;
       
       // Construct the progress data with lesson_id from URL parameter
-      const progressData: UpdateProgressInput = {
+      const progressData: UpdateProgressDto = {
         lesson_id: lessonId,
         score: bodyData.score,
         time_spent_seconds: bodyData.time_spent_seconds,
@@ -251,7 +251,7 @@ export class ProgressController {
       }
 
       // Use validated data from middleware
-      const syncData: OfflineProgressSyncInput = req.body;
+      const syncData: OfflineProgressSync = req.body;
 
       const result = await this.progressService.syncOfflineProgress(userId, syncData);
 

@@ -65,6 +65,10 @@ import { ContentService } from "../services";
 import { PrismaClient } from "@prisma/client";
 import {
     CreateCourseSchema,
+    CreateLevelSchema,
+    CreateSectionSchema,
+    CreateModuleSchema,
+    CreateCourseDto,
     CreateLevelDto,
     CreateSectionDto,
     CreateModuleDto,
@@ -72,7 +76,6 @@ import {
     ReorderSectionsSchema,
     ReorderLevelsSchema
 } from "../schemas";
-import { CreateCourseDto } from "../types";
 import { ApiResponse, ErrorCodes, HttpStatus } from "../../../shared/types";
 import { AppError } from "@/shared/middleware";
 
@@ -120,14 +123,7 @@ export class ContentController {
     ): Promise<void> => {
         try {
             const validatedData = CreateCourseSchema.parse(req.body);
-            // Handle optional properties for exactOptionalPropertyTypes
-            const courseData: CreateCourseDto = {
-                ...validatedData,
-                ...(validatedData.description && {
-                    description: validatedData.description,
-                }),
-            };
-            const course = await this.contentService.createCourse(courseData);
+            const course = await this.contentService.createCourse(validatedData as any);
 
             const response: ApiResponse = {
                 data: course,
@@ -438,8 +434,9 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const levelData: CreateLevelDto = { ...req.body, course_id: courseId };
-            const level = await this.contentService.createLevel(levelData);
+            const validatedData = CreateLevelSchema.omit({ course_id: true }).parse(req.body);
+            const levelData = { ...validatedData, course_id: courseId };
+            const level = await this.contentService.createLevel(levelData as any);
 
             const response: ApiResponse = {
                 data: level,
@@ -668,8 +665,9 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const sectionData: CreateSectionDto = { ...req.body, level_id: levelId };
-            const section = await this.contentService.createSection(sectionData);
+            const validatedData = CreateSectionSchema.omit({ level_id: true }).parse(req.body);
+            const sectionData = { ...validatedData, level_id: levelId };
+            const section = await this.contentService.createSection(sectionData as any);
 
             const response: ApiResponse = {
                 data: section,
@@ -886,11 +884,12 @@ export class ContentController {
                     ErrorCodes.VALIDATION_ERROR,
                 );
             }
-            const moduleData: CreateModuleDto = {
-                ...req.body,
+            const validatedData = CreateModuleSchema.omit({ section_id: true }).parse(req.body);
+            const moduleData = {
+                ...validatedData,
                 section_id: sectionId,
             };
-            const module = await this.contentService.createModule(moduleData);
+            const module = await this.contentService.createModule(moduleData as any);
 
             const response: ApiResponse = {
                 data: module,

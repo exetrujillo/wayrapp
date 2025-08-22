@@ -13,7 +13,7 @@
     "@": "dist"
   },
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "build": "prisma generate && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "vercel-build": "npm run build",
     "build:shared": "npm run build --workspace=wayrapp-shared",
     "build:all": "npm run build && npm run build:shared",
@@ -109,6 +109,7 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
     "typedoc": "^0.28.7",
     "typedoc-material-theme": "^1.4.0",

@@ -214,7 +214,7 @@ export const authenticateToken = async (
     }
 
     // Attach validated user info to request
-    req.user = validationResult.data;
+    req.user = validationResult.data as JWTPayload;
 
     logger.debug('Token verified successfully', {
       userId: validationResult.data.sub,
@@ -577,7 +577,7 @@ export const optionalAuth = async (
       const validationResult = JWTPayloadSchema.safeParse(decoded);
       
       if (validationResult.success) {
-        req.user = validationResult.data;
+        req.user = validationResult.data as JWTPayload;
         logger.debug('Optional auth - token verified', { userId: validationResult.data.sub });
       } else {
         logger.debug('Optional auth - invalid token payload ignored', { 
